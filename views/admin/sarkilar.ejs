@@ -1,0 +1,47 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Şarkılar · Admin' }) %>
+<%- include('../partials/admin-menu') %>
+
+<a href="/hesap/yukle" class="btn-turuncu mb-3 d-inline-block"><i class="bi bi-plus-circle"></i> Yeni şarkı yükle</a>
+
+<h2 class="bolum-baslik">Onay bekleyenler <span class="rozet sari-rozet"><%= bekleyenler.length %></span></h2>
+<div class="liste mb-4">
+  <% bekleyenler.forEach(s => { %>
+    <div class="satir">
+      <img src="<%= s.kapak %>" alt="" class="mini-kapak">
+      <div class="flex-grow-1 text-truncate">
+        <span class="satir-baslik"><%= s.baslik %></span>
+        <div class="soluk kucuk"><%= s.sanatci %> · <%= s.album %> · yükleyen: <%= s.kullanici ? s.kullanici.kullaniciAdi : '-' %></div>
+      </div>
+      <!-- Onaylamadan önce dinleyebilmek için tarayıcının kendi oynatıcısı -->
+      <audio src="<%= s.dosya %>" controls preload="none" class="d-none d-md-block bekleyen-ses"></audio>
+      <form action="/admin/sarkilar/<%= s.id %>/onayla" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-turuncu">Onayla</button>
+      </form>
+      <form action="/admin/sarkilar/<%= s.id %>/sil" method="post" onsubmit="return confirm('Bu şarkı reddedilip silinsin mi?')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-sil">Reddet</button>
+      </form>
+    </div>
+  <% }) %>
+  <% if (bekleyenler.length === 0) { %><p class="soluk">Onay bekleyen şarkı yok.</p><% } %>
+</div>
+
+<h2 class="bolum-baslik">Yayındaki şarkılar</h2>
+<div class="liste">
+  <% sarkilar.forEach(s => { %>
+    <div class="satir">
+      <img src="<%= s.kapak %>" alt="" class="mini-kapak">
+      <div class="flex-grow-1 text-truncate">
+        <a href="/sarki/<%= s.slug %>" class="satir-baslik"><%= s.baslik %></a>
+        <div class="soluk kucuk"><%= s.sanatci %> · <%= s.album %> · /sarki/<%= s.slug %> · yükleyen: <%= s.kullanici ? s.kullanici.kullaniciAdi : '-' %></div>
+      </div>
+      <span class="soluk kucuk"><i class="bi bi-headphones"></i> <%= s.dinlenme %></span>
+      <form action="/admin/sarkilar/<%= s.id %>/sil" method="post" onsubmit="return confirm('Bu şarkı silinsin mi? İncelemeleri de silinir.')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-sil">Sil</button>
+      </form>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/alt') %>

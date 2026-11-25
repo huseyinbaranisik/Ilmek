@@ -1,0 +1,21 @@
+<%- include('partials/ust', { sayfaBaslik: 'S.S.S.' }) %>
+<h2 class="bolum-baslik">Sıkça sorulan sorular</h2>
+<div class="d-grid gap-2">
+  <% sorular.forEach(s => { %>
+    <details class="kutu">
+      <summary><%= s.soru %></summary>
+      <p class="soluk mt-2 mb-0"><%= s.cevap %></p>
+    </details>
+  <% }) %>
+</div>
+
+<div class="kutu mt-4">
+  <div class="fw-medium mb-1">Sorunu bulamadın mı?</div>
+  <p class="soluk kucuk">Bize sor, cevaplayınca bu sayfada yayınlayalım.</p>
+  <form action="/sss" method="post" class="d-flex gap-2">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="soru" class="giris-kutu flex-grow-1" placeholder="Sorunu yaz" required minlength="5" maxlength="500">
+    <button class="btn-turuncu">Gönder</button>
+  </form>
+</div>
+<%- include('partials/alt') %>

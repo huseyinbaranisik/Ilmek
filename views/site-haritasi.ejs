@@ -1,0 +1,38 @@
+<%- include('partials/ust', { sayfaBaslik: 'Site haritası' }) %>
+<h2 class="bolum-baslik">Site haritası</h2>
+<div class="row g-3">
+  <div class="col-md-4"><div class="kutu h-100">
+    <div class="turuncu fw-medium mb-2">Sayfalar</div>
+    <ul class="harita">
+      <li><a href="/">Keşfet (ana sayfa)</a></li>
+      <li><a href="/kitaplik">Kitaplık</a></li>
+      <li><a href="/albumler">Albümler</a></li>
+      <li><a href="/uyeler">Üyeler</a></li>
+      <li><a href="/listeler">Listeler</a>
+        <ul><% listeler.forEach(l => { %><li><a href="/liste/<%= l.slug %>"><%= l.baslik %></a></li><% }) %></ul>
+      </li>
+      <li><a href="/galeri">Galeri</a></li>
+      <li><a href="/duyurular">Duyurular</a></li>
+      <li><a href="/sss">S.S.S.</a></li>
+      <li><a href="/auth/giris">Giriş yap</a> · <a href="/auth/kayit">Kayıt ol</a></li>
+    </ul>
+  </div></div>
+  <div class="col-md-4"><div class="kutu h-100">
+    <div class="turuncu fw-medium mb-2">Albümler ve şarkılar</div>
+    <ul class="harita">
+      <% albumler.forEach(a => { %>
+        <li><a href="/album/<%= a.albumSlug %>"><%= a.album %></a> <span class="soluk">· <%= a.sanatci %></span>
+          <ul><% sarkilar.filter(s => s.albumSlug === a.albumSlug).forEach(s => { %><li><a href="/sarki/<%= s.slug %>"><%= s.baslik %></a></li><% }) %></ul>
+        </li>
+      <% }) %>
+    </ul>
+  </div></div>
+  <div class="col-md-4"><div class="kutu h-100">
+    <div class="turuncu fw-medium mb-2">Duyurular</div>
+    <ul class="harita">
+      <% duyurular.forEach(d => { %><li><a href="/duyuru/<%= d.slug %>"><%= d.baslik %></a></li><% }) %>
+    </ul>
+    <p class="soluk kucuk mt-3 mb-0">Arama motorları için: <a href="/sitemap.xml">/sitemap.xml</a></p>
+  </div></div>
+</div>
+<%- include('partials/alt') %>

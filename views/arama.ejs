@@ -1,0 +1,10 @@
+<%- include('partials/ust', { sayfaBaslik: 'Arama' }) %>
+<h2 class="bolum-baslik">"<%= q %>" için sonuçlar</h2>
+<% if (sonuclar.length === 0) { %>
+  <p class="soluk">Sonuç bulunamadı. Başka bir şarkı, sanatçı ya da albüm adı deneyin.</p>
+<% } else { %>
+  <div class="liste">
+    <% sonuclar.forEach((s, i) => { %><%- include('partials/satir', { s, sira: i + 1 }) %><% }) %>
+  </div>
+<% } %>
+<%- include('partials/alt') %>

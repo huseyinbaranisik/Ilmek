@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= typeof sayfaBaslik !== 'undefined' ? sayfaBaslik + ' · Gramofy' : 'Gramofy · dinle, puanla, listele' %></title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/vendor/icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/vendor/inter/index.css">
+  <link rel="stylesheet" href="/css/stil.css">
+</head>
+<body>
+<%
+  // Sol menüdeki bağlantılar: [adres, ikon, yazı, aktif mi]
+  const menu = [
+    ['/', 'house-door', 'Keşfet', yol === '/'],
+    ['/kitaplik', 'vinyl', 'Kitaplık', yol === '/kitaplik'],
+    ['/albumler', 'disc', 'Albümler', yol.startsWith('/album')],
+    ['/listeler', 'collection-play', 'Listeler', yol.startsWith('/liste')],
+    ['/uyeler', 'people', 'Üyeler', yol.startsWith('/uye')],
+    ['/galeri', 'image', 'Galeri', yol === '/galeri'],
+    ['/duyurular', 'megaphone', 'Duyurular', yol.startsWith('/duyuru')],
+    ['/sss', 'question-circle', 'S.S.S.', yol === '/sss'],
+  ];
+%>
+<!-- Sayfa düzeni derste verilen "Start Bootstrap - Simple Sidebar" şablonundan:
+     #wrapper içinde solda #sidebar-wrapper, sağda #page-content-wrapper, menüyü açıp kapatan #sidebarToggle -->
+<div id="wrapper">
+
+  <!-- ===== SOL MENÜ ===== -->
+  <aside id="sidebar-wrapper">
+    <nav class="panel menu-panel">
+      <a href="/" class="logo"><span class="logo-plak"></span><span class="gizlenir">Gramofy</span></a>
+      <% menu.forEach(([adres, ikon, yazi, aktif]) => { %>
+        <a href="<%= adres %>" class="menu-link <%= aktif ? 'aktif' : '' %>" title="<%= yazi %>">
+          <i class="bi bi-<%= ikon %><%= aktif ? '-fill' : '' %>"></i><span class="gizlenir"><%= yazi %></span>
+        </a>
+      <% }) %>
+    </nav>
+
+    <div class="panel kutuphane-panel">
+      <div class="kutuphane-baslik">
+        <span class="menu-link p-0"><i class="bi bi-collection"></i><span class="gizlenir">Listelerin</span></span>
+        <% if (kullanici) { %><a href="/listeler" class="ikon-yuvarlak gizlenir" title="Yeni liste"><i class="bi bi-plus-lg"></i></a><% } %>
+      </div>
+      <div class="kutuphane-liste">
+        <% if (!kullanici) { %>
+          <div class="davet gizlenir">
+            <div class="fw-semibold">İlk listeni oluştur</div>
+            <p>Şarkıları puanla, listeler yap, kendi müziğini yükle.</p>
+            <a href="/auth/kayit" class="btn-beyaz">Üye ol</a>
+          </div>
+        <% } else { %>
+          <!-- Spotify'daki gibi en üstte "Beğenilen Şarkılar" -->
+          <a href="/uye/<%= kullanici.ad %>/begeniler" class="kutuphane-oge <%= yol === '/uye/' + kullanici.ad + '/begeniler' ? 'aktif' : '' %>" title="Beğenilen Şarkılar">
+            <span class="kutuphane-ikon kalp-ikon"><i class="bi bi-heart-fill"></i></span>
+            <span class="gizlenir text-truncate"><span class="d-block text-truncate">Beğenilen Şarkılar</span><span class="soluk kucuk">Liste · <%= begenilenIdler.length %> şarkı</span></span>
+          </a>
+        <% } %>
+        <% if (kullanici && menuListeler.length === 0) { %>
+          <div class="davet gizlenir">
+            <div class="fw-semibold">Henüz listen yok</div>
+            <p>Bir şarkı sayfasından "Listeye ekle" ile başla.</p>
+            <a href="/listeler" class="btn-beyaz">Liste oluştur</a>
+          </div>
+        <% } else if (kullanici) { menuListeler.forEach(l => { %>
+          <a href="/liste/<%= l.slug %>" class="kutuphane-oge <%= yol === '/liste/' + l.slug ? 'aktif' : '' %>" title="<%= l.baslik %>">
+            <span class="kutuphane-ikon"><i class="bi bi-music-note-list"></i></span>
+            <span class="gizlenir text-truncate"><span class="d-block text-truncate"><%= l.baslik %></span><span class="soluk kucuk">Liste · <%= kullanici.ad %></span></span>
+          </a>
+        <% }) } %>
+      </div>
+      <!-- Ziyaretçi sayacı ve online kullanıcı sayısı -->
+      <div class="sayaclar gizlenir">
+        <span><i class="bi bi-eye"></i> <%= ziyaretci.toLocaleString('tr-TR') %> ziyaretçi</span>
+        <span class="yesil"><span class="nokta"></span> <span id="online-sayi"><%= online %></span> çevrimiçi</span>
+        <a href="/site-haritasi">Site haritası</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== SAĞ: İÇERİK ===== -->
+  <div id="page-content-wrapper" class="panel">
+    <header class="ust-bar">
+      <button class="ikon-yuvarlak" id="sidebarToggle" title="Menüyü aç / kapat" aria-label="Menüyü aç / kapat"><i class="bi bi-layout-sidebar"></i></button>
+      <button class="ikon-yuvarlak d-none d-sm-grid" onclick="history.back()" aria-label="Geri"><i class="bi bi-chevron-left"></i></button>
+      <button class="ikon-yuvarlak d-none d-sm-grid" onclick="history.forward()" aria-label="İleri"><i class="bi bi-chevron-right"></i></button>
+      <form action="/" method="get" class="arama">
+        <i class="bi bi-search"></i>
+        <input type="search" name="q" placeholder="Şarkı, sanatçı ya da albüm ara" value="<%= typeof q !== 'undefined' ? q : '' %>" aria-label="Ara">
+      </form>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <% if (kullanici) { %>
+          <a href="/hesap/yukle" class="btn-cizgi d-none d-md-inline-flex"><i class="bi bi-upload"></i> Yükle</a>
+          <div class="dropdown">
+            <button class="avatar-btn" data-bs-toggle="dropdown" aria-label="Hesap menüsü"><%= kullanici.ad[0].toUpperCase() %></button>
+            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end menu-acilir">
+              <li class="px-3 py-2 soluk kucuk">@<%= kullanici.ad %><%= kullanici.admin ? ' · Admin' : '' %></li>
+              <li><a class="dropdown-item" href="/uye/<%= kullanici.ad %>"><i class="bi bi-person"></i> Profilim</a></li>
+              <li><a class="dropdown-item" href="/hesap/yukle"><i class="bi bi-upload"></i> Şarkı yükle</a></li>
+              <% if (kullanici.admin) { %><li><a class="dropdown-item" href="/admin"><i class="bi bi-speedometer2"></i> Admin paneli</a></li><% } %>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form action="/auth/cikis" method="post">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Çıkış yap</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        <% } else { %>
+          <a href="/auth/kayit" class="btn-yazi">Kayıt ol</a>
+          <a href="/auth/giris" class="btn-beyaz buyuk">Giriş yap</a>
+        <% } %>
+      </div>
+    </header>
+    <main class="icerik">
+<% if (mesaj) { %>
+  <div class="bilgi <%= mesaj.tur %>"><i class="bi <%= mesaj.tur === 'hata' ? 'bi-exclamation-circle' : 'bi-check-circle' %>"></i> <%= mesaj.metin %></div>
+<% } %>

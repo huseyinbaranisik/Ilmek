@@ -1,0 +1,13 @@
+<%# Şarkı listesi satırı (albüm ve şarkı sayfalarında) %>
+<div class="satir" data-sarki="<%= sarkiJson(s) %>" data-id="<%= s.id %>">
+  <span class="sira soluk"><%= sira %></span>
+  <div class="flex-grow-1 text-truncate">
+    <a href="/sarki/<%= s.slug %>" class="satir-baslik"><%= s.baslik %></a>
+    <div class="soluk kucuk"><%= s.sanatci %></div>
+  </div>
+  <span class="canli kucuk <%= dinleyici[s.id] ? 'var' : '' %>" data-canli="<%= s.id %>" title="Şu an dinleyen">● <b><%= dinleyici[s.id] || 0 %></b></span>
+  <% if (s.incelemeSayisi > 0) { %><span class="yildiz-kucuk d-none d-sm-inline">★ <%= s.ortPuan.toFixed(1) %></span><% } %>
+  <span class="soluk kucuk d-none d-sm-inline text-nowrap" title="<%= s.dinlenme.toLocaleString('tr-TR') %> dinlenme"><i class="bi bi-headphones"></i> <%= kisaSayi(s.dinlenme) %></span>
+  <% if (kullanici) { %><button class="ikon-btn kalp" data-begen="<%= s.id %>" aria-label="Beğen"><i class="bi bi-heart"></i></button><% } %>
+  <button class="ikon-btn satir-cal" aria-label="Çal"><i class="bi bi-play-fill"></i></button>
+</div>

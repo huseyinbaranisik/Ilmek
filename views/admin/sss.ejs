@@ -1,0 +1,29 @@
+<%- include('../partials/ust', { sayfaBaslik: 'S.S.S. · Admin' }) %>
+<%- include('../partials/admin-menu') %>
+
+<p class="soluk kucuk">Ziyaretçilerin gönderdiği sorular burada. Cevapladığınız soru S.S.S. sayfasında yayınlanır.</p>
+<div class="d-grid gap-2">
+  <% sorular.forEach(s => { %>
+    <div class="kutu">
+      <div class="d-flex gap-2 align-items-start">
+        <div class="flex-grow-1">
+          <% if (!s.cevap) { %><span class="rozet sari-rozet">Cevapsız</span><% } else { %><span class="rozet yesil-rozet">Yayında</span><% } %>
+          <div class="fw-medium mt-1"><%= s.soru %></div>
+          <% if (s.cevap) { %><div class="soluk kucuk mt-1">↳ <%= s.cevap %></div><% } %>
+        </div>
+        <form action="/admin/sss/<%= s.id %>/sil" method="post" onsubmit="return confirm('Bu soru silinsin mi?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn-sil">Sil</button>
+        </form>
+      </div>
+      <% if (!s.cevap) { %>
+        <form action="/admin/sss/<%= s.id %>/cevapla" method="post" class="d-flex gap-2 mt-2">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input name="cevap" class="giris-kutu flex-grow-1" placeholder="Cevabı yaz" required>
+          <button class="btn-turuncu">Cevapla ve yayınla</button>
+        </form>
+      <% } %>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/alt') %>

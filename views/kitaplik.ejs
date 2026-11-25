@@ -1,0 +1,28 @@
+<%- include('partials/ust', { sayfaBaslik: 'Kitaplık' }) %>
+<h2 class="bolum-baslik">Kitaplık</h2>
+<p class="soluk kucuk">Fareyle kılıfların üzerinde gezin, plak kılıfından çıksın. Tıklayınca çalmaya başlar.</p>
+
+<!-- Raf: kılıflar yan yana ve üst üste dizili. Her kılıfın içinde bir plak var. -->
+<div class="raf">
+  <% sarkilar.forEach(s => { %>
+    <div class="kilif" data-kilif="<%= sarkiJson(s) %>" style="--renk: <%= s.renk %>" tabindex="0" title="<%= s.baslik %> · <%= s.sanatci %>">
+      <!-- Plak: data-plak sayesinde şarkı çalarken oynatici.js "doner" sınıfı ekler ve plak döner -->
+      <div class="kilif-plak">
+        <div class="plak-buyuk" data-plak="<%= s.id %>"><img src="<%= s.kapak %>" alt=""></div>
+      </div>
+      <!-- Kılıfın kendisi: solda renkli sırt (üzerinde şarkı adı), sağda kapak -->
+      <div class="kilif-on">
+        <img src="<%= s.kapak %>" alt="<%= s.album %> kapağı">
+        <span class="kilif-sirt"><%= s.baslik %></span>
+      </div>
+      <div class="kilif-bilgi">
+        <a href="/sarki/<%= s.slug %>" class="fw-medium"><%= s.baslik %></a>
+        <div class="soluk kucuk"><%= s.sanatci %></div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<% if (sarkilar.length === 0) { %><p class="soluk">Kitaplık boş.</p><% } %>
+
+<script src="/js/kitaplik.js" defer></script>
+<%- include('partials/alt') %>

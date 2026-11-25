@@ -1,0 +1,28 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Duyurular · Admin' }) %>
+<%- include('../partials/admin-menu') %>
+
+<div class="kutu mb-4">
+  <div class="fw-medium mb-3"><i class="bi bi-plus-circle turuncu"></i> Yeni duyuru</div>
+  <form action="/admin/duyurular" method="post" class="d-grid gap-2">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="baslik" class="giris-kutu" placeholder="Başlık (adresi otomatik oluşur: /duyuru/baslik)" required>
+    <textarea name="icerik" class="giris-kutu" rows="3" placeholder="İçerik" required></textarea>
+    <div><button class="btn-turuncu">Yayınla</button></div>
+  </form>
+</div>
+
+<div class="liste">
+  <% duyurular.forEach(d => { %>
+    <div class="satir">
+      <div class="flex-grow-1 text-truncate">
+        <a href="/duyuru/<%= d.slug %>" class="satir-baslik"><%= d.baslik %></a>
+        <div class="soluk kucuk"><%= tarihYaz(d.tarih) %> · /duyuru/<%= d.slug %></div>
+      </div>
+      <form action="/admin/duyurular/<%= d.id %>/sil" method="post" onsubmit="return confirm('Bu duyuru silinsin mi?')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-sil">Sil</button>
+      </form>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/alt') %>

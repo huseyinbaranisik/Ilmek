@@ -1,0 +1,14 @@
+<%- include('partials/ust', { sayfaBaslik: 'Duyurular' }) %>
+<h2 class="bolum-baslik">Duyurular</h2>
+<div class="d-grid gap-2">
+  <% duyurular.forEach(d => { %>
+    <a href="/duyuru/<%= d.slug %>" class="kutu duyuru-kutu">
+      <i class="bi bi-megaphone turuncu fs-4"></i>
+      <div>
+        <div class="fw-medium"><%= d.baslik %></div>
+        <div class="soluk kucuk"><%= tarihYaz(d.tarih) %></div>
+      </div>
+    </a>
+  <% }) %>
+</div>
+<%- include('partials/alt') %>

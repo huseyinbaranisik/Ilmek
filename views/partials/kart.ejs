@@ -1,0 +1,13 @@
+<%# Şarkı kartı: kapak + başlık + sanatçı + canlı dinleyici sayısı %>
+<div class="kart">
+  <div class="kart-kapak">
+    <img src="<%= s.kapak %>" alt="<%= s.album %> kapağı">
+    <button class="kart-cal" data-sarki="<%= sarkiJson(s) %>" aria-label="<%= s.baslik %> çal"><i class="bi bi-play-fill"></i></button>
+  </div>
+  <a href="/sarki/<%= s.slug %>" class="kart-baslik text-truncate"><%= s.baslik %></a>
+  <div class="soluk kucuk d-flex">
+    <span class="text-truncate"><%= s.sanatci %></span>
+    <% if (s.incelemeSayisi > 0) { %><span class="ms-2 yildiz-kucuk">★ <%= s.ortPuan.toFixed(1) %></span><% } %>
+    <span class="ms-auto canli <%= dinleyici[s.id] ? 'var' : '' %>" data-canli="<%= s.id %>">● <b><%= dinleyici[s.id] || 0 %></b></span>
+  </div>
+</div>

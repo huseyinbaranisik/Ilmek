@@ -1,0 +1,13 @@
+<%- include('partials/ust', { sayfaBaslik: 'Kayıt ol' }) %>
+<div class="kutu form-kutu">
+  <h1 class="fs-4 text-center mb-3">Gramofy'a katıl</h1>
+  <% if (hata) { %><div class="bilgi hata"><%= hata %></div><% } %>
+  <form action="/auth/kayit" method="post" class="d-grid gap-2">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="kullaniciAdi" class="giris-kutu" placeholder="Kullanıcı adı (en az 3 karakter)" required minlength="3" autocomplete="username">
+    <input name="sifre" type="password" class="giris-kutu" placeholder="Şifre (en az 6 karakter)" required minlength="6" autocomplete="new-password">
+    <button class="btn-turuncu buyuk mt-2">Kayıt ol</button>
+  </form>
+  <p class="soluk kucuk text-center mt-3 mb-0">Zaten üye misin? <a href="/auth/giris" class="turuncu">Giriş yap</a></p>
+</div>
+<%- include('partials/alt') %>

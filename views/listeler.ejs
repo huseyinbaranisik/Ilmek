@@ -1,0 +1,29 @@
+<%- include('partials/ust', { sayfaBaslik: 'Listeler' }) %>
+<h2 class="bolum-baslik">Listeler</h2>
+
+<% if (kullanici) { %>
+  <form action="/hesap/liste" method="post" class="kutu d-flex gap-2 flex-wrap mb-3">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="baslik" class="giris-kutu flex-grow-1" placeholder="Yeni liste adı" required maxlength="100">
+    <input name="aciklama" class="giris-kutu flex-grow-1" placeholder="Açıklama (isteğe bağlı)" maxlength="500">
+    <button class="btn-turuncu">Liste oluştur</button>
+  </form>
+<% } else { %>
+  <p class="soluk kucuk">Kendi listeni oluşturmak için <a href="/auth/giris?url=/listeler" class="turuncu">giriş yap</a>.</p>
+<% } %>
+
+<div class="izgara liste-izgara">
+  <% listeler.forEach(l => { %>
+    <a href="/liste/<%= l.slug %>" class="kart">
+      <!-- Letterboxd'daki gibi ilk 4 kapak üst üste dizilir -->
+      <div class="kapak-yigin">
+        <% l.sarkilar.slice(0, 4).forEach(s => { %><img src="<%= s.kapak %>" alt=""><% }) %>
+        <% if (l.sarkilar.length === 0) { %><img src="/img/bos.svg" alt=""><% } %>
+      </div>
+      <span class="kart-baslik text-truncate"><%= l.baslik %></span>
+      <div class="soluk kucuk"><i class="bi bi-person-circle"></i> <%= l.kullanici.kullaniciAdi %> · <%= l.sarkilar.length %> şarkı</div>
+    </a>
+  <% }) %>
+</div>
+<% if (listeler.length === 0) { %><p class="soluk">Henüz liste yok.</p><% } %>
+<%- include('partials/alt') %>

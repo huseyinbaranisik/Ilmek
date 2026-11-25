@@ -1,0 +1,15 @@
+<%- include('partials/ust', { sayfaBaslik: 'Giriş yap' }) %>
+<div class="kutu form-kutu">
+  <div class="plak-kucuk doner mx-auto mb-2"><img src="/img/bos.svg" alt=""></div>
+  <h1 class="fs-4 text-center mb-3">Tekrar hoş geldin</h1>
+  <% if (hata) { %><div class="bilgi hata"><%= hata %></div><% } %>
+  <!-- ?url= varsa giriş yaptıktan sonra o sayfaya dönülür -->
+  <form action="/auth/giris<%= url ? '?url=' + encodeURIComponent(url) : '' %>" method="post" class="d-grid gap-2">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="kullaniciAdi" class="giris-kutu" placeholder="Kullanıcı adı" required autocomplete="username">
+    <input name="sifre" type="password" class="giris-kutu" placeholder="Şifre" required autocomplete="current-password">
+    <button class="btn-turuncu buyuk mt-2">Giriş yap</button>
+  </form>
+  <p class="soluk kucuk text-center mt-3 mb-0">Hesabın yok mu? <a href="/auth/kayit" class="turuncu">Kayıt ol</a></p>
+</div>
+<%- include('partials/alt') %>

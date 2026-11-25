@@ -1,0 +1,95 @@
+<%- include('partials/ust', { sayfaBaslik: uye.kullaniciAdi }) %>
+<section class="profil-ust">
+  <div class="avatar"><%= uye.kullaniciAdi[0].toUpperCase() %></div>
+  <div class="flex-grow-1 min-w-0">
+    <span class="kucuk fw-semibold">Profil</span>
+    <h1 class="text-truncate mb-2"><%= uye.kullaniciAdi %></h1>
+    <div class="profil-ozet">
+      <span><%= incelemeler.length %> inceleme</span> · <span><%= listeler.length %> liste</span> ·
+      <span><%= takipciler.length %> takipçi</span> · <span><%= takipEdilenler.length %> takip</span>
+      <span class="soluk"> · <%= tarihYaz(uye.createdAt) %> tarihinden beri üye</span>
+    </div>
+    <!-- Spotify'daki "arkadaş etkinliği": üye şu an bir şarkı çalıyorsa görünür -->
+    <% if (simdiDinliyor) { %>
+      <a href="/sarki/<%= simdiDinliyor.slug %>" class="simdi-dinliyor mt-3">
+        <span class="esitleyici"><i></i><i></i><i></i></span>
+        Şu an dinliyor: <b><%= simdiDinliyor.baslik %></b> · <%= simdiDinliyor.sanatci %>
+      </a>
+    <% } %>
+  </div>
+</section>
+
+<!-- Takip et / takibi bırak düğmesi (kendi profilinde görünmez) -->
+<div class="d-flex align-items-center gap-3 my-3">
+  <% if (kullanici && !kendisiMi) { %>
+    <form action="/hesap/takip/<%= uye.kullaniciAdi %>" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn-cizgi"><%= takipEdiyorum ? 'Takibi bırak' : 'Takip et' %></button>
+    </form>
+  <% } else if (!kullanici) { %>
+    <a href="/auth/giris?url=/uye/<%= uye.kullaniciAdi %>" class="btn-cizgi">Takip et</a>
+  <% } %>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <h2 class="bolum-baslik">Dinleme günlüğü</h2>
+    <div class="d-grid gap-2">
+      <% incelemeler.forEach(i => { %><%- include('partials/inceleme', { i, sarkiGoster: true }) %><% }) %>
+      <% if (incelemeler.length === 0) { %><p class="soluk">Henüz inceleme yok.</p><% } %>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <!-- Beğendiği şarkılar: ilk 5 tanesi, hepsi /uye/ad/begeniler sayfasında -->
+    <div class="d-flex align-items-baseline justify-content-between">
+      <h2 class="bolum-baslik">Beğendiği şarkılar</h2>
+      <% if (begenilenler.length) { %><a href="/uye/<%= uye.kullaniciAdi %>/begeniler" class="soluk kucuk fw-semibold">Hepsini göster</a><% } %>
+    </div>
+    <div class="liste mb-2">
+      <% begenilenler.slice(0, 5).forEach((s, i) => { %><%- include('partials/satir', { s, sira: i + 1 }) %><% }) %>
+      <% if (begenilenler.length === 0) { %><p class="soluk">Henüz beğendiği şarkı yok.</p><% } %>
+    </div>
+
+    <h2 class="bolum-baslik">Listeler</h2>
+    <div class="d-grid gap-2 mb-4">
+      <% listeler.forEach(l => { %>
+        <a href="/liste/<%= l.slug %>" class="kutu d-flex align-items-center gap-3">
+          <div class="kapak-yigin kucuk-yigin">
+            <% l.sarkilar.slice(0, 4).forEach(s => { %><img src="<%= s.kapak %>" alt=""><% }) %>
+            <% if (l.sarkilar.length === 0) { %><img src="/img/bos.svg" alt=""><% } %>
+          </div>
+          <div class="text-truncate"><div class="fw-medium text-truncate"><%= l.baslik %></div><div class="soluk kucuk"><%= l.sarkilar.length %> şarkı</div></div>
+        </a>
+      <% }) %>
+      <% if (listeler.length === 0) { %><p class="soluk">Henüz liste yok.</p><% } %>
+    </div>
+
+    <h2 class="bolum-baslik">Yüklediği şarkılar</h2>
+    <% if (kendisiMi) { %><a href="/hesap/yukle" class="btn-turuncu mb-2 d-inline-block"><i class="bi bi-upload"></i> Şarkı yükle</a><% } %>
+    <div class="liste">
+      <% yuklemeler.forEach(s => { %>
+        <div class="satir">
+          <img src="<%= s.kapak %>" alt="" class="mini-kapak">
+          <div class="flex-grow-1 text-truncate">
+            <% if (s.onayli) { %><a href="/sarki/<%= s.slug %>" class="satir-baslik"><%= s.baslik %></a><% } else { %><span class="satir-baslik"><%= s.baslik %></span><% } %>
+            <div class="soluk kucuk"><%= s.sanatci %> · <%= s.album %></div>
+          </div>
+          <% if (!s.onayli) { %><span class="rozet sari-rozet">Onay bekliyor</span><% } %>
+        </div>
+      <% }) %>
+      <% if (yuklemeler.length === 0) { %><p class="soluk">Henüz yüklediği şarkı yok.</p><% } %>
+    </div>
+
+    <!-- Takip ettiği ve onu takip eden üyeler -->
+    <% [['Takip ettikleri', takipEdilenler], ['Takipçileri', takipciler]].forEach(([baslik, kisiler]) => { %>
+      <h2 class="bolum-baslik"><%= baslik %></h2>
+      <div class="d-flex flex-wrap gap-2">
+        <% kisiler.forEach(k => { %>
+          <a href="/uye/<%= k.kullaniciAdi %>" class="uye-cip"><span class="avatar kucuk-avatar"><%= k.kullaniciAdi[0].toUpperCase() %></span><%= k.kullaniciAdi %></a>
+        <% }) %>
+        <% if (kisiler.length === 0) { %><p class="soluk">Henüz kimse yok.</p><% } %>
+      </div>
+    <% }) %>
+  </div>
+</div>
+<%- include('partials/alt') %>

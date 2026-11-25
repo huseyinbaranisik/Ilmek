@@ -1,0 +1,18 @@
+<%- include('partials/ust', { sayfaBaslik: 'Üyeler' }) %>
+<h2 class="bolum-baslik">Üyeler</h2>
+<p class="soluk kucuk">Diğer üyelerin profillerine gir, listelerine, beğendiği şarkılara ve incelemelerine göz at.</p>
+
+<!-- Spotify'daki sanatçı kartları gibi: yuvarlak profil resmi + ad -->
+<div class="izgara">
+  <% uyeler.forEach(u => { %>
+    <a href="/uye/<%= u.kullaniciAdi %>" class="kart uye-kart">
+      <div class="avatar uye-avatar"><%= u.kullaniciAdi[0].toUpperCase() %>
+        <% if (u.dinliyor) { %><span class="dinliyor-rozet" title="Şu an dinliyor"><i class="bi bi-music-note-beamed"></i></span><% } %>
+      </div>
+      <span class="kart-baslik text-truncate"><%= u.kullaniciAdi %></span>
+      <div class="soluk kucuk"><%= u.sayilar.takipci %> takipçi · <%= u.sayilar.liste %> liste</div>
+      <div class="soluk kucuk"><%= u.sayilar.inceleme %> inceleme · <%= u.sayilar.begeni %> beğeni</div>
+    </a>
+  <% }) %>
+</div>
+<%- include('partials/alt') %>

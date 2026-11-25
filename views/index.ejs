@@ -1,0 +1,65 @@
+<%- include('partials/ust') %>
+
+<% if (haftaninAlbumu) { %>
+<section class="vitrin" style="--renk: <%= haftaninAlbumu.renk %>">
+  <div class="flex-grow-1">
+    <span class="etiket">Haftanın albümü</span>
+    <h1><%= haftaninAlbumu.album %></h1>
+    <p><%= haftaninAlbumu.sanatci %> · <%= haftaninAlbumu.sarkiSayisi %> şarkı</p>
+    <a href="/album/<%= haftaninAlbumu.albumSlug %>" class="btn-turuncu buyuk"><i class="bi bi-play-fill"></i> Dinle</a>
+  </div>
+  <img src="<%= haftaninAlbumu.kapak %>" alt="<%= haftaninAlbumu.album %> kapağı" class="vitrin-kapak">
+</section>
+<% } %>
+
+<% if (sonDuyuru) { %>
+  <a href="/duyuru/<%= sonDuyuru.slug %>" class="duyuru-serit"><i class="bi bi-megaphone"></i> <%= sonDuyuru.baslik %> <i class="bi bi-arrow-right ms-auto"></i></a>
+<% } %>
+
+<% if (!kullanici) { %>
+  <!-- Misafirlere üye olmanın ne kazandıracağını anlatan şerit -->
+  <div class="kutu misafir-serit">
+    <i class="bi bi-stars turuncu fs-4"></i>
+    <div class="flex-grow-1">
+      <div class="fw-medium">Dinlediklerini puanla, listeler oluştur, kendi şarkını yükle</div>
+      <div class="soluk kucuk">Misafir olarak her şeyi dinleyebilirsin. Puan vermek ve inceleme yazmak için üye ol.</div>
+    </div>
+    <a href="/auth/kayit" class="btn-turuncu">Üye ol</a>
+  </div>
+<% } %>
+
+<h2 class="bolum-baslik">En çok dinlenenler</h2>
+<div class="izgara">
+  <% enCokDinlenen.forEach(s => { %>
+    <%- include('partials/kart', { s }) %>
+  <% }) %>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-7">
+    <h2 class="bolum-baslik">Son incelemeler</h2>
+    <div class="d-grid gap-2">
+      <% sonIncelemeler.forEach(i => { %><%- include('partials/inceleme', { i, sarkiGoster: true }) %><% }) %>
+      <% if (sonIncelemeler.length === 0) { %><p class="soluk">Henüz inceleme yok.</p><% } %>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <h2 class="bolum-baslik">En yüksek puanlılar</h2>
+    <div class="liste">
+      <% enYuksekPuan.forEach((s, i) => { %>
+        <a href="/sarki/<%= s.slug %>" class="satir">
+          <span class="sira soluk"><%= i + 1 %></span>
+          <img src="<%= s.kapak %>" alt="" class="mini-kapak">
+          <div class="flex-grow-1 text-truncate">
+            <div class="satir-baslik"><%= s.baslik %></div>
+            <div class="soluk kucuk"><%= s.sanatci %></div>
+          </div>
+          <span class="yildiz-kucuk">★ <%= s.ortPuan.toFixed(1) %></span>
+          <span class="soluk kucuk"><%= s.incelemeSayisi %> inceleme</span>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/alt') %>

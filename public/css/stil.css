@@ -1,0 +1,509 @@
+/* ============================================================
+   PLAK - Stil dosyası
+   Düzen: derste verilen "Simple Sidebar" şablonu (#wrapper, #sidebar-wrapper,
+   #page-content-wrapper) Spotify'ın uygulama görünümüne uyarlandı:
+     solda menü + listeler, sağda kayan içerik, en altta oynatıcı.
+   ============================================================ */
+:root {
+  --zemin: #000;          /* panellerin arasındaki boşluk */
+  --panel: #121212;       /* menü ve içerik panelleri */
+  --kutu: #1f1f1f;        /* kartlar, formlar */
+  --kutu-2: #2a2a2a;      /* üzerine gelince, giriş kutuları */
+  --cizgi: #2a2a2a;
+  --yazi: #fff;
+  --soluk: #a7a7a7;
+  --turuncu: #ff6b3d;     /* sitenin vurgu rengi */
+  --turuncu-acik: #ff9a76;
+  --yesil: #3ddc97;       /* yıldızlar ve "şu an dinliyor" */
+  --sari: #ffc864;
+  --ust-boy: 64px;        /* üst çubuğun yüksekliği */
+  --menu-genislik: 300px;
+}
+
+* { scrollbar-width: thin; scrollbar-color: #4d4d4d transparent; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--zemin);
+  color: var(--yazi);
+  font-family: "Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  /* Uygulama görünümü: üstte menü + içerik, altta oynatıcı */
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 8px;
+  overflow: hidden;
+}
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--yazi); }
+h1, h2, h3 { letter-spacing: -.02em; }
+
+/* Yardımcı sınıflar */
+.soluk { color: var(--soluk); }
+.kucuk { font-size: 13px; }
+.turuncu { color: var(--turuncu); }
+.yesil { color: var(--yesil); }
+.sari { color: var(--sari); }
+.min-w-0 { min-width: 0; }
+.bolum-baslik { font-size: 24px; font-weight: 700; margin: 32px 0 16px; }
+
+/* ============================================================
+   DÜZEN (Simple Sidebar)
+   ============================================================ */
+#wrapper {
+  display: grid;
+  grid-template-columns: var(--menu-genislik) minmax(0, 1fr);
+  gap: 8px;
+  min-height: 0;
+}
+.panel { background: var(--panel); border-radius: 8px; }
+
+/* ---------- Sol menü ---------- */
+#sidebar-wrapper { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.menu-panel { padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; letter-spacing: -.04em; padding: 4px 12px 14px; }
+.logo-plak { width: 30px; height: 30px; flex: none; border-radius: 50%;
+  background: radial-gradient(circle, var(--turuncu) 0 22%, #000 23% 27%, transparent 28%),
+              repeating-radial-gradient(circle, #2a2a2a 0 1px, #111 2px 3px); }
+.menu-link { display: flex; align-items: center; gap: 16px; padding: 9px 12px; border-radius: 6px;
+  color: var(--soluk); font-weight: 700; transition: color .2s; white-space: nowrap; }
+.menu-link i { font-size: 22px; line-height: 1; width: 24px; text-align: center; }
+.menu-link:hover, .menu-link.aktif { color: var(--yazi); }
+
+.kutuphane-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px; }
+.kutuphane-baslik { display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 12px 4px; }
+.kutuphane-liste { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.kutuphane-oge { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 6px; min-width: 0; }
+.kutuphane-oge:hover { background: #1a1a1a; }
+.kutuphane-oge.aktif { background: var(--kutu-2); }
+.kutuphane-ikon { width: 48px; height: 48px; flex: none; border-radius: 4px; display: grid; place-items: center;
+  font-size: 20px; background: linear-gradient(135deg, var(--turuncu), #7a2bd6); }
+.davet { background: var(--kutu); border-radius: 8px; padding: 16px 18px; margin: 4px 0; }
+.davet p { color: var(--yazi); font-size: 14px; margin: 6px 0 16px; }
+.sayaclar { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 12px 8px 4px; font-size: 12px; color: var(--soluk); }
+.sayaclar a:hover { text-decoration: underline; }
+.nokta { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--yesil);
+  box-shadow: 0 0 0 0 var(--yesil); animation: nabiz 2s infinite; vertical-align: 1px; }
+@keyframes nabiz { 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+@media (max-width: 1200px) { :root { --menu-genislik: 240px; } }
+
+/* Masaüstünde menü küçültülünce sadece ikonlar kalır */
+@media (min-width: 769px) {
+  body.sb-sidenav-toggled { --menu-genislik: 72px; }
+  body.sb-sidenav-toggled .gizlenir { display: none !important; }
+  body.sb-sidenav-toggled .menu-link, body.sb-sidenav-toggled .logo { justify-content: center; padding-left: 0; padding-right: 0; }
+  body.sb-sidenav-toggled .kutuphane-baslik { justify-content: center; padding: 8px 0 12px; }
+  body.sb-sidenav-toggled .kutuphane-oge { justify-content: center; }
+}
+
+/* ---------- Sağ: içerik paneli ---------- */
+#page-content-wrapper { position: relative; overflow-y: auto; overflow-x: hidden; min-width: 0; }
+.ust-bar {
+  position: sticky; top: 0; z-index: 20;
+  height: var(--ust-boy);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 24px;
+  border-radius: 8px 8px 0 0;
+  transition: background-color .3s;
+}
+/* Sayfa aşağı kayınca üst çubuk renklenir (alt.ejs'deki küçük script "dolu" sınıfını ekler) */
+.ust-bar.dolu { background: color-mix(in srgb, var(--ust-renk, #242424) 45%, #121212); }
+.icerik { padding: 0 24px 32px; }
+
+.ikon-yuvarlak { width: 32px; height: 32px; border-radius: 50%; border: 0; flex: none;
+  display: grid; place-items: center; background: rgba(0, 0, 0, .55); color: var(--yazi); font-size: 15px;
+  transition: transform .15s, background .2s; }
+.ikon-yuvarlak:hover { background: var(--kutu-2); transform: scale(1.06); color: var(--yazi); }
+
+.arama { position: relative; flex: 0 1 360px; margin-left: 8px; }
+.arama i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--soluk); }
+.arama input { width: 100%; height: 44px; border-radius: 22px; border: 2px solid transparent; outline: none;
+  background: var(--kutu); color: var(--yazi); padding: 0 16px 0 42px; transition: border-color .2s, background .2s; }
+.arama input:hover { background: var(--kutu-2); }
+.arama input:focus { border-color: var(--yazi); }
+.arama input::placeholder { color: var(--soluk); }
+
+.avatar-btn { width: 32px; height: 32px; border-radius: 50%; border: 4px solid #1f1f1f; box-sizing: content-box;
+  background: var(--turuncu); color: #000; font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+.avatar-btn:hover { transform: scale(1.05); }
+.menu-acilir { --bs-dropdown-bg: #282828; --bs-dropdown-link-hover-bg: #3e3e3e; border: 0; border-radius: 6px;
+  padding: 4px; box-shadow: 0 16px 24px rgba(0, 0, 0, .5); min-width: 200px; }
+.menu-acilir .dropdown-item { border-radius: 4px; padding: 10px 12px; font-size: 14px; display: flex; gap: 10px; }
+
+/* ---------- Butonlar ---------- */
+.btn-beyaz, .btn-turuncu, .btn-cizgi, .btn-yazi {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 999px; font-weight: 700; font-size: 14px; border: 0; white-space: nowrap;
+  transition: transform .15s, background .2s, color .2s;
+}
+.btn-beyaz { background: var(--yazi); color: #000; padding: 8px 18px; }
+.btn-beyaz:hover { color: #000; transform: scale(1.04); }
+.btn-beyaz.buyuk, .btn-turuncu.buyuk { padding: 12px 30px; font-size: 15px; }
+.btn-turuncu { background: var(--turuncu); color: #000; padding: 8px 18px; }
+.btn-turuncu:hover { background: var(--turuncu-acik); color: #000; transform: scale(1.04); }
+.btn-cizgi { background: none; color: var(--yazi); padding: 6px 16px; box-shadow: inset 0 0 0 1px #7c7c7c; }
+.btn-cizgi:hover { box-shadow: inset 0 0 0 1px var(--yazi); transform: scale(1.04); color: var(--yazi); }
+.btn-yazi { background: none; color: var(--soluk); padding: 8px 12px; }
+.btn-yazi:hover { color: var(--yazi); transform: scale(1.04); }
+.btn-hayalet { background: none; border: 0; color: var(--yazi); font-weight: 700; }
+.btn-sil { background: rgba(255, 80, 80, .12); color: #ff8f8f; border: 0; border-radius: 999px; padding: 5px 14px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.btn-sil:hover { background: rgba(255, 80, 80, .22); }
+.ikon-btn { background: none; border: 0; color: var(--soluk); font-size: 22px; line-height: 1; padding: 0; transition: color .15s, transform .15s; }
+.ikon-btn:hover { color: var(--yazi); transform: scale(1.06); }
+.cal-btn { width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--yazi); color: #000;
+  font-size: 22px; display: inline-flex; align-items: center; justify-content: center; flex: none; transition: transform .15s; }
+.cal-btn:hover { transform: scale(1.06); }
+.cal-btn.buyuk-cal { width: 56px; height: 56px; font-size: 30px; background: var(--turuncu); }
+.cal-btn.buyuk-cal:hover { background: var(--turuncu-acik); }
+
+/* ---------- Kutular / formlar ---------- */
+.kutu { background: var(--kutu); border-radius: 8px; padding: 16px 18px; transition: background .2s; }
+a.kutu:hover { background: var(--kutu-2); }
+.giris-kutu { background: var(--kutu-2); border: 1px solid #3e3e3e; border-radius: 6px; padding: 10px 12px; color: var(--yazi); outline: none; transition: border-color .2s; }
+.giris-kutu:hover { border-color: #7c7c7c; }
+.giris-kutu:focus { border-color: var(--yazi); }
+.giris-kutu::placeholder { color: var(--soluk); }
+select.giris-kutu option { background: var(--kutu-2); }
+.giris-kutu::file-selector-button { background: var(--yazi); color: #000; border: 0; border-radius: 999px; padding: 4px 14px; margin-right: 10px; font-weight: 700; cursor: pointer; }
+.giris-kutu.flex-grow-1 { min-width: 0; }   /* dar alanda yanındaki düğmeyi dışarı itmesin */
+.renk-sec { height: 44px; padding: 4px; }
+.form-kutu { max-width: 420px; margin: 32px auto; padding: 32px; }
+.form-kutu.genis { max-width: 820px; }
+.bilgi { border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.bilgi.basari { background: rgba(61, 220, 151, .12); color: #8ff0c4; }
+.bilgi.hata { background: rgba(255, 80, 80, .12); color: #ffb3b3; }
+/* Sayfanın en üstündeki mesaj, Spotify'daki gibi altta beliren bir bildirim olur */
+.icerik > .bilgi { position: fixed; z-index: 60; left: 50%; bottom: 110px; transform: translateX(-50%);
+  background: #2e77d0; color: #fff; font-weight: 600; box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+  animation: bildirim 5s forwards; pointer-events: none; }
+.icerik > .bilgi.hata { background: #c93838; color: #fff; }
+@keyframes bildirim { 0% { opacity: 0; translate: 0 12px; } 6%, 85% { opacity: 1; translate: 0 0; } 100% { opacity: 0; visibility: hidden; } }
+.rozet { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
+.sari-rozet { background: rgba(255, 200, 100, .14); color: var(--sari); }
+.yesil-rozet { background: rgba(61, 220, 151, .14); color: var(--yesil); }
+details summary { cursor: pointer; font-weight: 600; }
+.table { --bs-table-bg: transparent; --bs-table-color: var(--yazi); --bs-table-border-color: var(--cizgi); --bs-table-hover-bg: rgba(255, 255, 255, .06); }
+
+/* ============================================================
+   RENKLİ ÜST BÖLÜMLER (vitrin, albüm, şarkı, profil)
+   --renk değişkeni sayfada albümün renginden gelir. Bölüm üst çubuğun
+   altına kadar uzanır (margin-top: eksi üst çubuk boyu) ve aşağı doğru
+   panelin rengine kaybolur.
+   ============================================================ */
+.vitrin, .album-ust, .calan-ekran, .profil-ust {
+  display: flex; align-items: flex-end; gap: 24px;
+  margin: calc(var(--ust-boy) * -1) -24px 8px;
+  padding: calc(var(--ust-boy) + 24px) 24px 24px;
+  background: linear-gradient(color-mix(in srgb, var(--renk, #535353) 80%, #000), color-mix(in srgb, var(--renk, #535353) 30%, #121212));
+  border-radius: 8px 8px 0 0;
+}
+.album-ust h1, .calan-ekran h1, .vitrin h1 { font-weight: 900; letter-spacing: -.04em; line-height: 1; margin: 8px 0 12px;
+  font-size: clamp(32px, 5vw, 72px); }
+.vitrin p, .album-ust p, .calan-ekran p { color: rgba(255, 255, 255, .85); }
+.album-ust img, .vitrin-kapak { width: 200px; height: 200px; border-radius: 6px; object-fit: cover; flex: none;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, .5); }
+.album-ust > div > .kucuk, .etiket { font-size: 13px; font-weight: 600; }
+.vitrin { align-items: center; padding-bottom: 32px; }
+.vitrin .etiket { background: rgba(0, 0, 0, .3); padding: 5px 12px; border-radius: 999px; }
+.calan-ekran { align-items: center; gap: 48px; padding-bottom: 36px; }
+.calan-ekran a { text-decoration: underline; }
+.profil-ust { --renk: var(--turuncu); align-items: center; flex-wrap: wrap; }
+.profil-ust h1 { font-size: clamp(32px, 5vw, 64px) !important; font-weight: 900; letter-spacing: -.04em; }
+
+.duyuru-serit { display: flex; align-items: center; gap: 12px; background: var(--kutu); border-radius: 8px;
+  padding: 12px 16px; margin: 16px 0; font-size: 14px; font-weight: 600; transition: background .2s; }
+.duyuru-serit i:first-child { color: var(--sari); font-size: 18px; }
+.duyuru-serit:hover { background: var(--kutu-2); }
+.duyuru-kutu { display: flex; gap: 14px; align-items: center; }
+.misafir-serit { display: flex; align-items: center; gap: 16px; margin: 16px 0 4px;
+  background: linear-gradient(90deg, #af2896, #509bf5); }
+.misafir-serit .turuncu { color: #fff !important; }
+.misafir-serit .soluk { color: rgba(255, 255, 255, .85); }
+.misafir-serit .btn-turuncu { background: #fff; }
+
+/* ============================================================
+   KARTLAR (Spotify'daki gibi: üzerine gelince zemin açılır, çal düğmesi kayarak gelir)
+   ============================================================ */
+.izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin: 0 -12px; }
+.kart { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 12px; border-radius: 8px; transition: background .25s; }
+.kart:hover { background: var(--kutu); }
+.kart-kapak { position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden; background: var(--kutu-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .5); margin-bottom: 8px; }
+.kart-kapak img { width: 100%; height: 100%; object-fit: cover; }
+.kart-baslik { font-weight: 600; }
+.kart-baslik:hover { text-decoration: underline; }
+.kart-cal { position: absolute; right: 8px; bottom: 8px; width: 48px; height: 48px; border-radius: 50%; border: 0;
+  background: var(--turuncu); color: #000; font-size: 26px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 8px rgba(0, 0, 0, .3); opacity: 0; transform: translateY(8px); transition: opacity .3s, transform .3s; }
+.kart-cal:hover { transform: scale(1.06) !important; background: var(--turuncu-acik); }
+.kart:hover .kart-cal, .kart-cal.caliyor { opacity: 1; transform: none; }
+
+/* Canlı dinleyici sayısı */
+.canli { color: var(--soluk); white-space: nowrap; }
+.canli.var { color: var(--yesil); }
+.canli-cip { display: inline-block; background: rgba(0, 0, 0, .3); padding: 6px 14px; border-radius: 999px; font-size: 14px; }
+.canli-cip, .canli-cip b { color: var(--yesil); }
+
+/* ---------- Şarkı listesi (tablo gibi satırlar) ---------- */
+.liste { display: flex; flex-direction: column; }
+.satir { display: flex; align-items: center; gap: 16px; padding: 8px 16px; border-radius: 6px; transition: background .15s; }
+.satir:hover, .satir.caliyor { background: rgba(255, 255, 255, .08); }
+.satir.caliyor .satir-baslik, .satir.caliyor .sira { color: var(--turuncu); }
+.sira { width: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.satir-baslik { font-weight: 500; }
+a.satir-baslik:hover { text-decoration: underline; }
+.satir-cal { opacity: 0; }
+.satir:hover .satir-cal, .satir.caliyor .satir-cal { opacity: 1; }
+.mini-kapak { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
+a.satir { color: inherit; }
+
+/* ---------- Beğen (kalp) ---------- */
+.kalp { font-size: 17px; }
+.kalp.begenildi { color: var(--turuncu); }
+.kalp:active { transform: scale(.85); }
+.buyuk-kalp { font-size: 30px; }
+.kutuphane-ikon.kalp-ikon { background: linear-gradient(135deg, #4b2bd6, #c4efd9); }
+.kalp-kapak { width: 200px; height: 200px; flex: none; border-radius: 6px; display: grid; place-items: center; font-size: 72px;
+  background: linear-gradient(135deg, #4b2bd6, #8e8ee5 60%, #c4efd9); box-shadow: 0 8px 40px rgba(0, 0, 0, .5); }
+
+/* ---------- Üyeler ve profil ---------- */
+.uye-kart { align-items: flex-start; }
+.uye-avatar { width: 100%; height: auto; aspect-ratio: 1; font-size: 56px; margin-bottom: 8px; position: relative; }
+.dinliyor-rozet { position: absolute; right: 6%; bottom: 6%; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--yesil); color: #000; font-size: 16px; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0, 0, 0, .5); }
+.profil-ozet { font-size: 14px; font-weight: 500; }
+.simdi-dinliyor { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, .35); padding: 6px 14px;
+  border-radius: 999px; font-size: 13px; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.simdi-dinliyor b { color: var(--yesil); }
+/* Çalıyor animasyonu: 3 çubuk inip kalkar */
+.esitleyici { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; flex: none; }
+.esitleyici i { width: 3px; background: var(--yesil); animation: esitle .9s ease-in-out infinite alternate; }
+.esitleyici i:nth-child(2) { animation-delay: -.3s; }
+.esitleyici i:nth-child(3) { animation-delay: -.6s; }
+@keyframes esitle { from { height: 3px; } to { height: 12px; } }
+.uye-cip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px 4px 4px; border-radius: 999px; background: var(--kutu); font-weight: 600; font-size: 14px; }
+.uye-cip:hover { background: var(--kutu-2); }
+
+/* ============================================================
+   DÖNEN PLAK
+   ============================================================ */
+.plak-alan { position: relative; flex: none; }
+/* Plak: siyah daire + üzerinde ince oluk halkaları (repeating-radial-gradient) */
+.plak-buyuk, .plak-kucuk {
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, #111 0 2px, #1c1c1c 3px 4px);
+  display: flex; align-items: center; justify-content: center;
+  animation: don 4s linear infinite;
+  animation-play-state: paused;     /* varsayılan: duruyor */
+}
+.plak-buyuk { width: 260px; height: 260px; box-shadow: 0 10px 40px rgba(0, 0, 0, .6); }
+.plak-buyuk img { width: 42%; height: 42%; border-radius: 50%; object-fit: cover; }
+.plak-kucuk { width: 56px; height: 56px; flex: none; }
+.plak-kucuk img { width: 44%; height: 44%; border-radius: 50%; object-fit: cover; }
+.doner { animation-play-state: running; }   /* çalarken dönsün */
+@keyframes don { to { transform: rotate(360deg); } }
+
+/* Pikap iğnesi: çalınca plağın üstüne iner */
+.igne { position: absolute; top: -14px; right: -10px; width: 8px; height: 140px; background: #d3d1c7; border-radius: 4px; transform-origin: top center; transform: rotate(4deg); transition: transform .6s; }
+.igne::after { content: ""; position: absolute; bottom: -8px; left: -4px; width: 16px; height: 24px; background: #888780; border-radius: 3px; }
+.igne.inik { transform: rotate(26deg); }
+
+/* ============================================================
+   ALTTAKİ OYNATICI (3 sütun: şarkı bilgisi | kontroller | ses)
+   ============================================================ */
+.oynatici { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); align-items: center;
+  gap: 16px; height: 72px; padding: 0 8px; background: var(--zemin); }
+.o-bilgi { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.o-sarki { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.o-sarki:hover #o-baslik { text-decoration: underline; }
+/* Karıştır / tekrarla açıkken turuncu olur, altında küçük bir nokta çıkar (Spotify'daki gibi) */
+.mod-btn { font-size: 18px; position: relative; }
+.mod-btn.acik { color: var(--turuncu); }
+.mod-btn.acik::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--turuncu); }
+.o-orta { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 720px; width: 100%; justify-self: center; }
+.o-kontrol { display: flex; align-items: center; gap: 20px; }
+.o-kontrol .cal-btn { width: 32px; height: 32px; font-size: 20px; }
+.o-ilerleme-satir { align-items: center; gap: 8px; width: 100%; font-size: 12px; color: var(--soluk); font-variant-numeric: tabular-nums; }
+.o-ses { align-items: center; gap: 8px; justify-content: flex-end; color: var(--soluk); }
+
+/* İlerleme ve ses çubukları: Spotify'daki gibi ince */
+#o-ilerleme, #o-ses { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; background: #4d4d4d; cursor: pointer; }
+#o-ilerleme { flex: 1; }
+#o-ses { width: 100px; }
+#o-ilerleme::-webkit-slider-thumb, #o-ses::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+#o-ilerleme::-moz-range-thumb, #o-ses::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #fff; }
+
+/* ============================================================
+   GALERİ, SİTE HARİTASI, ADMİN
+   ============================================================ */
+.buyut { display: none; }
+.buyut:target { display: flex; position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .88); flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.buyut img { max-width: 80vw; max-height: 75vh; border-radius: 8px; }
+.harita { padding-left: 18px; margin: 0; line-height: 1.9; }
+.harita ul { padding-left: 16px; font-size: 14px; }
+.admin-menu { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 24px; }
+.admin-menu a { padding: 6px 14px; border-radius: 999px; background: var(--kutu-2); font-size: 14px; font-weight: 500; transition: background .2s; }
+.admin-menu a:hover { background: #3e3e3e; }
+.admin-menu a.aktif { background: var(--yazi); color: #000; }
+.sayi-kutu span { display: block; }
+.sayi-kutu b { font-size: 28px; font-weight: 800; }
+
+/* ============================================================
+   LETTERBOXD KISMI: yıldızlar, incelemeler, listeler, profil
+   ============================================================ */
+.yildiz { color: var(--yesil); letter-spacing: 1px; }
+.yildiz-kucuk { color: var(--yesil); font-size: 12px; white-space: nowrap; }
+.ort-puan { font-size: 15px; }
+
+/* Puan seçici: radio butonları ters sırada dizili, seçilen ve solundakiler yanar */
+.yildiz-sec { display: inline-flex; flex-direction: row-reverse; gap: 2px; }
+.yildiz-sec input { display: none; }
+.yildiz-sec label { font-size: 30px; line-height: 1; color: #3e3e3e; cursor: pointer; transition: color .15s, transform .15s; }
+.yildiz-sec label:hover { transform: scale(1.15); }
+.yildiz-sec input:checked ~ label,
+.yildiz-sec label:hover, .yildiz-sec label:hover ~ label { color: var(--yesil); }
+
+.inceleme { display: flex; gap: 12px; align-items: flex-start; background: var(--kutu); border-radius: 8px; padding: 14px 16px; }
+.inceleme-kapak { width: 56px; height: 56px; border-radius: 4px; object-fit: cover; }
+.inceleme-yorum { color: var(--yazi); font-size: 14px; white-space: pre-line; }
+
+/* Liste kapakları: Letterboxd'daki gibi kapaklar üst üste biner */
+.kapak-yigin { display: flex; aspect-ratio: 2 / 1; align-items: center; }
+.kapak-yigin img { width: 50%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; box-shadow: 4px 0 10px rgba(0, 0, 0, .5); }
+.kapak-yigin img + img { margin-left: -33.33%; } /* 4 kapak tam genişliğe sığsın */
+.buyuk-yigin { width: 260px; flex-shrink: 0; }
+.kucuk-yigin { width: 80px; flex-shrink: 0; }
+.liste-izgara { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.album-ust .kapak-yigin img { width: 50%; height: auto; box-shadow: 4px 0 16px rgba(0, 0, 0, .5); }
+
+.avatar { width: 160px; height: 160px; border-radius: 50%; background: linear-gradient(135deg, var(--turuncu), #b3261e);
+  display: grid; place-items: center; font-size: 64px; font-weight: 800; color: #000; flex-shrink: 0; box-shadow: 0 8px 40px rgba(0, 0, 0, .5); }
+.kucuk-avatar { width: 36px; height: 36px; font-size: 15px; box-shadow: none; }
+.profil-sayi { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+.profil-sayi b { font-size: 24px; font-weight: 800; }
+.profil-sayi span { color: rgba(255, 255, 255, .8); font-size: 12px; }
+.bekleyen-ses { height: 32px; max-width: 220px; }
+
+/* ============================================================
+   KİTAPLIK: raftaki plak kılıfları
+   - Kılıflar üst üste dizili, öndekinin solunda arkadakinin renkli sırtı görünür.
+   - Üzerine gelince kılıf yükselir, plak kılıftan sola kayarak çıkar,
+     yandaki kılıflar yer açar. Hepsi transform + transition ile.
+   ============================================================ */
+.raf {
+  --boy: 180px;     /* kılıf boyutu */
+  --sirt: 48px;     /* üst üste dururken görünen kısım */
+  display: flex; align-items: flex-start;
+  padding: 36px 150px 90px 150px;
+  overflow-x: auto; overflow-y: hidden;
+}
+.kilif {
+  position: relative; flex: none;
+  width: var(--boy); height: var(--boy);
+  margin-left: calc(var(--sirt) - var(--boy));
+  cursor: pointer; outline: none;
+  isolation: isolate;   /* her kılıf kendi katmanında: üst üste binme sırası HTML sırası olsun */
+  transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+}
+.kilif:first-child { margin-left: 0; }
+
+.kilif-on { position: relative; z-index: 1; width: 100%; height: 100%; border-radius: 4px; overflow: hidden;
+  box-shadow: -8px 0 16px rgba(0, 0, 0, .55); transition: box-shadow .5s; }
+.kilif-on img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.kilif-sirt {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--sirt);
+  /* Sırt düz renk değil: arkasındaki kapağın kenarı çok bulanık ve biraz karartılmış görünür
+     (backdrop-filter, altındaki görüntüyü bulanıklaştırır). Böylece beyaz yazı her kapakta okunur. */
+  background: rgba(0, 0, 0, .28);
+  -webkit-backdrop-filter: blur(14px) brightness(.8);
+  backdrop-filter: blur(14px) brightness(.8);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+  color: #fff; font-size: 12px; font-weight: 600;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  display: flex; align-items: center; padding: 10px 0; overflow: hidden; white-space: nowrap;
+  border-right: 1px solid rgba(255, 255, 255, .15);
+  transition: opacity .4s;
+}
+
+/* Kılıfın içindeki plak: önce tamamen kılıfın arkasında saklı */
+.kilif-plak { position: absolute; z-index: 0; inset: 6px; transition: transform .7s cubic-bezier(.2, .8, .2, 1); }
+.kilif .plak-buyuk { width: 100%; height: 100%; box-shadow: 0 6px 20px rgba(0, 0, 0, .6); }
+
+.kilif-bilgi { position: absolute; top: calc(100% + 10px); left: 0; width: var(--boy);
+  opacity: 0; transform: translateY(-6px); transition: opacity .3s, transform .3s; }
+.kilif-bilgi a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+
+/* Üzerine gelince (ya da klavyeyle seçilince):
+   - kılıf öne/yukarı gelir
+   - plak kılıftan sola doğru kayarak çıkar (kılıf kalktıktan biraz sonra: transition-delay)
+   - sağdaki kılıflar sağa, soldakiler sola çekilip yer açar */
+.kilif:hover, .kilif:focus-visible { transform: translateY(-14px) scale(1.04); }
+.kilif:hover .kilif-plak, .kilif:focus-visible .kilif-plak { transform: translateX(-62%); transition-delay: .08s; }
+.kilif:hover ~ .kilif, .kilif:focus-visible ~ .kilif { transform: translateX(calc(var(--boy) - var(--sirt))); }
+.kilif:has(~ .kilif:hover), .kilif:has(~ .kilif:focus-visible) { transform: translateX(calc(var(--boy) * -.6)); }
+.kilif:hover .kilif-sirt, .kilif:focus-visible .kilif-sirt { opacity: 0; }
+.kilif:hover .kilif-bilgi, .kilif:focus-visible .kilif-bilgi { opacity: 1; transform: none; }
+.kilif:hover .kilif-on { box-shadow: -8px 0 16px rgba(0, 0, 0, .55), 0 18px 30px rgba(0, 0, 0, .5); }
+
+/* Plak dönerken (çalıyorken) kılıfın altında küçük bir işaret */
+.kilif:has(.doner) .kilif-bilgi a::before { content: "♪ "; color: var(--turuncu); }
+
+/* ============================================================
+   TELEFON / TABLET
+   Bootstrap'in col-lg sütunları ekran genişliğine bakar, ama içerik paneli sol menü
+   kadar daha dar. Bu yüzden 1200px'ten küçük ekranlarda iki sütunlu bölümler alt alta dizilir.
+   ============================================================ */
+@media (max-width: 1199px) {
+  .icerik .row > .col-lg-7, .icerik .row > .col-lg-5 { flex: 0 0 100%; max-width: 100%; }
+}
+/* Dokunmatik ekranlarda "üzerine gelme" yok: çal düğmeleri hep görünsün */
+@media (hover: none) {
+  .kart-cal, .satir-cal { opacity: 1; transform: none; }
+}
+@media (max-width: 768px) {
+  body { padding: 0; gap: 0; }
+  #wrapper { grid-template-columns: minmax(0, 1fr); }
+  .panel { border-radius: 0; }
+  /* Menü soldan kayarak açılır (Simple Sidebar'daki gibi) */
+  #sidebar-wrapper { position: fixed; z-index: 40; top: 0; bottom: 64px; left: 0; width: 280px;
+    transform: translateX(-100%); transition: transform .3s ease; background: var(--zemin); padding: 8px; }
+  body.sb-sidenav-toggled #sidebar-wrapper { transform: none; box-shadow: 0 0 40px rgba(0, 0, 0, .8); }
+  .ust-bar { padding: 0 12px; border-radius: 0; }
+  .icerik { padding: 0 12px 24px; }
+  .vitrin, .album-ust, .calan-ekran, .profil-ust { margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px;
+    flex-direction: column; align-items: flex-start; border-radius: 0; }
+  .plak-buyuk { width: 200px; height: 200px; }
+  .vitrin-kapak, .album-ust > img, .album-ust > .kalp-kapak, .album-ust > .kapak-yigin { order: -1; }
+  .avatar { width: 100px; height: 100px; font-size: 40px; }
+  .oynatici { grid-template-columns: minmax(0, 1fr) auto; height: 64px; }
+  .btn-beyaz.buyuk { padding: 8px 16px; font-size: 14px; }
+}
+@media (max-width: 576px) {
+  .raf { --boy: 140px; --sirt: 40px; padding: 30px 110px 80px 110px; }
+  body { font-size: 14px; }
+  .bolum-baslik { font-size: 20px; margin: 24px 0 12px; }
+  /* Kartlar telefonda 2 sütun */
+  .izgara { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 0 -8px; }
+  .kart { padding: 8px; }
+  .uye-avatar { font-size: 40px; }
+  .liste-izgara { grid-template-columns: minmax(0, 1fr); }
+  /* Üst çubuk: misafirde sadece "Giriş yap" kalsın, arama kutusu küçülsün */
+  .ust-bar .btn-yazi { display: none; }
+  .arama { margin-left: 0; }
+  .arama input { height: 40px; }
+  /* Oynatıcı: Spotify mobildeki gibi sadece şarkı + kalp + çal/ileri */
+  #o-karistir, #o-tekrar, #o-onceki { display: none; }
+  .o-kontrol { gap: 14px; }
+  .oynatici { gap: 8px; }
+  .satir { gap: 10px; padding: 8px 10px; }
+  .canli { display: none; }
+  .album-ust > img, .vitrin-kapak, .kalp-kapak { width: 140px; height: 140px; }
+  .buyuk-yigin { height: auto; width: 200px; }
+  .kalp-kapak { font-size: 48px; }
+  .form-kutu { padding: 20px; margin: 16px auto; }
+  .misafir-serit { flex-wrap: wrap; }
+  .duyuru-kutu { align-items: flex-start; }
+}

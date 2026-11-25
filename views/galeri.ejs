@@ -1,0 +1,19 @@
+<%- include('partials/ust', { sayfaBaslik: 'Galeri' }) %>
+<h2 class="bolum-baslik">Galeri</h2>
+<div class="izgara">
+  <% resimler.forEach(r => { %>
+    <a href="#resim-<%= r.id %>" class="kart">
+      <div class="kart-kapak"><img src="<%= r.resim %>" alt="<%= r.aciklama %>"></div>
+      <span class="soluk kucuk text-truncate"><%= r.aciklama %></span>
+    </a>
+  <% }) %>
+</div>
+
+<!-- Büyük görünüm: adres #resim-ID olunca CSS (:target) ile açılır, JavaScript gerekmez -->
+<% resimler.forEach(r => { %>
+  <a href="#" class="buyut" id="resim-<%= r.id %>">
+    <img src="<%= r.resim %>" alt="<%= r.aciklama %>">
+    <span><%= r.aciklama %></span>
+  </a>
+<% }) %>
+<%- include('partials/alt') %>

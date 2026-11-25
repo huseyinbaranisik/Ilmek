@@ -1,0 +1,12 @@
+<%- include('partials/ust', { sayfaBaslik: 'Albümler' }) %>
+<h2 class="bolum-baslik">Albümler</h2>
+<div class="izgara">
+  <% albumler.forEach(a => { %>
+    <a href="/album/<%= a.albumSlug %>" class="kart">
+      <div class="kart-kapak"><img src="<%= a.kapak %>" alt="<%= a.album %> kapağı"></div>
+      <span class="kart-baslik text-truncate"><%= a.album %></span>
+      <div class="soluk kucuk"><%= a.sanatci %> · <%= a.sarkiSayisi %> şarkı</div>
+    </a>
+  <% }) %>
+</div>
+<%- include('partials/alt') %>

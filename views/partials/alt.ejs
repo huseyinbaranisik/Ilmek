@@ -1,0 +1,66 @@
+    </main>
+  </div><!-- /#page-content-wrapper -->
+</div><!-- /#wrapper -->
+
+<!-- ===== ALTTAKİ OYNATICI: bütün sayfalarda aynı ===== -->
+<div class="oynatici">
+  <div class="o-bilgi">
+    <a id="o-link" href="#" class="o-sarki">
+      <div class="plak-kucuk" id="o-plak"><img id="o-kapak" src="/img/bos.svg" alt=""></div>
+      <div class="min-w-0">
+        <div id="o-baslik" class="text-truncate fw-semibold">Bir şarkı seç</div>
+        <div id="o-sanatci" class="soluk kucuk text-truncate">Gramofy</div>
+      </div>
+    </a>
+    <!-- Kalp: sadece üyelere. data-begen değeri çalan şarkının id'si olur (oynatici.js) -->
+    <% if (kullanici) { %><button id="o-begen" class="ikon-btn kalp" data-begen="" hidden aria-label="Beğen"><i class="bi bi-heart"></i></button><% } %>
+  </div>
+  <div class="o-orta">
+    <div class="o-kontrol">
+      <button id="o-karistir" class="ikon-btn mod-btn" title="Karıştır" aria-label="Karıştır"><i class="bi bi-shuffle"></i></button>
+      <button id="o-onceki" class="ikon-btn" aria-label="Önceki"><i class="bi bi-skip-start-fill"></i></button>
+      <button id="o-cal" class="cal-btn" aria-label="Çal / durdur"><i class="bi bi-play-fill"></i></button>
+      <button id="o-sonraki" class="ikon-btn" aria-label="Sonraki"><i class="bi bi-skip-end-fill"></i></button>
+      <button id="o-tekrar" class="ikon-btn mod-btn" title="Tekrarla" aria-label="Tekrarla"><i class="bi bi-repeat"></i></button>
+    </div>
+    <div class="o-ilerleme-satir d-none d-md-flex">
+      <span id="o-simdi">0:00</span>
+      <input id="o-ilerleme" type="range" min="0" max="100" value="0" step="0.1" aria-label="İlerleme">
+      <span id="o-toplam">0:00</span>
+    </div>
+  </div>
+  <div class="o-ses d-none d-lg-flex">
+    <i class="bi bi-volume-up"></i>
+    <input id="o-ses" type="range" min="0" max="1" step="0.05" value="0.8" aria-label="Ses">
+  </div>
+  <audio id="ses" preload="metadata"></audio>
+</div>
+
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- Giriş yapan üyenin beğendiği şarkıların id'leri: oynatici.js kalpleri buna göre doldurur -->
+<script>window.begenilenIdler = <%- JSON.stringify(typeof begenilenIdler !== 'undefined' ? begenilenIdler : []) %>;</script>
+<script src="/js/oynatici.js"></script>
+<script>
+  // Menüyü aç / kapat (derste verilen Simple Sidebar şablonunun scripts.js kodu)
+  // Masaüstünde menü sadece ikonlara küçülür, telefonda soldan açılır.
+  if (localStorage.getItem('sb|sidebar-toggle') === 'true' && innerWidth > 768) document.body.classList.add('sb-sidenav-toggled');
+  document.getElementById('sidebarToggle').addEventListener('click', e => {
+    e.preventDefault();
+    document.body.classList.toggle('sb-sidenav-toggled');
+    localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
+  });
+
+  // Sayfa aşağı kayınca üst çubuğa arka plan ver (Spotify'daki gibi).
+  // Renk, sayfanın üstündeki renkli bölümün --renk değerinden gelir.
+  const icerikPaneli = document.getElementById('page-content-wrapper');
+  const ustBar = document.querySelector('.ust-bar');
+  const renkli = document.querySelector('.icerik [style*="--renk"]');
+  if (renkli) ustBar.style.setProperty('--ust-renk', renkli.style.getPropertyValue('--renk'));
+  // Telefonda açık menü, içeriğe dokununca kapansın
+  icerikPaneli.addEventListener('click', e => {
+    if (innerWidth <= 768 && !e.target.closest('#sidebarToggle')) document.body.classList.remove('sb-sidenav-toggled');
+  });
+  icerikPaneli.addEventListener('scroll',() => ustBar.classList.toggle('dolu', icerikPaneli.scrollTop > 60));
+</script>
+</body>
+</html>

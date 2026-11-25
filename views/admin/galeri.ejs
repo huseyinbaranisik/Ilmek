@@ -1,0 +1,28 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Galeri · Admin' }) %>
+<%- include('../partials/admin-menu') %>
+
+<div class="kutu mb-4">
+  <div class="fw-medium mb-3"><i class="bi bi-plus-circle turuncu"></i> Galeriye resim ekle</div>
+  <form action="/admin/galeri?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data" class="row g-2">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="col-md-5"><input type="file" name="resim" accept=".jpg,.jpeg,.png,.webp,.gif" class="giris-kutu w-100" required></div>
+    <div class="col-md-5"><input name="aciklama" class="giris-kutu w-100" placeholder="Açıklama"></div>
+    <div class="col-md-2"><button class="btn-turuncu w-100">Yükle</button></div>
+  </form>
+</div>
+
+<div class="izgara">
+  <% resimler.forEach(r => { %>
+    <div class="kart">
+      <div class="kart-kapak"><img src="<%= r.resim %>" alt="<%= r.aciklama %>"></div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="soluk kucuk text-truncate flex-grow-1"><%= r.aciklama %></span>
+        <form action="/admin/galeri/<%= r.id %>/sil" method="post" onsubmit="return confirm('Bu resim silinsin mi?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn-sil">Sil</button>
+        </form>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/alt') %>

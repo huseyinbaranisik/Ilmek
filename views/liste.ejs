@@ -1,0 +1,40 @@
+<%- include('partials/ust', { sayfaBaslik: liste.baslik }) %>
+<% const benim = kullanici && kullanici.id === liste.kullaniciId; %>
+<section class="album-ust" style="--renk: <%= liste.sarkilar.length ? liste.sarkilar[0].renk : '#3C3489' %>">
+  <div class="kapak-yigin buyuk-yigin">
+    <% liste.sarkilar.slice(0, 4).forEach(s => { %><img src="<%= s.kapak %>" alt=""><% }) %>
+    <% if (liste.sarkilar.length === 0) { %><img src="/img/bos.svg" alt=""><% } %>
+  </div>
+  <div class="flex-grow-1">
+    <span class="kucuk">Liste</span>
+    <h1><%= liste.baslik %></h1>
+    <% if (liste.aciklama) { %><p class="mb-1"><%= liste.aciklama %></p><% } %>
+    <p class="mb-0 kucuk"><a href="/uye/<%= liste.kullanici.kullaniciAdi %>"><i class="bi bi-person-circle"></i> <%= liste.kullanici.kullaniciAdi %></a> · <%= liste.sarkilar.length %> şarkı</p>
+  </div>
+  <% if (benim) { %>
+    <form action="/hesap/liste/<%= liste.id %>/sil" method="post" onsubmit="return confirm('Liste silinsin mi?')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn-sil">Listeyi sil</button>
+    </form>
+  <% } %>
+</section>
+
+<% if (liste.sarkilar.length > 0) { %>
+  <button class="cal-btn buyuk-cal my-3" id="hepsini-cal" aria-label="Listeyi çal"><i class="bi bi-play-fill"></i></button>
+  <div class="liste">
+    <% liste.sarkilar.forEach((s, i) => { %>
+      <div class="d-flex align-items-center gap-2">
+        <div class="flex-grow-1"><%- include('partials/satir', { s, sira: i + 1 }) %></div>
+        <% if (benim) { %>
+          <form action="/hesap/liste/<%= liste.id %>/cikar/<%= s.id %>" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn-sil" title="Listeden çıkar"><i class="bi bi-x-lg"></i></button>
+          </form>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+<% } else { %>
+  <p class="soluk mt-3">Bu liste boş. Şarkı sayfalarındaki "Listeye ekle" kutusundan şarkı ekleyebilirsin.</p>
+<% } %>
+<%- include('partials/alt') %>

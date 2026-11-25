@@ -1,0 +1,16 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Kullanıcılar · Admin' }) %>
+<%- include('../partials/admin-menu') %>
+
+<div class="liste">
+  <% kullanicilar.forEach(k => { %>
+    <div class="satir">
+      <div class="avatar kucuk-avatar"><%= k.kullaniciAdi[0].toUpperCase() %></div>
+      <div class="flex-grow-1 text-truncate">
+        <a href="/uye/<%= k.kullaniciAdi %>" class="satir-baslik"><%= k.kullaniciAdi %></a>
+        <div class="soluk kucuk"><%= tarihYaz(k.createdAt) %> · <%= k.incelemeler.length %> inceleme</div>
+      </div>
+      <span class="rozet <%= k.rol.ad === 'Admin' ? 'sari-rozet' : 'yesil-rozet' %>"><%= k.rol.ad %></span>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/alt') %>

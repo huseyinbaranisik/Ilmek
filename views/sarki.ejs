@@ -1,0 +1,86 @@
+<%- include('partials/ust', { sayfaBaslik: sarki.baslik }) %>
+<section class="calan-ekran" style="--renk: <%= sarki.renk %>">
+  <!-- Dönen plak: ortasında albüm kapağı var. Bu şarkı çalınca "doner" sınıfı eklenir. -->
+  <div class="plak-alan">
+    <div class="plak-buyuk" data-plak="<%= sarki.id %>">
+      <img src="<%= sarki.kapak %>" alt="<%= sarki.album %> kapağı">
+    </div>
+    <div class="igne" data-igne="<%= sarki.id %>"></div>
+  </div>
+  <div class="flex-grow-1">
+    <h1><%= sarki.baslik %></h1>
+    <p class="mb-3"><%= sarki.sanatci %> · <a href="/album/<%= sarki.albumSlug %>"><%= sarki.album %></a></p>
+    <span class="canli-cip">● Şu an <b data-canli-sayi="<%= sarki.id %>"><%= dinleyici[sarki.id] || 0 %></b> kişi bu şarkıyı dinliyor</span>
+    <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
+      <button class="cal-btn buyuk-cal" data-sarki="<%= sarkiJson(sarki) %>" aria-label="Çal"><i class="bi bi-play-fill"></i></button>
+      <% if (kullanici) { %><button class="ikon-btn kalp buyuk-kalp" data-begen="<%= sarki.id %>" aria-label="Beğen"><i class="bi bi-heart"></i></button><% } %>
+      <span class="kucuk"><i class="bi bi-headphones"></i> <span title="<%= sarki.dinlenme.toLocaleString('tr-TR') %>"><%= kisaSayi(sarki.dinlenme) %></span> dinlenme</span>
+      <span class="kucuk"><i class="bi bi-heart"></i> <%= begeniSayisi %> beğeni</span>
+      <% if (sarki.incelemeSayisi > 0) { %>
+        <span class="ort-puan"><span class="yildiz"><%= yildiz(sarki.ortPuan) %></span> <b><%= sarki.ortPuan.toFixed(1) %></b> <span class="kucuk">(<%= sarki.incelemeSayisi %> inceleme)</span></span>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<div class="row g-4 mt-1">
+  <!-- SOL: incelemeler -->
+  <div class="col-lg-7">
+    <h2 class="bolum-baslik">İncelemeler</h2>
+
+    <% if (kullanici) { %>
+      <!-- Üye: puan ver / incelemeni güncelle -->
+      <form action="/hesap/inceleme/<%= sarki.id %>" method="post" class="kutu mb-3">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="fw-medium mb-1"><%= benimInceleme ? 'İncelemeni güncelle' : 'Bu şarkıyı puanla' %></div>
+        <!-- Yıldızlar: 5 tane radio butonu. CSS ile yıldız gibi görünüyor (sağdan sola dizili) -->
+        <div class="yildiz-sec">
+          <% for (let p = 5; p >= 1; p--) { %>
+            <input type="radio" name="puan" value="<%= p %>" id="puan-<%= p %>" <%= benimInceleme && benimInceleme.puan === p ? 'checked' : '' %> required>
+            <label for="puan-<%= p %>" title="<%= p %> yıldız">★</label>
+          <% } %>
+        </div>
+        <textarea name="yorum" class="giris-kutu w-100 mt-2" rows="2" maxlength="2000" placeholder="Ne düşündün? (isteğe bağlı)"><%= benimInceleme ? benimInceleme.yorum || '' : '' %></textarea>
+        <button class="btn-turuncu mt-2"><%= benimInceleme ? 'Güncelle' : 'Kaydet' %></button>
+      </form>
+    <% } else { %>
+      <div class="kutu mb-3 soluk"><a href="/auth/giris?url=/sarki/<%= sarki.slug %>" class="turuncu">Giriş yap</a> ya da <a href="/auth/kayit" class="turuncu">üye ol</a>, bu şarkıyı puanla.</div>
+    <% } %>
+
+    <div class="d-grid gap-2">
+      <% incelemeler.forEach(i => { %><%- include('partials/inceleme', { i, sarkiGoster: false }) %><% }) %>
+      <% if (incelemeler.length === 0) { %><p class="soluk">Henüz inceleme yok. İlk sen yaz!</p><% } %>
+    </div>
+  </div>
+
+  <!-- SAĞ: listeye ekle + albümdeki şarkılar -->
+  <div class="col-lg-5">
+    <% if (kullanici) { %>
+      <h2 class="bolum-baslik">Listeye ekle</h2>
+      <div class="kutu mb-3">
+        <% if (listelerim.length > 0) { %>
+          <form method="post" class="d-flex gap-2 mb-2" onsubmit="this.action = '/hesap/liste/' + this.liste.value + '/ekle'">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="sarkiId" value="<%= sarki.id %>">
+            <select name="liste" class="giris-kutu flex-grow-1">
+              <% listelerim.forEach(l => { %><option value="<%= l.id %>"><%= l.baslik %></option><% }) %>
+            </select>
+            <button class="btn-turuncu">Ekle</button>
+          </form>
+        <% } %>
+        <form action="/hesap/liste" method="post" class="d-flex gap-2">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="sarkiId" value="<%= sarki.id %>">
+          <input name="baslik" class="giris-kutu flex-grow-1" placeholder="Yeni liste adı" required maxlength="100">
+          <button class="btn-hayalet">Oluştur</button>
+        </form>
+      </div>
+    <% } %>
+
+    <h2 class="bolum-baslik"><%= sarki.album %> albümü</h2>
+    <div class="liste">
+      <% albumdekiler.forEach((s, i) => { %><%- include('partials/satir', { s, sira: i + 1 }) %><% }) %>
+    </div>
+  </div>
+</div>
+<%- include('partials/alt') %>

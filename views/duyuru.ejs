@@ -1,0 +1,8 @@
+<%- include('partials/ust', { sayfaBaslik: duyuru.baslik }) %>
+<a href="/duyurular" class="soluk kucuk"><i class="bi bi-arrow-left"></i> Duyurular</a>
+<article class="kutu mt-3">
+  <h1 class="fs-3"><%= duyuru.baslik %></h1>
+  <p class="soluk kucuk"><%= tarihYaz(duyuru.tarih) %></p>
+  <p class="mb-0" style="white-space: pre-line"><%= duyuru.icerik %></p>
+</article>
+<%- include('partials/alt') %>
