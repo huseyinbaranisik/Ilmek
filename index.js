@@ -42,7 +42,9 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/vendor/bootstrap", express.static(path.join(__dirname, "node_modules/bootstrap/dist")));
 app.use("/vendor/icons", express.static(path.join(__dirname, "node_modules/bootstrap-icons/font")));
-app.use("/vendor/inter", express.static(path.join(__dirname, "node_modules/@fontsource-variable/inter"))); // yazı tipi
+app.use("/vendor/inter", express.static(path.join(__dirname, "node_modules/@fontsource-variable/inter")));     // yazı tipleri
+app.use("/vendor/fraunces", express.static(path.join(__dirname, "node_modules/@fontsource-variable/fraunces")));
+app.use("/vendor/courier", express.static(path.join(__dirname, "node_modules/@fontsource/courier-prime")));
 
 // ---------- Middleware ----------
 app.use(bodyParser.urlencoded({ extended: true })); // form verileri

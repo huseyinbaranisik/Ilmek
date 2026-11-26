@@ -46,7 +46,7 @@ Tarayıcıda: http://localhost:3000
 | multer | Şarkı, kapak ve galeri resmi yükleme |
 | Bootstrap 5 + Bootstrap Icons | Izgara, açılır menü ve ikonlar |
 | Start Bootstrap "Simple Sidebar" | Sayfa iskeleti (sol menü + içerik). Spotify'ın uygulama görünümüne uyarlandı. |
-| Inter yazı tipi (`@fontsource-variable/inter`) | Yazı tipi, `node_modules`'tan sunuluyor |
+| Yazı tipleri (`@fontsource`) | Fraunces (başlıklar, eski plak kılıfı yazısı), Courier Prime (daktilo etiketleri), Inter (gövde). Hepsi `node_modules`'tan sunuluyor, internete gerek yok |
 
 ## Dosya yapısı (derste kullanılan MVC yapısı)
 
@@ -60,8 +60,8 @@ controller/           Her route'un yaptığı iş
 middleware/           config_Session, isAuth, isAdmin, csrf, locals (sayaçlar)
 helpers/              slugfield (slugify), yukle (multer), canli (online sayısı), puan (ortalama)
 views/                EJS sayfaları (partials/ ortak parçalar, admin/, hesap/)
-public/css, js        stil.css (Spotify tarzı koyu tema, dönen plak, kitaplık), oynatici.js (alttaki müzik çalar)
-public/img            Bütün resimler: kapaklar/ (örnek albüm kapakları), yuklenen/ (yüklenen kapak ve galeri resimleri), bos.svg, favicon.svg
+public/css, js        stil.css (eski plakçı teması, dönen plak, kitaplık), oynatici.js (alttaki müzik çalar)
+public/img            Bütün resimler: kapaklar/ (örnek albüm kapakları), yuklenen/ (yüklenen kapak ve galeri resimleri), bos.svg, gramofon.svg (logo ve sekme ikonu), doku.svg (kâğıt greni)
 public/muzik          Örnek müzikler, yuklenen/ (üyelerin yüklediği müzikler)
 test/test.mjs         Uçtan uca test (npm test)
 ```

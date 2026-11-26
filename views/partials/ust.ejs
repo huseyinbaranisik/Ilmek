@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="<%= csrfToken %>">
   <title><%= typeof sayfaBaslik !== 'undefined' ? sayfaBaslik + ' · Gramofy' : 'Gramofy · dinle, puanla, listele' %></title>
-  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/img/gramofon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/vendor/icons/bootstrap-icons.min.css">
   <link rel="stylesheet" href="/vendor/inter/index.css">
+  <link rel="stylesheet" href="/vendor/fraunces/index.css"><!-- başlıklar: eski plak kılıfı yazısı -->
+  <link rel="stylesheet" href="/vendor/courier/index.css"><!-- küçük etiketler: daktilo yazısı -->
   <link rel="stylesheet" href="/css/stil.css">
 </head>
 <body>
@@ -32,7 +34,7 @@
   <!-- ===== SOL MENÜ ===== -->
   <aside id="sidebar-wrapper">
     <nav class="panel menu-panel">
-      <a href="/" class="logo"><span class="logo-plak"></span><span class="gizlenir">Gramofy</span></a>
+      <a href="/" class="logo"><img src="/img/gramofon.svg" alt="" class="logo-gramofon"><span class="gizlenir">Gramofy</span></a>
       <% menu.forEach(([adres, ikon, yazi, aktif]) => { %>
         <a href="<%= adres %>" class="menu-link <%= aktif ? 'aktif' : '' %>" title="<%= yazi %>">
           <i class="bi bi-<%= ikon %><%= aktif ? '-fill' : '' %>"></i><span class="gizlenir"><%= yazi %></span>

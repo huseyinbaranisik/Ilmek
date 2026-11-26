@@ -360,7 +360,7 @@ Veritabanında değil, klasörde. Bütün resimler `public/img/` altında: örne
 ## Tasarım
 
 **Tasarımı nasıl yaptın, hazır şablon var mı?**
-Sayfa iskeleti derste verilen **Start Bootstrap "Simple Sidebar"** şablonundan geliyor. Aynı id'ler kullanılıyor: `#wrapper`, solda `#sidebar-wrapper`, sağda `#page-content-wrapper`, menüyü açıp kapatan `#sidebarToggle` düğmesi. Şablonun `scripts.js` kodu da `views/partials/alt.ejs`'in sonunda neredeyse aynen var: düğmeye basınca `body`'ye `sb-sidenav-toggled` sınıfı ekleniyor ve durum `localStorage`'a yazılıyor (`sb|sidebar-toggle`). Görünümü Spotify'ın web uygulamasına benzettim: siyah zemin üzerinde yuvarlak köşeli koyu paneller, solda menü ve "Listelerin", altta tam genişlikte oynatıcı.
+Sayfa iskeleti derste verilen **Start Bootstrap "Simple Sidebar"** şablonundan geliyor. Aynı id'ler kullanılıyor: `#wrapper`, solda `#sidebar-wrapper`, sağda `#page-content-wrapper`, menüyü açıp kapatan `#sidebarToggle` düğmesi. Şablonun `scripts.js` kodu da `views/partials/alt.ejs`'in sonunda neredeyse aynen var: düğmeye basınca `body`'ye `sb-sidenav-toggled` sınıfı ekleniyor ve durum `localStorage`'a yazılıyor (`sb|sidebar-toggle`). Yerleşim Spotify'ın web uygulamasındaki gibi (solda menü ve "Listelerin", ortada içerik, altta oynatıcı), ama sitenin konusu plaklar olduğu için görünüm eski bir plakçı dükkânına benzetildi (aşağıdaki "Eski plakçı teması" sorusu).
 
 **Hangi dosyalarda?**
 `views/partials/ust.ejs` (sol menü + üst çubuk), `views/partials/alt.ejs` (oynatıcı + menü ve kaydırma scripti), `public/css/stil.css` (bütün görünüm). Bootstrap'in ızgarası (`row`, `col-lg-7`), yardımcı sınıfları (`d-flex`, `gap-2`) ve açılır menüsü (`dropdown`) de kullanılıyor.
@@ -381,7 +381,18 @@ Albüm, şarkı, liste ve profil sayfalarının başındaki bölüm sayfanın `-
 `.kart-cal` normalde `opacity: 0` ve biraz aşağıda (`translateY(8px)`). `.kart:hover .kart-cal` olunca görünür olup yerine kayıyor. `transition` ile yumuşak geçiyor.
 
 **Yazı tipi?**
-Inter (`@fontsource-variable/inter` paketi). İnternetten değil, `index.js`'teki `/vendor/inter` statik yolundan, yani `node_modules`'tan geliyor, Bootstrap gibi.
+Üç yazı tipi var, hepsi `@fontsource` paketlerinden: **Fraunces** (başlıklar; eski plak kılıflarındaki gibi tırnaklı, italik), **Courier Prime** (tarih, sayı, etiket gibi küçük yazılar; daktilo), **Inter** (gövde yazısı, okunaklı olsun diye). İnternetten değil, `index.js`'teki `/vendor/fraunces`, `/vendor/courier`, `/vendor/inter` statik yollarından, yani `node_modules`'tan geliyor, Bootstrap gibi.
+
+**Eski plakçı teması nasıl yapıldı?**
+`stil.css`'in en altındaki "ESKİ PLAKÇI TEMASI" bölümünde. Resim kullanılmadan, çoğu CSS ile:
+- **Renkler**: `:root`'taki değişkenler değiştirildi: ceviz kahvesi zemin, krem (eski kâğıt) yazı, hardal ve yanık turuncu vurgu, bordo. Bütün site bu değişkenleri kullandığı için hepsi birden değişti.
+- **Kâğıt greni**: `body::after` bütün sayfanın üstüne `public/img/doku.svg` resmini çok soluk seriyor. `pointer-events: none` sayesinde tıklamalara engel olmuyor. Doku SVG'nin içindeki `feTurbulence` filtresiyle (rastgele gürültü) çiziliyor.
+- **Ahşap zemin ve raf**: `repeating-linear-gradient` ile ince çizgiler (ağaç damarı). Kitaplıktaki raf tahtası, `.raf`'ın arka planına kılıfların hemen altına çizilen kahverengi bir şerit. `background-attachment: local` raf yana kayınca tahtanın da kaymasını sağlıyor.
+- **Kılıf baskısı (raster)**: Renkli üst bölümlerdeki noktalar `radial-gradient(...) 0 0 / 7px 7px`, yani 7 pikselde bir tekrarlanan küçük nokta.
+- **Sararmış kapaklar**: `filter: sepia(.28)`. Üzerine gelince `filter: none` ile canlanıyor.
+- **Kartlardaki plak**: `.kart-kapak::before` kapağın arkasına CSS ile bir plak çiziyor (`repeating-radial-gradient` oluklar). Üzerine gelince `translateX(24%)` ile biraz dışarı kayıyor, kitaplıktaki gibi.
+- **Pirinç düğmeler**: `radial-gradient(circle at 35% 30%, açık, koyu)` ışık soldan üstten vuruyormuş gibi parlak bir düğme.
+- **Logo**: `public/img/gramofon.svg`, sekme ikonu da aynı dosya.
 
 ---
 
