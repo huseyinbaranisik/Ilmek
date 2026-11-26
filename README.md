@@ -71,7 +71,7 @@ test/test.mjs         Uçtan uca test (npm test)
 
 ## Resimler nerede?
 
-Resimler veritabanına konmaz. Dosyanın kendisi `public/img/` klasöründe durur, veritabanına sadece adresi (URL) yazılır, örneğin `urun.resim = "/img/urunler/bere.svg"`. Sayfa bu adresi `<img src="...">` içine koyar, Express de `express.static("public")` ile dosyayı o adresten sunar. Yüklenen resimler `public/img/yuklenen/` klasörüne kaydedilir ve veritabanına `/img/yuklenen/dosya-adi.jpg` adresi yazılır. Bu klasör `.gitignore` içinde, GitHub'a gönderilmez.
+Resimler veritabanına konmaz. Dosyanın kendisi `public/img/` klasöründe durur, veritabanına sadece adresi (URL) yazılır, örneğin `urun.resim = "/img/urunler/bere.jpg"`. Sayfa bu adresi `<img src="...">` içine koyar, Express de `express.static("public")` ile dosyayı o adresten sunar. Yüklenen resimler `public/img/yuklenen/` klasörüne kaydedilir ve veritabanına `/img/yuklenen/dosya-adi.jpg` adresi yazılır. Bu klasör `.gitignore` içinde, GitHub'a gönderilmez.
 
 ## Test
 
@@ -97,6 +97,22 @@ npm test       # başka bir terminalde
 | Slugify | `/urun/el-orgusu-bere`, `/kategori/mum-sabun`, `/duyuru/ilmek-acildi` |
 | Soru-Cevap | `/sss`: ziyaretçi soru gönderir, admin cevaplayınca yayınlanır |
 
-## Örnek resimler
+## Fotoğraf kaynakları
 
-`public/img/urunler/` klasöründeki ürün resimleri bu proje için çizilmiş basit SVG illüstrasyonlardır, telif hakkı yoktur.
+`public/img/urunler/` klasöründeki ürün fotoğrafları [Unsplash](https://unsplash.com)'ten indirildi ve [Unsplash Lisansı](https://unsplash.com/license) ile kullanılıyor (ücretsiz, ticari kullanım dahil, izin gerekmez). 800x800 piksel kare JPG olarak kırpıldı.
+
+| Dosya | Fotoğrafçı | Kaynak |
+|---|---|---|
+| `bere.jpg` | la crafter | https://unsplash.com/photos/y7NBxZuL-_w |
+| `atki.jpg` | Susan Wilkinson | https://unsplash.com/photos/red-and-black-striped-textile-9dDJk8lvUwg |
+| `ayicik.jpg` | Moon Moons | https://unsplash.com/photos/6bFNsRzla_c |
+| `kolye.jpg` | Andres Vera | https://unsplash.com/photos/CmmYT6Mm948 |
+| `kupe.jpg` | Barry A | https://unsplash.com/photos/06ky0cL_6X0 |
+| `kupa.jpg` | Annie Spratt | https://unsplash.com/photos/n42ogaQn32o |
+| `vazo.jpg` | Yana Hurska | https://unsplash.com/photos/zeGT9j4ltRA |
+| `kasik.jpg` | Andrew Valdivia | https://unsplash.com/photos/4lUI9_v0Sos |
+| `tahta.jpg` | Towfiqu barbhuiya | https://unsplash.com/photos/oMCQAjEtbGI |
+| `mum.jpg` | pmv chamara | https://unsplash.com/photos/KLU0scqbKQ0 |
+| `sabun.jpg` | Aurélia Dubois | https://unsplash.com/photos/6J0MUsmS4fQ |
+| `canta.jpg` | Brando Makes Branding | https://unsplash.com/photos/smTDI-z1rlY |
+| `yastik.jpg` | la crafter | https://unsplash.com/photos/white-and-brown-knit-textile-0-i_R_vSpOI |

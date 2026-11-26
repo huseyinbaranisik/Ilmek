@@ -120,14 +120,17 @@ GET ile silme yapılırsa bir link ya da resim etiketi bile silmeyi tetikleyebil
 JavaScript kullanmadan, CSS `:target` seçicisiyle. Resim linki `#resim-3` adresine gidiyor, CSS'teki `.buyut:target` kuralı o elemanı tam ekran gösteriyor.
 
 **Resimleri nerede tutuyorsun?**
-Veritabanında değil, klasörde. Örnek ürün resimleri `public/img/urunler/`, yüklenen resimler `public/img/yuklenen/`. Veritabanına sadece adres (URL) yazılıyor: `urun.resim = "/img/urunler/bere.svg"`. EJS bunu `<img src="<%= u.resim %>">` içine koyuyor, `express.static("public")` dosyayı o adresten sunuyor.
+Veritabanında değil, klasörde. Örnek ürün resimleri `public/img/urunler/`, yüklenen resimler `public/img/yuklenen/`. Veritabanına sadece adres (URL) yazılıyor: `urun.resim = "/img/urunler/bere.jpg"`. EJS bunu `<img src="<%= u.resim %>">` içine koyuyor, `express.static("public")` dosyayı o adresten sunuyor.
+
+**Ürün fotoğrafları nereden geldi, telifli mi?**
+Unsplash'ten indirildi (`public/img/urunler/*.jpg`). Unsplash Lisansı fotoğrafların ücretsiz indirilmesine ve ticari olanlar dahil her projede kullanılmasına izin veriyor, izin almak gerekmiyor. Yine de fotoğrafçıların adlarını ve fotoğrafların bağlantılarını README'ye yazdık. Fotoğraflar 800x800 piksel, kare kırpılmış JPG; tanesi 100 KB civarında, sayfa hızlı açılsın diye büyük hallerini indirmedik.
 
 **Dosya yükleme nasıl ve güvenli mi?**
 `multer` paketiyle (`helpers/yukle.js`):
 - Sadece resim uzantıları kabul ediliyor: jpg, png, webp, gif.
 - En fazla 5 MB.
 - Dosya adı `zaman-rastgeleSayı.uzantı` olarak değiştiriliyor, çakışma olmuyor.
-- Kullanıcıdan SVG kabul edilmiyor, çünkü SVG içine JavaScript yazılabilir. (Örnek resimler SVG ama onları biz çizdik.)
+- SVG kabul edilmiyor, çünkü SVG içine JavaScript yazılabilir.
 
 **Form neden `enctype="multipart/form-data"`?**
 Normal formlar sadece metin gönderir. Dosya göndermek için bu biçim gerekiyor, multer da bu biçimi okuyor.

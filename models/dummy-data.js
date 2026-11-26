@@ -47,18 +47,18 @@ async function populate() {
   // Resimler public/img/urunler/ klasöründe, veritabanına sadece adresleri yazılır
   const urunler = {};
   const liste = [
-    ["El Örgüsü Bere", "Örgü", ayse, 350, 5, "bere.svg", "Yüzde yüz yün, içi astarlı. Kış için sıcacık. Renk seçeneği için sipariş notuna yazabilirsiniz."],
-    ["Yün Atkı", "Örgü", ayse, 480, 3, "atki.svg", "180 cm uzunluğunda, saç örgüsü desenli, püsküllü atkı."],
-    ["Amigurumi Ayıcık", "Örgü", ayse, 290, 8, "ayicik.svg", "Pamuk iplikten, 20 cm boyunda. Göz ve burun işlemedir, küçük çocuklar için güvenlidir."],
-    ["Doğal Taşlı Kolye", "Takı", elif, 420, 4, "kolye.svg", "Amazonit ve kehribar taşlı, ayarlanabilir mumlu ipli kolye."],
-    ["Gümüş Halka Küpe", "Takı", elif, 260, 6, "kupe.svg", "925 ayar gümüş, el dövmesi halka küpe. Ucunda akuamarin boncuk."],
-    ["Sırlı Seramik Kupa", "Seramik", zeynep, 220, 10, "kupa.svg", "Çarkta şekillendirilmiş, 350 ml. Bulaşık makinesinde yıkanabilir."],
-    ["El Yapımı Vazo", "Seramik", zeynep, 540, 2, "vazo.svg", "30 cm yüksekliğinde, el boyaması desenli vazo. Her biri birbirinden biraz farklıdır."],
-    ["Ahşap Kaşık Seti", "Ahşap", mehmet, 310, 7, "kasik.svg", "Gürgen ve ceviz, iki kaşıklık set. Zeytinyağı ile cilalanmıştır."],
-    ["Ceviz Kesme Tahtası", "Ahşap", mehmet, 650, 3, "tahta.svg", "Tek parça ceviz, 40x25 cm. Ömürlük bir mutfak dostu."],
-    ["Soya Mumu", "Mum & Sabun", zeynep, 180, 15, "mum.svg", "Cam kavanozda, pamuk fitilli. Lavanta ve portakal kokulu, yaklaşık 40 saat yanar."],
-    ["Zeytinyağlı Sabun", "Mum & Sabun", zeynep, 90, 30, "sabun.svg", "Soğuk yöntemle, saf zeytinyağından. Katkısız ve kokusuz."],
-    ["Desenli Bez Çanta", "Dikiş & Kumaş", elif, 240, 9, "canta.svg", "Kalın kanvas kumaş, elde baskı desen. İç cepli."],
+    ["El Örgüsü Bere", "Örgü", ayse, 350, 5, "bere.jpg", "Yüzde yüz yün, içi astarlı. Kış için sıcacık. Renk seçeneği için sipariş notuna yazabilirsiniz."],
+    ["Yün Atkı", "Örgü", ayse, 480, 3, "atki.jpg", "180 cm uzunluğunda, kırmızı-siyah çizgili, yumuşacık yün atkı."],
+    ["Amigurumi Ayıcık", "Örgü", ayse, 290, 8, "ayicik.jpg", "Pamuk iplikten, 20 cm boyunda. Göz ve burun işlemedir, küçük çocuklar için güvenlidir."],
+    ["Doğal Taşlı Kolye", "Takı", elif, 420, 4, "kolye.jpg", "Mavi doğal taşlı, gümüş kaplama zincirli kolye. Taşlar elle seçilip kesilir."],
+    ["Gümüş Halka Küpe", "Takı", elif, 260, 6, "kupe.jpg", "925 ayar gümüş, el dövmesi örgü desenli halka küpe."],
+    ["Sırlı Seramik Kupa", "Seramik", zeynep, 220, 10, "kupa.jpg", "Çarkta şekillendirilmiş, 350 ml. Bulaşık makinesinde yıkanabilir."],
+    ["El Yapımı Vazo", "Seramik", zeynep, 540, 2, "vazo.jpg", "Pişmiş topraktan, sırsız, doğal dokulu vazo. Her biri birbirinden biraz farklıdır."],
+    ["Ahşap Kaşık Seti", "Ahşap", mehmet, 310, 7, "kasik.jpg", "Gürgen ve ceviz, iki kaşıklık set. Zeytinyağı ile cilalanmıştır."],
+    ["Ceviz Kesme Tahtası", "Ahşap", mehmet, 650, 3, "tahta.jpg", "Tek parça ceviz, 30 cm çapında. Ömürlük bir mutfak dostu."],
+    ["Soya Mumu", "Mum & Sabun", zeynep, 180, 15, "mum.jpg", "Cam kavanozda, pamuk fitilli. Lavanta ve portakal kokulu, yaklaşık 40 saat yanar."],
+    ["Zeytinyağlı Sabun", "Mum & Sabun", zeynep, 90, 30, "sabun.jpg", "Soğuk yöntemle, saf zeytinyağından. Katkısız ve kokusuz."],
+    ["Kanvas Bez Çanta", "Dikiş & Kumaş", elif, 240, 9, "canta.jpg", "Kalın pamuklu kanvas, sağlam dikişli. İç cepli, alışverişe ve okula."],
   ];
   for (const [baslik, kategori, satici, fiyat, stok, resim, aciklama] of liste) {
     urunler[baslik] = await Urun.create({
@@ -70,7 +70,7 @@ async function populate() {
   }
   // Onay bekleyen örnek ürün (admin panelinde görünür)
   await Urun.create({ baslik: "Örgü Yastık Kılıfı", slug: "orgu-yastik-kilifi", aciklama: "40x40 cm, düğmeli.", fiyat: 390, stok: 2,
-    resim: "/img/urunler/atki.svg", onayli: false, kategoriId: kategoriler["Örgü"].id, kullaniciId: ayse.id });
+    resim: "/img/urunler/yastik.jpg", onayli: false, kategoriId: kategoriler["Örgü"].id, kullaniciId: ayse.id });
 
   // ---------- Siparişler ve yorumlar ----------
   // can birkaç şey sipariş etmiş: bazıları teslim edilmiş (yorum yazabilir), biri yolda, biri onay bekliyor
@@ -103,8 +103,8 @@ async function populate() {
   await elif.addTakipEdilen(zeynep);
 
   // ---------- Galeri: atölyelerden kareler ----------
-  for (const [resim, aciklama] of [["kupa.svg", "Zeynep'in atölyesinde sırlama günü"], ["bere.svg", "Ayşe'nin kış koleksiyonu"],
-    ["tahta.svg", "Bolu'dan ceviz tahtalar"], ["kolye.svg", "Elif'in taş seçimi"], ["mum.svg", "Mum dökme günü"], ["canta.svg", "Baskı kalıpları"]]) {
+  for (const [resim, aciklama] of [["kupa.jpg", "Zeynep'in atölyesinde sırlama günü"], ["bere.jpg", "Ayşe'nin kış koleksiyonu"],
+    ["tahta.jpg", "Bolu'dan ceviz tahtalar"], ["kolye.jpg", "Elif'in taş seçimi"], ["mum.jpg", "Mum dökme günü"], ["canta.jpg", "Elif'in dikiş masası"]]) {
     await Galeri.create({ resim: "/img/urunler/" + resim, aciklama });
   }
 
