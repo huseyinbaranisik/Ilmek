@@ -119,3 +119,7 @@ sonuc('arama üyeleri de buluyor', sayfa.includes('/uye/deniz'));
 sonuc('kısa sayı (2.6k gibi)', /\d\.\dk/.test((await m.istek('/album/gece-yarisi')).metin));
 sayfa = (await a.istek('/admin')).metin;
 sonuc('admin panelinde beğeni ve takip sayıları', sayfa.includes('Beğeni') && sayfa.includes('Takip'));
+sayfa = (await m.istek('/sarki/orman-yolu')).metin;
+sonuc('şarkı sayfasında beğenenler', sayfa.includes('class="begenenler') && sayfa.includes('title="deniz"'));
+sayfa = (await m.istek('/kitaplik')).metin;
+sonuc('kitaplıkta sanatçı çipleri', sayfa.includes('data-filtre="Mavi Gece"') && sayfa.includes('data-sanatci="Mavi Gece"'));

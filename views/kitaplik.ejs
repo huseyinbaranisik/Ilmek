@@ -2,10 +2,18 @@
 <h2 class="bolum-baslik">Kitaplık</h2>
 <p class="soluk kucuk">Fareyle kılıfların üzerinde gezin, plak kılıfından çıksın. Tıklayınca çalmaya başlar.</p>
 
+<!-- Sanatçıya göre süzme çipleri (kitaplik.js). Sanatçı listesi şarkılardan tekrarsız çıkarılır. -->
+<div class="cipler" role="group" aria-label="Sanatçıya göre süz">
+  <button class="cip aktif" data-filtre="">Hepsi</button>
+  <% [...new Set(sarkilar.map(s => s.sanatci))].sort((a, b) => a.localeCompare(b, 'tr')).forEach(ad => { %>
+    <button class="cip" data-filtre="<%= ad %>"><%= ad %></button>
+  <% }) %>
+</div>
+
 <!-- Raf: kılıflar yan yana ve üst üste dizili. Her kılıfın içinde bir plak var. -->
 <div class="raf">
   <% sarkilar.forEach(s => { %>
-    <div class="kilif" data-kilif="<%= sarkiJson(s) %>" style="--renk: <%= s.renk %>" tabindex="0" title="<%= s.baslik %> · <%= s.sanatci %>">
+    <div class="kilif" data-kilif="<%= sarkiJson(s) %>" data-sanatci="<%= s.sanatci %>" style="--renk: <%= s.renk %>" tabindex="0" title="<%= s.baslik %> · <%= s.sanatci %>">
       <!-- Plak: data-plak sayesinde şarkı çalarken oynatici.js "doner" sınıfı ekler ve plak döner -->
       <div class="kilif-plak">
         <div class="plak-buyuk" data-plak="<%= s.id %>"><img src="<%= s.kapak %>" alt=""></div>

@@ -314,6 +314,15 @@ Oynatıcıdaki panel düğmesi `body`'ye `calan-acik` sınıfını ekliyor. CSS'
 **Admin panelindeki beğeni ve takip sayıları?**
 `begeni` ve `takip` tabloları için ayrı model dosyası yazmadık, Sequelize onları `belongsToMany`'den kendisi oluşturdu. Bu modellere `db.models.begeni` ve `db.models.takip` ile ulaşılıyor, `.count()` ile sayılıyor.
 
+**Şarkı sayfasındaki "Beğenenler" ve Paylaş düğmesi?**
+Beğenenler: `sarki.getBegenenler({ limit: 8 })`, yani beğeni ilişkisinin şarkı tarafındaki fonksiyonu, ilk 8 üyeyi getiriyor. Daha fazlası varsa "+3" gibi yazılıyor. Paylaş: `navigator.clipboard.writeText(location.href)` sayfanın adresini panoya kopyalıyor. Tarayıcı izin vermezse adres bildirimde gösteriliyor.
+
+**Kitaplıktaki sanatçı çipleri nasıl süzüyor?**
+Çipler EJS'te şarkılardan tekrarsız sanatçı listesiyle (`new Set(...)`) oluşturuluyor. Her kılıfta `data-sanatci` var. `kitaplik.js` bir çipe basılınca o sanatçıya ait olmayan kılıflara `gizli` sınıfı ekliyor (CSS'te `display: none`). Kılıflar normalde negatif `margin-left` ile üst üste biniyor. Süzme varken ilk görünen kılıf sola kaymasın diye CSS'te `.raf:has(.gizli)` ile bu boşluk sadece görünen bir kılıftan sonra gelenlere veriliyor. Çalma sırası da sadece görünen kılıflardan oluşuyor.
+
+**Klavyeyle gezince çıkan turuncu çerçeve?**
+`:focus-visible` seçicisi. Tab tuşuyla bir düğmeye ya da bağlantıya gelince turuncu çerçeve çıkıyor, fareyle tıklayınca çıkmıyor. Erişilebilirlik için.
+
 **Arama üyeleri de buluyor mu?**
 Evet. `anaSayfa`'da `?q=` varsa şarkılarla birlikte `Kullanici.findAll({ where: { kullaniciAdi: { [Op.like]: "%den%" } } })` ile üyeler de aranıyor.
 
@@ -322,7 +331,7 @@ Evet. `anaSayfa`'da `?q=` varsa şarkılarla birlikte `Kullanici.findAll({ where
 ## Test
 
 **Projeyi nasıl test ettin?**
-`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla sitenin üzerinde gerçek bir kullanıcı gibi geziniyor: misafir, üye ve admin olarak giriş yapıyor, form gönderiyor, şarkı yüklüyor, beğeniyor, takip ediyor ve sonuçları kontrol ediyor (32 kontrol). Örneğin CSRF anahtarı olmadan gönderilen formun 403 aldığını, incelemedeki `<script>` kodunun sayfada çalışmadan düz yazı olarak göründüğünü, onaylanmamış şarkının 404 verdiğini kontrol ediyor. Çalıştırmak için: `plak.db`'yi sil, `npm start`, başka terminalde `npm test`.
+`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla sitenin üzerinde gerçek bir kullanıcı gibi geziniyor: misafir, üye ve admin olarak giriş yapıyor, form gönderiyor, şarkı yüklüyor, beğeniyor, takip ediyor ve sonuçları kontrol ediyor (34 kontrol). Örneğin CSRF anahtarı olmadan gönderilen formun 403 aldığını, incelemedeki `<script>` kodunun sayfada çalışmadan düz yazı olarak göründüğünü, onaylanmamış şarkının 404 verdiğini kontrol ediyor. Çalıştırmak için: `plak.db`'yi sil, `npm start`, başka terminalde `npm test`.
 
 ---
 

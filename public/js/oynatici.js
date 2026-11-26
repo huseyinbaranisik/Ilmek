@@ -140,6 +140,12 @@ function arayuzuGuncelle() {
 document.addEventListener('click', e => {
   const kalp = e.target.closest('[data-begen]');
   if (kalp) return begen(Number(kalp.dataset.begen));   // kalbe tıklandı: şarkıyı çalma, sadece beğen
+  if (e.target.closest('[data-paylas]')) {              // paylaş: sayfanın adresini panoya kopyala
+    navigator.clipboard.writeText(location.href)
+      .then(() => bildirim('Bağlantı panoya kopyalandı'))
+      .catch(() => bildirim('Bağlantı: ' + location.href));   // tarayıcı izin vermezse adresi göster
+    return;
+  }
   if (e.target.closest('#hepsini-cal')) return cal(sayfadakiSarkilar(), 0);
 
   const el = e.target.closest('[data-sarki]');

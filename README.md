@@ -68,7 +68,7 @@ test/test.mjs         Uçtan uca test (npm test)
 
 ## Test
 
-`test/test.mjs` misafir, üye ve admin akışlarını uçtan uca dener (CSRF, XSS, puan ortalaması, liste, şarkı yükleme ve onay, beğeni, takip, arama, admin paneli; 32 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
+`test/test.mjs` misafir, üye ve admin akışlarını uçtan uca dener (CSRF, XSS, puan ortalaması, liste, şarkı yükleme ve onay, beğeni, takip, arama, admin paneli; 34 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
 
 ```bash
 # plak.db dosyasını silin, sonra:

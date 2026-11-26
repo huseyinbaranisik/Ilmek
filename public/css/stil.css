@@ -306,6 +306,14 @@ a.satir { color: inherit; }
 .esitleyici i:nth-child(2) { animation-delay: -.3s; }
 .esitleyici i:nth-child(3) { animation-delay: -.6s; }
 @keyframes esitle { from { height: 3px; } to { height: 12px; } }
+.begenenler { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.begenenler .avatar { width: 28px; height: 28px; font-size: 12px; box-shadow: 0 0 0 2px rgba(0, 0, 0, .4); transition: transform .15s; }
+.begenenler .avatar:hover { transform: scale(1.15); color: #000; }
+
+/* Klavyeyle gezenler için görünür odak çerçevesi (fareyle tıklayınca çıkmaz) */
+:focus-visible { outline: 2px solid var(--turuncu); outline-offset: 2px; }
+.kilif:focus-visible { outline: none; }   /* kılıf odaklanınca zaten öne çıkıyor */
+
 .uye-cip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px 4px 4px; border-radius: 999px; background: var(--kutu); font-weight: 600; font-size: 14px; }
 .uye-cip:hover { background: var(--kutu-2); }
 
@@ -431,6 +439,18 @@ a.satir { color: inherit; }
   transition: transform .5s cubic-bezier(.2, .8, .2, 1);
 }
 .kilif:first-child { margin-left: 0; }
+/* Süzme: gizlenen kılıflar raftan çıkar. Görünen ilk kılıfın solu boşluk kalmasın diye
+   üst üste binme (negatif margin) sadece görünen bir kılıftan sonra gelenlere uygulanır. */
+.kilif.gizli { display: none; }
+.raf:has(.gizli) .kilif { margin-left: 0; }
+.raf:has(.gizli) .kilif:not(.gizli) ~ .kilif:not(.gizli) { margin-left: calc(var(--sirt) - var(--boy)); }
+
+/* Filtre çipleri (Spotify'daki "Çalma listeleri / Sanatçılar" düğmeleri gibi) */
+.cipler { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+.cip { border: 0; border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 500;
+  background: var(--kutu-2); color: var(--yazi); transition: background .2s; }
+.cip:hover { background: #3e3e3e; }
+.cip.aktif { background: var(--yazi); color: #000; }
 
 .kilif-on { position: relative; z-index: 1; width: 100%; height: 100%; border-radius: 4px; overflow: hidden;
   box-shadow: -8px 0 16px rgba(0, 0, 0, .55); transition: box-shadow .5s; }

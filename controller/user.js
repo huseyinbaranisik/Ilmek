@@ -122,7 +122,8 @@ exports.sarki = async (req, res, next) => {
       listelerim = await Liste.findAll({ where: { kullaniciId: benimId }, order: [["baslik", "ASC"]] });
     }
     const begeniSayisi = await sarki.countBegenenler(); // kaç üye beğendi
-    res.render("sarki", { sarki, albumdekiler, incelemeler, benimInceleme, listelerim, begeniSayisi });
+    const begenenler = await sarki.getBegenenler({ limit: 8 }); // beğenen üyelerden ilk 8 tanesi
+    res.render("sarki", { sarki, albumdekiler, incelemeler, benimInceleme, listelerim, begeniSayisi, begenenler });
   } catch (err) {
     next(err);
   }

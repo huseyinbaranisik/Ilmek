@@ -19,7 +19,19 @@
       <% if (sarki.incelemeSayisi > 0) { %>
         <span class="ort-puan"><span class="yildiz"><%= yildiz(sarki.ortPuan) %></span> <b><%= sarki.ortPuan.toFixed(1) %></b> <span class="kucuk">(<%= sarki.incelemeSayisi %> inceleme)</span></span>
       <% } %>
+      <!-- Paylaş: sayfanın adresini panoya kopyalar (oynatici.js) -->
+      <button class="ikon-btn" data-paylas title="Bağlantıyı kopyala" aria-label="Bağlantıyı kopyala"><i class="bi bi-share"></i></button>
     </div>
+    <% if (begenenler.length) { %>
+      <!-- Bu şarkıyı beğenen üyeler (Letterboxd'daki "beğenenler" gibi) -->
+      <div class="begenenler mt-3">
+        <span class="kucuk me-1">Beğenenler</span>
+        <% begenenler.forEach(k => { %>
+          <a href="/uye/<%= k.kullaniciAdi %>" class="avatar kucuk-avatar" title="<%= k.kullaniciAdi %>"><%= k.kullaniciAdi[0].toUpperCase() %></a>
+        <% }) %>
+        <% if (begeniSayisi > begenenler.length) { %><span class="kucuk ms-1">+<%= begeniSayisi - begenenler.length %></span><% } %>
+      </div>
+    <% } %>
   </div>
 </section>
 
