@@ -5,7 +5,7 @@ const controllerUser = require("../controller/user");
 
 router.get("/", controllerUser.anaSayfa);                     // ana sayfa + arama (?q=)
 router.get("/urunler", controllerUser.urunler);               // bütün ürünler (?sirala=ucuz&min=100&max=500)
-router.get("/kategori/:slug", controllerUser.urunler);        // /kategori/seramik
+router.get("/kategori/:slug", controllerUser.urunler);        // /kategori/bere-ve-sapka
 router.get("/urun/:slug", controllerUser.urun);               // /urun/el-orgusu-bere
 router.get("/magazalar", controllerUser.magazalar);
 router.get("/magaza/:kullaniciAdi", controllerUser.magaza);   // /magaza/ayse

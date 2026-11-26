@@ -1,7 +1,7 @@
 {
   "name": "web_programlama_proje",
   "version": "1.0.0",
-  "description": "Plak - müzik dinleme ve puanlama sitesi (MYAZ470 dönem projesi)",
+  "description": "İlmek - el örgüsü ürünler pazarı (MYAZ470 dönem projesi)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

@@ -4,6 +4,8 @@ MYAZ470 İnternet ve Web Programlama dönem projesi.
 
 **İlmek**, el örgüsü ürünlerin pazar yeri. Şişle ve tığla ören üyeler kendi mağazalarını açıp kazak, hırka, bere, atkı, bebek patiği, amigurumi gibi örgülerini ekler. Her ürünün **iplik türü** (yün, merinos, alpaka, pamuk...) ve **hazırlanma süresi** (kaç günde örüleceği) vardır. Ziyaretçiler **üye olmadan da** ürünleri sepete ekleyip ödeme yapabilir. Sepet tarayıcıda (localStorage) tutulur. Misafir ödemede adresini ve kart bilgilerini yazar; üyenin adresi ve telefonu hesabında kayıtlı olduğu için sadece kart bilgisini girer. Örgücü siparişi "hazırlanıyor → kargoda → teslim edildi" diye ilerletir. Ürünü teslim alan üye yorum ve puan yazabilir. Ödeme sahtedir (ders projesi): kart bilgileri kontrol edilir ama para çekilmez, kartın sadece son 4 hanesi kaydedilir.
 
+**Dokümanlar:** [BACKEND.md](BACKEND.md), sunucu tarafını kod parçalarıyla adım adım anlatıyor. [SORU-CEVAP.md](SORU-CEVAP.md), sunumda sorulabilecek soruları ve cevaplarını içeriyor.
+
 ## Kurulum ve çalıştırma
 
 Node.js 22 veya daha yeni bir sürüm gerekir.
