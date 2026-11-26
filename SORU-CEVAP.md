@@ -305,6 +305,15 @@ Sunucuda değil, tarayıcının `localStorage`'ında (`sonDinlenenler` anahtarı
 **Klavye kısayolları ve kilit ekranı?**
 `oynatici.js`'te `keydown` olayı: Boşluk çal / durdur, ← → 5 saniye geri / ileri, Shift + ← → önceki / sonraki şarkı. Bir yazı kutusuna yazı yazılırken kısayollar çalışmıyor. Telefonun kilit ekranında ve klavyenin medya tuşlarında şarkı adı ve düğmeler tarayıcının Media Session API'si ile gösteriliyor (`navigator.mediaSession`). Desteklemeyen tarayıcıda bu kısım atlanıyor.
 
+**Sağdaki "Şimdi çalan" paneli nasıl çalışıyor?**
+Oynatıcıdaki panel düğmesi `body`'ye `calan-acik` sınıfını ekliyor. CSS'te bu sınıf varken `#wrapper` ızgarası iki yerine üç sütun oluyor (`menü | içerik | 320px panel`). Paneldeki büyük kapak, şarkı adı ve "Sıradakiler" listesini `oynatici.js`'teki `paneliGuncelle()` dolduruyor. Sıradakiler, çalma listesinde (`sira` dizisi) çalan şarkıdan sonraki en fazla 10 şarkı. Birine tıklayınca `cal(sira, o şarkının numarası)` çağrılıyor. Panelin açık olup olmadığı `localStorage`'da saklanıyor. 1100px'ten dar ekranlarda içerik sıkışmasın diye panel gösterilmiyor.
+
+**Kalbe basınca çıkan "Beğenilen Şarkılar'a eklendi" yazısı?**
+`oynatici.js`'teki `bildirim()` fonksiyonu sayfaya `bilgi basari` sınıflı bir `div` ekliyor. CSS'teki `.icerik > .bilgi` kuralı onu altta beliren ve 5 saniyede kaybolan bir bildirime dönüştürüyor. Sunucudan gelen "kaydedildi" mesajlarıyla aynı görünüm.
+
+**Admin panelindeki beğeni ve takip sayıları?**
+`begeni` ve `takip` tabloları için ayrı model dosyası yazmadık, Sequelize onları `belongsToMany`'den kendisi oluşturdu. Bu modellere `db.models.begeni` ve `db.models.takip` ile ulaşılıyor, `.count()` ile sayılıyor.
+
 **Arama üyeleri de buluyor mu?**
 Evet. `anaSayfa`'da `?q=` varsa şarkılarla birlikte `Kullanici.findAll({ where: { kullaniciAdi: { [Op.like]: "%den%" } } })` ile üyeler de aranıyor.
 
@@ -313,7 +322,7 @@ Evet. `anaSayfa`'da `?q=` varsa şarkılarla birlikte `Kullanici.findAll({ where
 ## Test
 
 **Projeyi nasıl test ettin?**
-`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla sitenin üzerinde gerçek bir kullanıcı gibi geziniyor: misafir, üye ve admin olarak giriş yapıyor, form gönderiyor, şarkı yüklüyor, beğeniyor, takip ediyor ve sonuçları kontrol ediyor (31 kontrol). Örneğin CSRF anahtarı olmadan gönderilen formun 403 aldığını, incelemedeki `<script>` kodunun sayfada çalışmadan düz yazı olarak göründüğünü, onaylanmamış şarkının 404 verdiğini kontrol ediyor. Çalıştırmak için: `plak.db`'yi sil, `npm start`, başka terminalde `npm test`.
+`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla sitenin üzerinde gerçek bir kullanıcı gibi geziniyor: misafir, üye ve admin olarak giriş yapıyor, form gönderiyor, şarkı yüklüyor, beğeniyor, takip ediyor ve sonuçları kontrol ediyor (32 kontrol). Örneğin CSRF anahtarı olmadan gönderilen formun 403 aldığını, incelemedeki `<script>` kodunun sayfada çalışmadan düz yazı olarak göründüğünü, onaylanmamış şarkının 404 verdiğini kontrol ediyor. Çalıştırmak için: `plak.db`'yi sil, `npm start`, başka terminalde `npm test`.
 
 ---
 

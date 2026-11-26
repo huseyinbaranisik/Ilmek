@@ -10,6 +10,7 @@ const Duyuru = require("../models/duyuru");
 const Soru = require("../models/soru");
 const Galeri = require("../models/galeri");
 const { benzersizSlug } = require("../helpers/slugfield");
+const db = require("../data/db");
 
 // ---------- Özet ----------
 exports.panel = async (req, res, next) => {
@@ -20,6 +21,9 @@ exports.panel = async (req, res, next) => {
       kullanici: await Kullanici.count(),
       inceleme: await Inceleme.count(),
       cevapsiz: await Soru.count({ where: { cevap: null } }),
+      // Ara tablolar (begeni, takip) Sequelize tarafından oluşturuldu, db.models içinden sayılır
+      begeni: await db.models.begeni.count(),
+      takip: await db.models.takip.count(),
     };
     const populer = await Sarki.findAll({ where: { onayli: true }, order: [["dinlenme", "DESC"]], limit: 5 });
     res.render("admin/panel", { sayilar, populer });

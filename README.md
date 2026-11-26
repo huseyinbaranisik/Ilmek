@@ -1,7 +1,7 @@
 # Gramofy · müzik dinle, puanla, listele
 
 MYAZ470 İnternet ve Web Programlama dönem projesi.
-Spotify ile Letterboxd'un karışımı bir müzik sitesi. Şarkıları dinlerken ortasında albüm kapağı olan bir plak döner ve o an kaç kişinin dinlediği canlı görünür (Spotify kısmı). **Kitaplık** sayfasında şarkılar rafta duran plak kılıfları gibi dizilir: üzerine gelince kılıf öne çıkar ve plak kılıftan kayar, tıklayınca çalar. Üyeler şarkılara 1-5 yıldız verir, inceleme yazar, liste oluşturur ve kendi şarkılarını yükler (Letterboxd kısmı). Şarkıları kalple "Beğenilen Şarkılar"a ekler, birbirlerini takip eder, **Üyeler** sayfasından başkalarının profillerine, listelerine ve beğendiği şarkılara bakar. Ana sayfada takip ettiklerinin son incelemeleri ve o an ne dinledikleri, ayrıca son dinlediğin şarkılar görünür. Oynatıcıda karıştır ve tekrarla var, klavyeyle (boşluk, oklar) ve telefonun kilit ekranından kontrol edilebilir. Arama şarkıların yanında üyeleri de bulur. Site telefon, tablet ve bilgisayarda düzgün görünür.
+Spotify ile Letterboxd'un karışımı bir müzik sitesi. Şarkıları dinlerken ortasında albüm kapağı olan bir plak döner ve o an kaç kişinin dinlediği canlı görünür (Spotify kısmı). **Kitaplık** sayfasında şarkılar rafta duran plak kılıfları gibi dizilir: üzerine gelince kılıf öne çıkar ve plak kılıftan kayar, tıklayınca çalar. Üyeler şarkılara 1-5 yıldız verir, inceleme yazar, liste oluşturur ve kendi şarkılarını yükler (Letterboxd kısmı). Şarkıları kalple "Beğenilen Şarkılar"a ekler, birbirlerini takip eder, **Üyeler** sayfasından başkalarının profillerine, listelerine ve beğendiği şarkılara bakar. Ana sayfada takip ettiklerinin son incelemeleri ve o an ne dinledikleri, ayrıca son dinlediğin şarkılar görünür. Sağda Spotify'daki gibi "Şimdi çalan" paneli ve sıradaki şarkılar listesi açılır. Oynatıcıda karıştır ve tekrarla var, klavyeyle (boşluk, oklar) ve telefonun kilit ekranından kontrol edilebilir. Arama şarkıların yanında üyeleri de bulur. Site telefon, tablet ve bilgisayarda düzgün görünür.
 
 ## Kurulum ve çalıştırma
 
@@ -68,7 +68,7 @@ test/test.mjs         Uçtan uca test (npm test)
 
 ## Test
 
-`test/test.mjs` misafir, üye ve admin akışlarını uçtan uca dener (CSRF, XSS, puan ortalaması, liste, şarkı yükleme ve onay, beğeni, takip, arama; 31 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
+`test/test.mjs` misafir, üye ve admin akışlarını uçtan uca dener (CSRF, XSS, puan ortalaması, liste, şarkı yükleme ve onay, beğeni, takip, arama, admin paneli; 32 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
 
 ```bash
 # plak.db dosyasını silin, sonra:

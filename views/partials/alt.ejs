@@ -1,5 +1,18 @@
     </main>
   </div><!-- /#page-content-wrapper -->
+
+  <!-- ===== SAĞ PANEL: Şimdi çalan + sıradakiler (Spotify'daki gibi). oynatici.js doldurur. ===== -->
+  <aside id="calan-panel" class="panel" aria-label="Şimdi çalan">
+    <div class="calan-ust">
+      <span class="fw-bold">Şimdi çalan</span>
+      <button class="ikon-yuvarlak" id="calan-kapat" aria-label="Paneli kapat"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <img id="calan-kapak" src="/img/bos.svg" alt="">
+    <a id="calan-baslik" class="calan-baslik text-truncate" href="#">Bir şarkı seç</a>
+    <div id="calan-sanatci" class="soluk text-truncate"></div>
+    <div class="fw-bold mt-4 mb-2">Sıradakiler</div>
+    <div id="calan-sira" class="liste"></div>
+  </aside>
 </div><!-- /#wrapper -->
 
 <!-- ===== ALTTAKİ OYNATICI: bütün sayfalarda aynı ===== -->
@@ -30,6 +43,7 @@
     </div>
   </div>
   <div class="o-ses d-none d-lg-flex">
+    <button id="o-panel" class="ikon-btn mod-btn" title="Şimdi çalan" aria-label="Şimdi çalan panelini aç / kapat"><i class="bi bi-layout-sidebar-reverse"></i></button>
     <i class="bi bi-volume-up"></i>
     <input id="o-ses" type="range" min="0" max="1" step="0.05" value="0.8" aria-label="Ses">
   </div>

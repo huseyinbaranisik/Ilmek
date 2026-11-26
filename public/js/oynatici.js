@@ -119,6 +119,7 @@ function arayuzuGuncelle() {
     if ($('o-begen')) { $('o-begen').dataset.begen = s.id; $('o-begen').hidden = false; }
   }
   kalpleriGuncelle();
+  paneliGuncelle();
   $('o-cal').innerHTML = caliyor ? '<i class="bi bi-pause-fill"></i>' : '<i class="bi bi-play-fill"></i>';
   $('o-plak').classList.toggle('doner', caliyor);
 
@@ -230,8 +231,60 @@ function begen(id) {
   gonder('/hesap/begen/' + id).then(veri => {
     if (veri.begendi) begenilenler.add(id); else begenilenler.delete(id);
     kalpleriGuncelle();
+    bildirim(veri.begendi ? 'Beğenilen Şarkılar\'a eklendi' : 'Beğenilen Şarkılar\'dan çıkarıldı');
   }).catch(() => {});
 }
+
+// Altta birkaç saniye görünüp kaybolan küçük bildirim (CSS'teki ".icerik > .bilgi" kuralı)
+function bildirim(metin) {
+  document.querySelectorAll('.icerik > .bilgi').forEach(el => el.remove());   // öncekini kaldır
+  const el = document.createElement('div');
+  el.className = 'bilgi basari';
+  el.textContent = metin;
+  document.querySelector('.icerik').append(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+// ---------- Sağ panel: şimdi çalan + sıradakiler ----------
+function paneliGuncelle() {
+  const s = simdiki();
+  if (!s) return;
+  $('calan-kapak').src = s.kapak;
+  $('calan-baslik').textContent = s.baslik;
+  $('calan-baslik').href = '/sarki/' + s.slug;
+  $('calan-sanatci').textContent = s.sanatci;
+  // Listede bu şarkıdan sonraki en fazla 10 şarkı. Yazılar textContent ile (XSS olmasın)
+  $('calan-sira').innerHTML = '';
+  sira.slice(index + 1, index + 11).forEach((x, i) => {
+    const satir = document.createElement('div');
+    satir.className = 'satir sira-satir';
+    satir.dataset.siraIndex = index + 1 + i;   // tıklayınca listede kaçıncı şarkıya atlanacak
+    const img = document.createElement('img');
+    img.src = x.kapak; img.alt = ''; img.className = 'mini-kapak';
+    const yazi = document.createElement('div');
+    yazi.className = 'min-w-0';
+    const ad = document.createElement('div'); ad.className = 'satir-baslik text-truncate'; ad.textContent = x.baslik;
+    const sanatci = document.createElement('div'); sanatci.className = 'soluk kucuk text-truncate'; sanatci.textContent = x.sanatci;
+    yazi.append(ad, sanatci);
+    satir.append(img, yazi);
+    $('calan-sira').append(satir);
+  });
+  if (index + 1 >= sira.length) $('calan-sira').innerHTML = '<p class="soluk kucuk">Listenin sonu.</p>';
+}
+$('calan-sira').onclick = e => {
+  const satir = e.target.closest('[data-sira-index]');
+  if (satir) cal(sira, Number(satir.dataset.siraIndex));
+};
+
+// Paneli aç / kapat. Durum localStorage'da saklanır, sayfa değişince açık kalır.
+function paneliAc(acik) {
+  document.body.classList.toggle('calan-acik', acik);
+  $('o-panel').classList.toggle('acik', acik);
+  localStorage.setItem('calanPanel', acik);
+}
+$('o-panel').onclick = () => paneliAc(!document.body.classList.contains('calan-acik'));
+$('calan-kapat').onclick = () => paneliAc(false);
+paneliAc(localStorage.getItem('calanPanel') === 'true');
 kalpleriGuncelle();
 ses.addEventListener('timeupdate', () => {
   $('o-simdi').textContent = sure(ses.currentTime);

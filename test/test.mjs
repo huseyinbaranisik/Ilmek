@@ -117,3 +117,5 @@ sonuc('üyeler sayfası (misafir)', sayfa.includes('/uye/testuye') && sayfa.incl
 sayfa = (await m.istek('/?q=den')).metin;
 sonuc('arama üyeleri de buluyor', sayfa.includes('/uye/deniz'));
 sonuc('kısa sayı (2.6k gibi)', /\d\.\dk/.test((await m.istek('/album/gece-yarisi')).metin));
+sayfa = (await a.istek('/admin')).metin;
+sonuc('admin panelinde beğeni ve takip sayıları', sayfa.includes('Beğeni') && sayfa.includes('Takip'));
