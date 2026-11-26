@@ -261,6 +261,13 @@ details summary { cursor: pointer; font-weight: 600; }
 .iplik-cipleri { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .iplik-cipleri a { padding: 5px 14px; border-radius: 999px; border: 1.5px solid var(--cizgi); font-size: 14px; font-weight: 500; background: var(--kagit); }
 .iplik-cipleri a.aktif { background: var(--yesil); border-color: var(--yesil); color: #fff; }
+
+/* Sayfalama: 1 2 3 düğmeleri */
+.sayfalama { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 28px 0 8px; }
+.sayfalama a { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px;
+  border-radius: 999px; border: 1.5px solid var(--cizgi); background: var(--kagit); font-weight: 600; }
+.sayfalama a:hover { border-color: var(--turuncu); }
+.sayfalama a.aktif { background: var(--yesil); border-color: var(--yesil); color: #fff; }
 @media (max-width: 576px) { .orgu-bilgi { grid-template-columns: 1fr; } }
 
 .siparis-kutu { background: var(--kagit); border-radius: 16px; padding: 18px; margin: 18px 0; box-shadow: var(--golge);

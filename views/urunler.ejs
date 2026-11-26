@@ -2,7 +2,7 @@
 <div class="sayfa-ust">
   <div>
     <h1><% if (kategori) { %><i class="bi bi-<%= kategori.ikon %>"></i> <%= kategori.ad %><% } else { %>Tüm örgüler<% } %></h1>
-    <p class="soluk mb-0"><%= urunler.length %> el örgüsü ürün<%= iplik ? ' · ' + iplik + ' iplikten' : '' %></p>
+    <p class="soluk mb-0"><%= toplam %> el örgüsü ürün<%= iplik ? ' · ' + iplik + ' iplikten' : '' %></p>
   </div>
 </div>
 
@@ -36,5 +36,17 @@
 </div>
 <% if (urunler.length === 0) { %>
   <div class="bos-durum"><i class="bi bi-basket"></i><p>Bu seçime uygun örgü yok.</p></div>
+<% } %>
+
+<!-- Sayfalama: diğer seçimler (iplik, sıralama, fiyat) adreste korunur -->
+<% if (sayfaSayisi > 1) { %>
+  <% const adres = (s) => '?sayfa=' + s + '&sirala=' + sirala + '&min=' + min + '&max=' + max + (iplik ? '&iplik=' + encodeURIComponent(iplik) : ''); %>
+  <nav class="sayfalama" aria-label="Sayfalar">
+    <% if (sayfa > 1) { %><a href="<%= adres(sayfa - 1) %>" aria-label="Önceki sayfa"><i class="bi bi-chevron-left"></i></a><% } %>
+    <% for (let s = 1; s <= sayfaSayisi; s++) { %>
+      <a href="<%= adres(s) %>" class="<%= s === sayfa ? 'aktif' : '' %>"><%= s %></a>
+    <% } %>
+    <% if (sayfa < sayfaSayisi) { %><a href="<%= adres(sayfa + 1) %>" aria-label="Sonraki sayfa"><i class="bi bi-chevron-right"></i></a><% } %>
+  </nav>
 <% } %>
 <%- include('partials/alt') %>

@@ -46,6 +46,12 @@ Modellere bakıp tablolar yoksa oluşturuyor (`index.js` en alt). Ardından `dum
 **`include` ne işe yarıyor?**
 SQL'deki JOIN. Örnek: `Urun.findAll({ include: Kullanici })` ürünle birlikte satıcısını da getiriyor, EJS'te `u.kullanici.magazaAdi` diye kullanılıyor. `required: true` verilirse INNER JOIN oluyor: mağazalar sayfasında sadece en az bir onaylı ürünü olan üyeler geliyor (`controller/user.js` → `magazalar`).
 
+**Ürün listesinde sayfalama nasıl yapıldı?**
+Her sayfada 24 ürün var (`controller/user.js` → `urunler`). Adresteki `?sayfa=2` okunuyor, `Urun.findAndCountAll({ limit: 24, offset: (sayfa - 1) * 24 })` ile o sayfanın ürünleri ve toplam ürün sayısı birlikte alınıyor. `offset` baştan kaç ürünün atlanacağı. Sayfa sayısı `Math.ceil(toplam / 24)`. Sayfa düğmelerinin adresine iplik, sıralama ve fiyat seçimleri de yazılıyor, sayfa değişince filtre kaybolmuyor.
+
+**Ürün sayfasındaki "Benzer ürünler" nasıl seçiliyor?**
+Aynı kategorideki diğer ürünlerden rastgele 8 tane (`controller/user.js` → `urun`). Önce ürünün kendisi ve üstteki "... mağazasından" bölümünde gösterilen ürünlerin id'leri bir diziye konuyor, sonra `id: { [Op.notIn]: gosterilenler }` ile bunlar hariç tutuluyor, böylece aynı ürün sayfada iki kere çıkmıyor. `order: Sequelize.fn("RANDOM")` SQLite'ın `ORDER BY RANDOM()` komutu, sayfa her açıldığında farklı ürünler geliyor.
+
 **SQL injection'a karşı ne yaptın?**
 Sequelize kullanıyoruz: `Urun.findOne({ where: { slug: req.params.slug } })`. Sequelize değerleri SQL metnine eklemiyor, parametre olarak ayrı gönderiyor. Kullanıcının yazdığı şey SQL komutu olarak çalışamıyor.
 
@@ -122,7 +128,7 @@ JavaScript kullanmadan, CSS `:target` seçicisiyle. Resim linki `#resim-3` adres
 Veritabanında değil, klasörde. Örnek ürün resimleri `public/img/urunler/`, yüklenen resimler `public/img/yuklenen/`. Veritabanına sadece adres (URL) yazılıyor: `urun.resim = "/img/urunler/bere.jpg"`. EJS bunu `<img src="<%= u.resim %>">` içine koyuyor, `express.static("public")` dosyayı o adresten sunuyor.
 
 **Ürün fotoğrafları nereden geldi, telifli mi?**
-Unsplash'ten indirildi (`public/img/urunler/*.jpg`). Unsplash Lisansı fotoğrafların ücretsiz indirilmesine ve ticari olanlar dahil her projede kullanılmasına izin veriyor, izin almak gerekmiyor. Yine de fotoğrafçıların adlarını ve fotoğrafların bağlantılarını README'ye yazdık. Fotoğraflar 800x800 piksel, kare kırpılmış JPG; tanesi 100 KB civarında, sayfa hızlı açılsın diye büyük hallerini indirmedik.
+Unsplash'ten indirildi (`public/img/urunler/*.jpg`). Unsplash Lisansı fotoğrafların ücretsiz indirilmesine ve ticari olanlar dahil her projede kullanılmasına izin veriyor, izin almak gerekmiyor. Yine de fotoğrafçıların adlarını ve fotoğrafların bağlantılarını README'ye yazdık. Fotoğraflar 600x600 ya da 800x800 piksel, kare kırpılmış JPG; tanesi 60-150 KB civarında, sayfa hızlı açılsın diye büyük hallerini indirmedik.
 
 **Dosya yükleme nasıl ve güvenli mi?**
 `multer` paketiyle (`helpers/yukle.js`):

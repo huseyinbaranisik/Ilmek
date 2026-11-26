@@ -2,7 +2,7 @@
 //  controller/user.js - Herkesin (misafirlerin de) görebildiği sayfalar
 //  Not: Sadece onaylı (onayli: true) ürünler gösterilir.
 // ============================================================
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const Urun = require("../models/urun");
 const Kategori = require("../models/kategori");
 const Kullanici = require("../models/kullanici");
@@ -105,10 +105,27 @@ exports.urunler = async (req, res, next) => {
     let sirala = "yeni";
     if (SIRALAMALAR[req.query.sirala]) sirala = req.query.sirala;
 
-    const urunler = await Urun.findAll({ where: kosul, include: Kullanici, order: SIRALAMALAR[sirala].sira });
+    // Sayfalama (?sayfa=2). Her sayfada 24 ürün.
+    const SAYFA_BASI = 24;
+    let sayfa = parseInt(req.query.sayfa);
+    if (!(sayfa > 0)) sayfa = 1;
+
+    // findAndCountAll hem ürünleri (rows) hem toplam sayıyı (count) verir
+    const sonuc = await Urun.findAndCountAll({
+      where: kosul,
+      include: Kullanici,
+      order: SIRALAMALAR[sirala].sira,
+      limit: SAYFA_BASI,
+      offset: (sayfa - 1) * SAYFA_BASI,   // kaç ürün atlanacak
+    });
+    const sayfaSayisi = Math.ceil(sonuc.count / SAYFA_BASI);
+
     res.render("urunler", {
       kategori: kategori,
-      urunler: urunler,
+      urunler: sonuc.rows,
+      toplam: sonuc.count,
+      sayfa: sayfa,
+      sayfaSayisi: sayfaSayisi,
       sirala: sirala,
       SIRALAMALAR: SIRALAMALAR,
       min: min > 0 ? min : "",
@@ -141,24 +158,16 @@ exports.urun = async (req, res, next) => {
       include: Kullanici,
       limit: 4,
     });
-    // Benzer ürünler: aynı kategoride, BAŞKA örgücülerin ürünleri
-    // (aynı örgücünün ürünleri zaten yukarıdaki "mağazasından" bölümünde görünüyor)
+    // Benzer ürünler: aynı kategorideki diğer ürünlerden rastgele 8 tane.
+    // Bu ürünün kendisi ve yukarıdaki "mağazasından" bölümünde çıkanlar tekrar gösterilmez.
+    const gosterilenler = [urun.id];
+    for (const u of saticininDigerleri) gosterilenler.push(u.id);
     const benzerler = await Urun.findAll({
-      where: { onayli: true, kategoriId: urun.kategoriId, kullaniciId: { [Op.ne]: urun.kullaniciId } },
+      where: { onayli: true, kategoriId: urun.kategoriId, id: { [Op.notIn]: gosterilenler } },   // notIn = listede olmayan
       include: Kullanici,
-      limit: 4,
+      order: Sequelize.fn("RANDOM"),   // her açılışta farklı ürünler gelsin
+      limit: 8,
     });
-    // Aynı kategoride 4 tane yoksa aynı iplikten örülmüş başka ürünlerle tamamla
-    if (benzerler.length < 4) {
-      const olanlar = [urun.id];
-      for (const b of benzerler) olanlar.push(b.id);
-      const ekler = await Urun.findAll({
-        where: { onayli: true, iplik: urun.iplik, kullaniciId: { [Op.ne]: urun.kullaniciId }, id: { [Op.notIn]: olanlar } },
-        include: Kullanici,
-        limit: 4 - benzerler.length,
-      });
-      for (const e of ekler) benzerler.push(e);
-    }
     const favoriSayisi = await urun.countFavorileyenler();
 
     // Giriş yapan üye bu ürünü teslim aldıysa yorum yazabilir

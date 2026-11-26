@@ -41,10 +41,28 @@ sonuc('CSRF yok -> 403', r.durum === 403);
 sonuc('onaysız ürün misafire görünmez (404)', (await m.istek('/urun/orgu-yastik-kilifi')).durum === 404);
 let sayfa = (await m.istek('/kategori/bere-ve-sapka')).metin;
 sonuc('kategori sayfası (slug, & -> ve)', sayfa.includes('/urun/el-orgusu-bere') && !sayfa.includes('/urun/bebek-patigi'));
+// Sayfadaki kartların fiyatlarını sırayla al ("1.250 ₺" -> 1250)
+const fiyatlar = (html) => [...html.matchAll(/class="fiyat">([\d.]+) ₺/g)].map(x => Number(x[1].replace(/\./g, '')));
 sayfa = (await m.istek('/urunler?sirala=ucuz')).metin;
-sonuc('sıralama: en ucuz önce', sayfa.indexOf('/urun/bebek-patigi') < sayfa.indexOf('/urun/kalin-orgu-battaniye'));
+let f = fiyatlar(sayfa);
+sonuc('sıralama: en ucuz önce', f.length > 0 && f.every((x, i) => i === 0 || f[i - 1] <= x), f.slice(0, 5).join(','));
 sayfa = (await m.istek('/urunler?min=1000')).metin;
-sonuc('fiyat filtresi (en az 1000)', sayfa.includes('/urun/sac-orgulu-kazak') && !sayfa.includes('/urun/bebek-patigi'));
+f = fiyatlar(sayfa);
+sonuc('fiyat filtresi (en az 1000)', f.length > 0 && f.every(x => x >= 1000) && !sayfa.includes('/urun/bebek-patigi'));
+// Sayfalama: 24'er ürün, 2. sayfa farklı ürünler, son sayfadan sonrası boş
+const kartlar = (html) => [...html.matchAll(/<a href="(\/urun\/[^"]+)" class="urun-ad"/g)].map(x => x[1]);
+const s1 = kartlar((await m.istek('/urunler')).metin);
+sayfa = (await m.istek('/urunler?sayfa=2')).metin;
+const s2 = kartlar(sayfa);
+sonuc('sayfalama: sayfa başına 24 ürün, 2. sayfa farklı', s1.length === 24 && s2.length === 24 && !s2.some(x => s1.includes(x)) && sayfa.includes('class="sayfalama"'));
+sonuc('sayfalama: olmayan sayfa boş liste', kartlar((await m.istek('/urunler?sayfa=99')).metin).length === 0);
+// Her kategoride en az 20 ürün var (toplam yazısından okunur)
+let azKategori = [];
+for (const k of ['bere-ve-sapka', 'atki-ve-sal', 'kazak-ve-hirka', 'bebek-orguleri', 'amigurumi', 'ev-ve-dekor', 'corap-ve-eldiven', 'canta-ve-aksesuar']) {
+  const adet = Number(((await m.istek('/kategori/' + k)).metin.match(/(\d+) el örgüsü ürün/) || [0, 0])[1]);
+  if (adet < 20) azKategori.push(k + ':' + adet);
+}
+sonuc('her kategoride en az 20 ürün', azKategori.length === 0, azKategori.join(' '));
 sayfa = (await m.istek('/urunler?iplik=Alpaka')).metin;
 sonuc('iplik filtresi (Alpaka)', sayfa.includes('/urun/pembe-motifli-hirka') && !sayfa.includes('/urun/el-orgusu-bere'));
 sonuc('arama ürün buluyor', (await m.istek('/?q=pati')).metin.includes('/urun/bebek-patigi'));
@@ -54,9 +72,15 @@ sayfa = (await m.istek('/urun/sac-orgulu-kazak')).metin;
 sonuc('ürün sayfasında iplik ve hazırlanma süresi', sayfa.includes('Merinos') && sayfa.includes('12 günde örülür'));
 sayfa = (await m.istek('/sitemap.xml')).metin;
 sonuc('sitemap.xml', sayfa.includes('/urun/el-orgusu-bere') && sayfa.includes('/magaza/ayse') && sayfa.includes('/kategori/bebek-orguleri'));
+// Benzer ürünler: aynı kategoriden, ürünün kendisi ve "mağazasından" bölümündekiler tekrar etmez
 sayfa = (await m.istek('/urun/amigurumi-tavsan')).metin;
-const benzerKismi = sayfa.split('Benzer ürünler')[1] || '';
-sonuc('benzer ürünler başka örgücülerden (aynı mağaza tekrar etmiyor)', benzerKismi.includes('class="urun-kart"') && !benzerKismi.includes('/magaza/mehmet'));
+const [ustKisim, benzerKismi = ''] = sayfa.split('Benzer ürünler');
+const magazaKismi = kartlar(ustKisim.split('mağazasından')[1] || '');
+const benzerler = kartlar(benzerKismi);
+const amigurumiler = kartlar((await m.istek('/kategori/amigurumi')).metin);
+sonuc('benzer ürünler aynı kategoriden, tekrar yok',
+  benzerler.length === 8 && benzerler.every(x => amigurumiler.includes(x)) && !benzerler.includes('/urun/amigurumi-tavsan') && !benzerler.some(x => magazaKismi.includes(x)),
+  benzerler.length + ' benzer');
 
 // ================= YENİ ÜYE (alıcı + satıcı) =================
 const u = istemci();
