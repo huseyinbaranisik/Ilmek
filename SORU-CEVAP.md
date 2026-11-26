@@ -261,6 +261,9 @@ Hayır, sadece ürünü satın alıp **teslim almış** üye (`controller/hesap.
 **Favori (kalp) nasıl çalışıyor?**
 Çoka çok ilişki: `Kullanici.belongsToMany(Urun, { through: "favori", as: { singular: "favori", plural: "favoriler" } })`. `as` sayesinde `ben.addFavori(urun)`, `ben.removeFavori(urun)`, `ben.hasFavori(urun)`, `ben.getFavoriler()` fonksiyonları kendiliğinden oluşuyor. Kalbe basınca `site.js` `fetch` ile `/hesap/favori/5` adresine POST atıyor, sunucu varsa siliyor yoksa ekliyor ve `{ favori: true }` gibi JSON döndürüyor. Sayfa yenilenmiyor, kalp dolup boşalıyor ve altta bildirim çıkıyor.
 
+**Ürün sayfasındaki "Benzer ürünler" nasıl seçiliyor?**
+`controller/user.js` → `urun`. Aynı kategorideki, **başka örgücülerin** ürünleri: `kullaniciId: { [Op.ne]: urun.kullaniciId }` (ne = eşit değil). Aynı örgücünün ürünleri zaten üstteki "... mağazasından" bölümünde görünüyor, iki bölümde aynı ürün tekrar etmesin diye. Aynı kategoride 4 ürün yoksa, aynı iplikten örülmüş başka ürünlerle tamamlanıyor (`Op.notIn` ile zaten seçilenler tekrar gelmiyor).
+
 **Sıralama ve fiyat filtresi?**
 `/urunler?sirala=ucuz&min=100&max=500` (`controller/user.js` → `urunler`). Sıralama seçenekleri `SIRALAMALAR` nesnesinde, her birinin `sira` dizisi var. Fiyat aralığı için `Op.between` (ikisi de varsa), `Op.gte` (büyük eşit) ya da `Op.lte` (küçük eşit) kullanılıyor. Form `method="get"` olduğu için seçimler adreste görünüyor, sayfa paylaşılabiliyor. Kategori sayfası da aynı fonksiyonu kullanıyor (`/kategori/:slug`).
 
@@ -300,7 +303,7 @@ Bootstrap 5 + kendi `public/css/stil.css` dosyam. Bootstrap'ten navbar (telefond
 ## Test
 
 **Projeyi nasıl test ettin?**
-`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla siteyi gerçek bir kullanıcı gibi geziyor: misafir, üye, satıcı ve admin olarak giriş yapıyor, ürün ekliyor, sepetle ödeme yapıyor, durumu ilerletiyor, yorum yazıyor ve sonuçları kontrol ediyor (57 kontrol). Örnekler: CSRF anahtarı olmadan gönderilen form 403 alıyor; ürün adındaki `<script>` sayfada çalışmadan düz yazı görünüyor; hatalı ya da süresi geçmiş kart reddediliyor; sepete elle "fiyat: 1" yazılsa bile toplam veritabanı fiyatıyla hesaplanıyor; sipariş sayfasında kartın sadece son 4 hanesi görünüyor; misafirin siparişini başkası göremiyor; üye ikinci alışverişte adres yazmıyor; teslim almadan yorum yazılamıyor; "hazırlanıyor"dan doğrudan "teslim"e geçilemiyor. Çalıştırmak için: `ilmek.db`'yi sil, `npm start`, başka terminalde `npm test`.
+`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla siteyi gerçek bir kullanıcı gibi geziyor: misafir, üye, satıcı ve admin olarak giriş yapıyor, ürün ekliyor, sepetle ödeme yapıyor, durumu ilerletiyor, yorum yazıyor ve sonuçları kontrol ediyor (58 kontrol). Örnekler: CSRF anahtarı olmadan gönderilen form 403 alıyor; ürün adındaki `<script>` sayfada çalışmadan düz yazı görünüyor; hatalı ya da süresi geçmiş kart reddediliyor; sepete elle "fiyat: 1" yazılsa bile toplam veritabanı fiyatıyla hesaplanıyor; sipariş sayfasında kartın sadece son 4 hanesi görünüyor; misafirin siparişini başkası göremiyor; üye ikinci alışverişte adres yazmıyor; teslim almadan yorum yazılamıyor; "hazırlanıyor"dan doğrudan "teslim"e geçilemiyor. Çalıştırmak için: `ilmek.db`'yi sil, `npm start`, başka terminalde `npm test`.
 
 ---
 

@@ -141,11 +141,24 @@ exports.urun = async (req, res, next) => {
       include: Kullanici,
       limit: 4,
     });
+    // Benzer ürünler: aynı kategoride, BAŞKA örgücülerin ürünleri
+    // (aynı örgücünün ürünleri zaten yukarıdaki "mağazasından" bölümünde görünüyor)
     const benzerler = await Urun.findAll({
-      where: { onayli: true, kategoriId: urun.kategoriId, id: { [Op.ne]: urun.id } },
+      where: { onayli: true, kategoriId: urun.kategoriId, kullaniciId: { [Op.ne]: urun.kullaniciId } },
       include: Kullanici,
       limit: 4,
     });
+    // Aynı kategoride 4 tane yoksa aynı iplikten örülmüş başka ürünlerle tamamla
+    if (benzerler.length < 4) {
+      const olanlar = [urun.id];
+      for (const b of benzerler) olanlar.push(b.id);
+      const ekler = await Urun.findAll({
+        where: { onayli: true, iplik: urun.iplik, kullaniciId: { [Op.ne]: urun.kullaniciId }, id: { [Op.notIn]: olanlar } },
+        include: Kullanici,
+        limit: 4 - benzerler.length,
+      });
+      for (const e of ekler) benzerler.push(e);
+    }
     const favoriSayisi = await urun.countFavorileyenler();
 
     // Giriş yapan üye bu ürünü teslim aldıysa yorum yazabilir

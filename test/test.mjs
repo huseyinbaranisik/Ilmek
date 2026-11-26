@@ -54,6 +54,9 @@ sayfa = (await m.istek('/urun/sac-orgulu-kazak')).metin;
 sonuc('ürün sayfasında iplik ve hazırlanma süresi', sayfa.includes('Merinos') && sayfa.includes('12 günde örülür'));
 sayfa = (await m.istek('/sitemap.xml')).metin;
 sonuc('sitemap.xml', sayfa.includes('/urun/el-orgusu-bere') && sayfa.includes('/magaza/ayse') && sayfa.includes('/kategori/bebek-orguleri'));
+sayfa = (await m.istek('/urun/amigurumi-tavsan')).metin;
+const benzerKismi = sayfa.split('Benzer ürünler')[1] || '';
+sonuc('benzer ürünler başka örgücülerden (aynı mağaza tekrar etmiyor)', benzerKismi.includes('class="urun-kart"') && !benzerKismi.includes('/magaza/mehmet'));
 
 // ================= YENİ ÜYE (alıcı + satıcı) =================
 const u = istemci();

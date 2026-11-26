@@ -33,6 +33,10 @@ async function populate() {
     hakkinda: "Bebekler için yumuşacık örgüler: patikler, kazaklar, battaniyeler. Bebek dostu pamuk ve merinos iplik." });
   const elif = await Kullanici.create({ kullaniciAdi: "elif", sifre, rolId: 2, magazaAdi: "Elif Örgü Evi", sehir: "İstanbul",
     hakkinda: "Çoraplar, eldivenler, şallar ve tığ işi çantalar. Renkli ve neşeli örgüler seviyorum." });
+  const burak = await Kullanici.create({ kullaniciAdi: "burak", sifre, rolId: 2, magazaAdi: "Kuzey Örgü", sehir: "Erzurum",
+    hakkinda: "Erzurum kışına dayanıklı kalın örgüler: yelekler, boyunluklar, tozluklar. Örgüyü babaannemden öğrendim." });
+  const gul = await Kullanici.create({ kullaniciAdi: "gul", sifre, rolId: 2, magazaAdi: "Gül'ün Tığı", sehir: "Trabzon",
+    hakkinda: "Tığ işi her şey: dantel şallar, battaniyeler, sepetler, plaj çantaları. Ev için örgüler en sevdiğim." });
   // can sadece alıcı. Teslimat bilgileri kayıtlı olduğu için ödemede adres sorulmaz.
   const can = await Kullanici.create({ kullaniciAdi: "can", sifre, rolId: 2, adSoyad: "Can Yılmaz", telefon: "05321234567",
     eposta: "can@ornek.com", adres: "Atatürk Mah. Çınar Sok. No:12 D:3, Çankaya / Ankara" });
@@ -65,6 +69,37 @@ async function populate() {
     ["Motifli Yün Eldiven", "Çorap & Eldiven", elif, 330, 6, "Yün", 4, "eldiven.jpg", "Kar tanesi motifli, çift kat örülmüş parmaksız eldiven."],
     ["Kare Motifli Şal", "Atkı & Şal", elif, 690, 3, "Akrilik", 8, "sal.jpg", "Renkli kare motiflerin birleştirilmesiyle yapılmış şal. Omuza da dizlere de olur."],
     ["Tığ İşi File Çanta", "Çanta & Aksesuar", elif, 360, 5, "Pamuk", 3, "canta.jpg", "Pazar ve plaj için tığ işi file çanta. Uzun saplı, yıkanabilir pamuk."],
+
+    // Ayşe'nin İlmekleri
+    ["Ponponlu Kış Beresi", "Bere & Şapka", ayse, 390, 6, "Yün", 3, "ponponlu_bere.jpg", "Saç örgüsü desenli, kocaman ponponlu bere. Kıvrık kenarı kulakları tamamen kapatır."],
+    ["Balıkçı Yaka Kazak", "Kazak & Hırka", ayse, 1650, 2, "Merinos", 14, "balikci_kazak.jpg", "Boğazlı, kalın merinos kazak. Hardal, krem ve bej renkleri var, rengi sipariş notuna yazın."],
+    // Kuzey Örgü
+    ["Tığ İşi Boyunluk", "Atkı & Şal", burak, 420, 5, "Yün", 4, "tig_sapka.jpg", "Tarçın rengi, kalın dokulu boyunluk. Atkı gibi uçları sarkmaz, rüzgarda boyun açıkta kalmaz."],
+    ["Lacivert Örgü Yelek", "Kazak & Hırka", burak, 980, 3, "Yün", 9, "yelek.jpg", "V yaka, lacivert yün yelek. Gömleğin üstüne de tişörtün üstüne de olur."],
+    ["Gökkuşağı Atkı", "Atkı & Şal", burak, 450, 4, "Akrilik", 5, "renkli_atki.jpg", "Rengarenk çizgili, uzun ve yumuşak atkı. Kışın gri günlerine renk katar."],
+    ["Yün Tozluk", "Çorap & Eldiven", burak, 260, 8, "Yün", 3, "tozluk.jpg", "Dizden bileğe, lastik örgülü tozluk. Bot içinde de, evde de sıcak tutar."],
+    // Minik İlmek
+    ["Bebek Beresi", "Bebek Örgüleri", zeynep, 180, 10, "Pamuk", 2, "bebek_bere.jpg", "Tavşan kulaklı yenidoğan beresi. 0-3 ay, kaşındırmayan pamuk iplik."],
+    ["Bebek Battaniyesi", "Bebek Örgüleri", zeynep, 890, 3, "Pamuk", 6, "bebek_battaniye.jpg", "80x100 cm, puset ve beşik için yumuşacık battaniye. Makinede yıkanabilir."],
+    ["Bebek Hırkası", "Bebek Örgüleri", zeynep, 640, 4, "Merinos", 7, "bebek_hirka.jpg", "Düğmeli, motifli bebek hırkası. 6-12 ay ve 1-2 yaş bedenleri var."],
+    // Tığ Atölyesi
+    ["Mantar Amigurumi", "Amigurumi", mehmet, 250, 7, "Pamuk", 3, "mantar.jpg", "Kırmızı şapkalı, beyaz benekli mantar. Raf süsü ya da çocuk odası için."],
+    ["Örgü Bez Bebek", "Amigurumi", mehmet, 340, 5, "Pamuk", 4, "bebek_oyuncak.jpg", "Turuncu elbiseli, 28 cm boyunda örgü bebek. Kıyafeti çıkarılabilir."],
+    ["Ahtapot Amigurumi", "Amigurumi", mehmet, 270, 9, "Pamuk", 3, "ahtapot.jpg", "Sekiz kollu, gülen yüzlü ahtapot. Prematüre bebekler için de güvenli."],
+    ["Ayıcık Anahtarlık", "Çanta & Aksesuar", mehmet, 120, 15, "Akrilik", 1, "anahtarlik.jpg", "Avuç içi kadar minik ayıcık. Anahtarlık ya da çanta süsü olarak kullanılır."],
+    // Elif Örgü Evi
+    ["Burgulu Saç Bandı", "Bere & Şapka", elif, 190, 9, "Yün", 2, "sac_bandi.jpg", "Önü burgulu, yeşil yün saç bandı. Kulakları sıcak tutar, saçı bozmaz."],
+    ["Örgü Ev Terliği", "Çorap & Eldiven", elif, 310, 6, "Yün", 3, "terlik.jpg", "Keçe tabanlı, kaymaz örgü terlik. 36'dan 41'e kadar numara seçin."],
+    ["Püsküllü Panço", "Kazak & Hırka", elif, 1150, 2, "Alpaka", 10, "panco.jpg", "Krem rengi, püsküllü alpaka panço. Tek beden, her mevsim omuza alınır."],
+    // Gül'ün Tığı
+    ["Granny Kare Battaniye", "Ev & Dekor", gul, 1350, 2, "Akrilik", 12, "motifli_battaniye.jpg", "Yüzlerce renkli granny karenin birleştirilmesiyle yapıldı. 130x160 cm."],
+    ["Fil Desenli Çocuk Halısı", "Ev & Dekor", gul, 1290, 1, "Pamuk", 14, "fil.jpg", "Kalın penye ipten tığla örülmüş fil halı. Çocuk odasına neşe katar, 90 cm."],
+    ["Bardak Altlığı Seti", "Ev & Dekor", gul, 160, 12, "Pamuk", 2, "altlik.jpg", "Renkli, yuvarlak 4'lü bardak altlığı. Sıcak kupalar masayı lekelemez."],
+    ["Örgü Sepet", "Ev & Dekor", gul, 420, 6, "Pamuk", 4, "sepet.jpg", "Penye iple örülmüş, sağlam duran düzenleme sepeti. Banyo ve çocuk odası için."],
+    ["Örgü Kırlent", "Ev & Dekor", gul, 450, 5, "Pamuk", 4, "kirlent.jpg", "Krem rengi, kabartma desenli 45x45 cm kırlent. Kılıfı fermuarlı, iç yastık dahil."],
+    ["Tığ İşi Plaj Çantası", "Çanta & Aksesuar", gul, 380, 4, "Pamuk", 3, "plaj_canta.jpg", "Kiremit rengi, geniş tığ işi çanta. Havlu ve şişe rahatça sığar."],
+    ["Dantel Örgü Şal", "Atkı & Şal", gul, 870, 2, "Moher", 12, "dantel_sal.jpg", "İnce moher iplikle şişte örülmüş dantel şal. Düğün ve davetlere çok yakışır."],
+    ["Tığ İşi Yazlık Bluz", "Kazak & Hırka", gul, 560, 3, "Bambu", 6, "bustiyer.jpg", "Mavi tonlarında, askılı tığ işi yazlık bluz. Bambu iplik terletmez."],
   ];
   for (const [baslik, kategori, satici, fiyat, stok, iplik, hazirlikGunu, resim, aciklama] of liste) {
     urunler[baslik] = await Urun.create({
@@ -119,7 +154,8 @@ async function populate() {
 
   // ---------- Galeri: atölyelerden kareler ----------
   for (const [resim, aciklama] of [["orgu_eller.jpg", "Akşam örgüsü"], ["yumak.jpg", "Yeni gelen yumaklar"], ["ip_rafi.jpg", "Elif'in ip rafı"],
-    ["kazak.jpg", "Ayşe'nin kış koleksiyonu"], ["tavsan.jpg", "Tığ Atölyesi'nin yeni üyesi"], ["battaniye.jpg", "Minik İlmek'ten kalın örgü"]]) {
+    ["kazak.jpg", "Ayşe'nin kış koleksiyonu"], ["tavsan.jpg", "Tığ Atölyesi'nin yeni üyesi"], ["battaniye.jpg", "Minik İlmek'ten kalın örgü"],
+    ["dantel_sal.jpg", "Gül'ün dantel şalı şişte"], ["motifli_battaniye.jpg", "Yüzlerce granny kare"], ["mantar.jpg", "Mantar yumağın üstünde"]]) {
     await Galeri.create({ resim: "/img/urunler/" + resim, aciklama });
   }
 

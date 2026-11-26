@@ -22,6 +22,8 @@ Tarayıcıda: http://localhost:3000
 | Örgücü (bebek örgüleri, battaniye) | `zeynep` | `123456` |
 | Örgücü (amigurumi, tığ işi çiçek) | `mehmet` | `123456` |
 | Örgücü (çorap, eldiven, şal, çanta) | `elif` | `123456` |
+| Örgücü (yelek, boyunluk, tozluk) | `burak` | `123456` |
+| Örgücü (tığ işi: dantel şal, battaniye, sepet, ev dekoru) | `gul` | `123456` |
 | Alıcı (adresi kayıtlı) | `can` | `123456` |
 
 Ödeme sayfasında deneme için herhangi bir 16 haneli numara yazabilirsiniz, örneğin `4242 4242 4242 4242`, son kullanma `12/30`, CVV `123`.
@@ -81,7 +83,7 @@ Resimler veritabanına konmaz. Dosyanın kendisi `public/img/` klasöründe duru
 
 ## Test
 
-`test/test.mjs` misafir, alıcı, örgücü ve admin akışlarını uçtan uca dener: CSRF, XSS, slug, sıralama, fiyat ve iplik filtresi, arama, ürün ekleme ve onay, sepet ve ödeme (misafir ve üye, kart kontrolleri, fiyatın sunucudan alınması, sipariş sorgulama), stok, sipariş durumları, "sadece teslim alan yorum yazabilir" kuralı, favori, kategori yönetimi (57 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
+`test/test.mjs` misafir, alıcı, örgücü ve admin akışlarını uçtan uca dener: CSRF, XSS, slug, sıralama, fiyat ve iplik filtresi, arama, ürün ekleme ve onay, sepet ve ödeme (misafir ve üye, kart kontrolleri, fiyatın sunucudan alınması, sipariş sorgulama), stok, sipariş durumları, "sadece teslim alan yorum yazabilir" kuralı, favori, benzer ürünler, kategori yönetimi (58 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
 
 ```bash
 # ilmek.db dosyasını silin, sonra:
@@ -127,3 +129,27 @@ npm test       # başka bir terminalde
 | `yumak.jpg` | Margarida Afonso | https://unsplash.com/photos/orange-blue-and-white-yarn-ahMCpXdUjv0 |
 | `ip_rafi.jpg` | Paul Hanaoka | https://unsplash.com/photos/assorted-color-textiles-4nabmlliGdU |
 | `orgu_eller.jpg` | Tanaphong Toochinda | https://unsplash.com/photos/a-woman-is-knitting-a-piece-of-fabric-WddCult7llk |
+| `ponponlu_bere.jpg` | Chris Lorensson | https://unsplash.com/photos/woman-covering-her-face-with-knit-cap-zXdI8XO3ZBs |
+| `tig_sapka.jpg` | la crafter | https://unsplash.com/photos/brown-textile-FQi7FgB6GRo |
+| `bebek_bere.jpg` | kaushal mishra | https://unsplash.com/photos/baby-in-white-knit-cap-lying-on-white-textile-p76UivR30oo |
+| `sac_bandi.jpg` | Yuliia Pakhomova | https://unsplash.com/photos/knitted-green-headband-with-a-twisted-knot-detail-dGezk2g_SQk |
+| `panco.jpg` | Milada Vigerova | https://unsplash.com/photos/beige-crochet-poncho-with-fringe-p8Drpg_duLw |
+| `yelek.jpg` | Laura Ohlman | https://unsplash.com/photos/a-close-up-of-a-knitted-sweater-with-a-ball-of-yarn-next-to-it-1wM8AxQPQuM |
+| `terlik.jpg` | Stacy | https://unsplash.com/photos/cozy-pink-slippers-with-home-sweet-home-sign-AGr29lY9TMA |
+| `motifli_battaniye.jpg` | Annie Spratt | https://unsplash.com/photos/kDT-gRJanKw |
+| `bebek_battaniye.jpg` | Olivia Anne Snyder | https://unsplash.com/photos/newborn-baby-sleeping-peacefully-on-a-soft-blanket-LcJARfBVhW8 |
+| `bebek_hirka.jpg` | David Utt | https://unsplash.com/photos/a-smiling-baby-holds-a-small-leaf-in-a-park-8bCFpXmPyUQ |
+| `mantar.jpg` | Anya Chernykh | https://unsplash.com/photos/a-white-ball-of-yarn-with-a-red-mushroom-on-top-of-it-P5vgCstOdJM |
+| `bebek_oyuncak.jpg` | Yousef Bagheri | https://unsplash.com/photos/orange-and-white-crochet-doll-HYiMr8Ep0aA |
+| `ahtapot.jpg` | Lizzi Sassman | https://unsplash.com/photos/a-crocheted-stuffed-animal-sitting-on-top-of-a-table-eo7kcjkQVcI |
+| `fil.jpg` | Stephanie Harvey | https://unsplash.com/photos/black-and-gray-elephant-plush-toy-on-brown-wooden-table-d916id9kurQ |
+| `altlik.jpg` | Céline Druguet | https://unsplash.com/photos/a-cup-of-coffee-and-a-crocheted-coaster-next-to-an-open-book-egf6NVZUiMA |
+| `sepet.jpg` | Ana Laura Palharini | https://unsplash.com/photos/a-close-up-of-a-woven-piece-of-cloth-UBuv8COUVg4 |
+| `kirlent.jpg` | Lucas de Moura | https://unsplash.com/photos/a-brown-couch-with-two-pillows-on-it-b0kTwnDM1O0 |
+| `plaj_canta.jpg` | mohadese marvi | https://unsplash.com/photos/red-knit-textile-on-brown-wooden-table-fxGgqbIGQlg |
+| `anahtarlik.jpg` | Akshay Malik | https://unsplash.com/photos/brown-and-white-knitted-owl-on-brown-wooden-table-vG3NdHF6dAY |
+| `renkli_atki.jpg` | Point Normal | https://unsplash.com/photos/a-crocheted-blanket-with-a-multicolored-design-2QhoX6bZ1rk |
+| `dantel_sal.jpg` | Knit Pro | https://unsplash.com/photos/white-chopsticks-on-stainless-steel-bowl-0ZTjxgegQpk |
+| `balikci_kazak.jpg` | Kateryna Hliznitsova | https://unsplash.com/photos/a-pile-of-sweaters-laying-on-top-of-each-other-tRknQ2W_0zQ |
+| `tozluk.jpg` | Maria Kovalets | https://unsplash.com/photos/a-womans-feet-with-red-nail-polish-and-a-pair-of-socks-wlkGZ0gMBN4 |
+| `bustiyer.jpg` | Chidera Faustina Okeke | https://unsplash.com/photos/smiling-woman-in-a-blue-top-leaning-on-a-tree-7rys7hWy9H0 |
