@@ -28,6 +28,39 @@
   </div>
 <% } %>
 
+<!-- Son dinlenenler: tarayıcıda (localStorage) tutulur, oynatici.js doldurur. Hiç dinlenmediyse gizli kalır. -->
+<section id="son-dinlenenler" hidden>
+  <h2 class="bolum-baslik">Son dinlediklerin</h2>
+  <div class="hizli-izgara" id="son-dinlenenler-liste"></div>
+</section>
+
+<% if (kullanici) { %>
+  <!-- Takip ettiklerinin etkinliği -->
+  <h2 class="bolum-baslik">Takip ettiklerin</h2>
+  <% if (!takipVar) { %>
+    <div class="kutu d-flex align-items-center gap-3 flex-wrap">
+      <i class="bi bi-people fs-4 turuncu"></i>
+      <div class="flex-grow-1">Henüz kimseyi takip etmiyorsun. Takip ettiklerinin incelemeleri ve ne dinledikleri burada görünür.</div>
+      <a href="/uyeler" class="btn-beyaz">Üyelere göz at</a>
+    </div>
+  <% } else { %>
+    <% if (dinleyenArkadaslar.length) { %>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <% dinleyenArkadaslar.forEach(d => { %>
+          <a href="/sarki/<%= d.sarki.slug %>" class="simdi-dinliyor">
+            <span class="esitleyici"><i></i><i></i><i></i></span>
+            <%= d.kullaniciAdi %> şu an <b><%= d.sarki.baslik %></b> dinliyor
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+    <div class="d-grid gap-2">
+      <% takipIncelemeleri.forEach(i => { %><%- include('partials/inceleme', { i, sarkiGoster: true }) %><% }) %>
+      <% if (takipIncelemeleri.length === 0) { %><p class="soluk">Takip ettiklerin henüz inceleme yazmamış.</p><% } %>
+    </div>
+  <% } %>
+<% } %>
+
 <h2 class="bolum-baslik">En çok dinlenenler</h2>
 <div class="izgara">
   <% enCokDinlenen.forEach(s => { %>

@@ -296,6 +296,25 @@ Oynatıcı zaten 15 saniyede bir `/api/nabiz`'e hangi şarkıyı çaldığını 
 **Karıştır ve tekrarla nasıl çalışıyor?**
 Tamamen tarayıcıda (`oynatici.js`), sunucuya bir şey gitmiyor. `karisik` açıksa sıradaki şarkı `Math.random()` ile seçiliyor. `tekrar` üç durum arasında dönüyor: kapalı → listeyi tekrarla (liste bitince başa döner) → şarkıyı tekrarla (şarkı bitince `currentTime = 0`). Seçim `localStorage`'a kaydediliyor, sayfa değişince kaybolmuyor.
 
+**Ana sayfadaki "Takip ettiklerin" nasıl hazırlanıyor?**
+`controller/user.js` → `anaSayfa`. Giriş yapan üyenin takip ettikleri `ben.getTakipEdilenler()` ile alınıyor. Sonra `Inceleme.findAll({ where: { kullaniciId: [2, 3] } })` ile o kişilerin son incelemeleri çekiliyor. Sequelize `where`'e dizi verilince SQL'de `kullaniciId IN (2, 3)` yazıyor. Ayrıca her biri için `neDinliyor()` ile şu an dinledikleri şarkıya bakılıyor.
+
+**"Son dinlediklerin" nerede tutuluyor?**
+Sunucuda değil, tarayıcının `localStorage`'ında (`sonDinlenenler` anahtarı), en fazla 6 şarkı. Bu yüzden misafirlerde de çalışıyor ama başka bilgisayarda görünmüyor. Ana sayfadaki kutucukları `oynatici.js` oluşturuyor. Şarkı adını `innerHTML` ile değil `textContent` ile yazıyoruz. Böylece adında HTML kodu olsa bile çalıştırılmıyor, düz yazı olarak görünüyor (XSS koruması).
+
+**Klavye kısayolları ve kilit ekranı?**
+`oynatici.js`'te `keydown` olayı: Boşluk çal / durdur, ← → 5 saniye geri / ileri, Shift + ← → önceki / sonraki şarkı. Bir yazı kutusuna yazı yazılırken kısayollar çalışmıyor. Telefonun kilit ekranında ve klavyenin medya tuşlarında şarkı adı ve düğmeler tarayıcının Media Session API'si ile gösteriliyor (`navigator.mediaSession`). Desteklemeyen tarayıcıda bu kısım atlanıyor.
+
+**Arama üyeleri de buluyor mu?**
+Evet. `anaSayfa`'da `?q=` varsa şarkılarla birlikte `Kullanici.findAll({ where: { kullaniciAdi: { [Op.like]: "%den%" } } })` ile üyeler de aranıyor.
+
+---
+
+## Test
+
+**Projeyi nasıl test ettin?**
+`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla sitenin üzerinde gerçek bir kullanıcı gibi geziniyor: misafir, üye ve admin olarak giriş yapıyor, form gönderiyor, şarkı yüklüyor, beğeniyor, takip ediyor ve sonuçları kontrol ediyor (31 kontrol). Örneğin CSRF anahtarı olmadan gönderilen formun 403 aldığını, incelemedeki `<script>` kodunun sayfada çalışmadan düz yazı olarak göründüğünü, onaylanmamış şarkının 404 verdiğini kontrol ediyor. Çalıştırmak için: `plak.db`'yi sil, `npm start`, başka terminalde `npm test`.
+
 ---
 
 ## Resimler ve dosyalar

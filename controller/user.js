@@ -34,7 +34,9 @@ exports.anaSayfa = async (req, res, next) => {
         where: { onayli: true, [Op.or]: [{ baslik: ara }, { sanatci: ara }, { album: ara }] },
         order: [["baslik", "ASC"]],
       });
-      return res.render("arama", { q, sonuclar });
+      // Kullanıcı adında aranan kelime geçen üyeler de bulunur
+      const uyeSonuclar = await Kullanici.findAll({ where: { kullaniciAdi: ara }, order: [["kullaniciAdi", "ASC"]], limit: 8 });
+      return res.render("arama", { q, sonuclar, uyeSonuclar });
     }
     // Haftanın albümü = en son eklenen albüm
     const [haftaninAlbumu] = await albumleriGetir([[fn("MAX", col("id")), "DESC"]], 1);
@@ -50,7 +52,31 @@ exports.anaSayfa = async (req, res, next) => {
       limit: 4,
     });
     const sonDuyuru = await Duyuru.findOne({ order: [["tarih", "DESC"]] });
-    res.render("index", { haftaninAlbumu, enCokDinlenen, enYuksekPuan, sonIncelemeler, sonDuyuru });
+
+    // Giriş yapan üyenin takip ettiklerinin etkinliği (Spotify'daki "arkadaş etkinliği" gibi)
+    let takipVar = false, takipIncelemeleri = [], dinleyenArkadaslar = [];
+    if (req.session.isAuth) {
+      const ben = await Kullanici.findByPk(req.session.kullanici.id);
+      const takipEdilenler = ben ? await ben.getTakipEdilenler() : [];
+      takipVar = takipEdilenler.length > 0;
+      // Takip ettiklerimin son incelemeleri: kullaniciId bu listedekilerden biri olsun
+      takipIncelemeleri = await Inceleme.findAll({
+        where: { kullaniciId: takipEdilenler.map(k => k.id) },
+        include: [Kullanici, Sarki],
+        order: [["updatedAt", "DESC"]],
+        limit: 4,
+      });
+      // Şu an bir şey dinleyenler
+      for (const k of takipEdilenler) {
+        const sarkiId = neDinliyor(k.kullaniciAdi);
+        if (sarkiId) dinleyenArkadaslar.push({ kullaniciAdi: k.kullaniciAdi, sarki: await Sarki.findByPk(sarkiId) });
+      }
+    }
+
+    res.render("index", {
+      haftaninAlbumu, enCokDinlenen, enYuksekPuan, sonIncelemeler, sonDuyuru,
+      takipVar, takipIncelemeleri, dinleyenArkadaslar,
+    });
   } catch (err) {
     next(err);
   }

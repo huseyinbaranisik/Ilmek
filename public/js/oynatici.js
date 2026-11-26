@@ -46,7 +46,53 @@ function cal(liste, i, baslangic = 0, yeniDinleme = true) {
   if (yeniDinleme) {
     ses.play().catch(() => {});
     gonder('/api/dinlendi/' + s.id);   // dinlenme sayısı +1
+    sonDinlenenlereEkle(s);
   }
+  kilitEkrani(s);
+}
+
+// ---------- Son dinlenenler (tarayıcıda, localStorage'da en fazla 6 şarkı) ----------
+function sonDinlenenlereEkle(s) {
+  let liste = JSON.parse(localStorage.getItem('sonDinlenenler') || '[]');
+  liste = [s, ...liste.filter(x => x.id !== s.id)].slice(0, 6);   // en başa koy, tekrarı sil
+  localStorage.setItem('sonDinlenenler', JSON.stringify(liste));
+}
+
+// Ana sayfadaki "Son dinlediklerin" bölümünü doldurur (sadece ana sayfada bu bölüm var)
+function sonDinlenenleriGoster() {
+  const kutu = document.getElementById('son-dinlenenler-liste');
+  if (!kutu) return;
+  const liste = JSON.parse(localStorage.getItem('sonDinlenenler') || '[]');
+  if (liste.length === 0) return;
+  liste.forEach(s => {
+    // Her şarkı için küçük bir kutucuk: kapak + ad. Yazıları textContent ile koyuyoruz (XSS olmasın diye innerHTML değil)
+    const el = document.createElement('div');
+    el.className = 'hizli-kart';
+    el.dataset.sarki = JSON.stringify(s);   // tıklayınca çalsın (aşağıdaki tıklama dinleyicisi)
+    const img = document.createElement('img');
+    img.src = s.kapak; img.alt = '';
+    const ad = document.createElement('span');
+    ad.textContent = s.baslik;
+    el.append(img, ad);
+    kutu.append(el);
+  });
+  document.getElementById('son-dinlenenler').hidden = false;
+}
+sonDinlenenleriGoster();
+
+// ---------- Telefonun kilit ekranı / klavyenin medya tuşları (Media Session API) ----------
+function kilitEkrani(s) {
+  if (!('mediaSession' in navigator)) return;   // tarayıcı desteklemiyorsa geç
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: s.baslik, artist: s.sanatci, album: 'Gramofy',
+    artwork: [{ src: location.origin + s.kapak }],
+  });
+}
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play', () => ses.play());
+  navigator.mediaSession.setActionHandler('pause', () => ses.pause());
+  navigator.mediaSession.setActionHandler('nexttrack', () => $('o-sonraki').click());
+  navigator.mediaSession.setActionHandler('previoustrack', () => $('o-onceki').click());
 }
 
 // Ses dosyası yüklenince kaldığı saniyeye git
@@ -131,7 +177,18 @@ $('o-onceki').onclick = () => {
   if (ses.currentTime > 3 || index === 0) ses.currentTime = 0;   // başa sar
   else if (index > 0) cal(sira, index - 1);
 };
-$('o-ilerleme').oninput = e => { if (ses.duration) ses.currentTime = ses.duration * e.target.value / 100; };
+// ---------- Klavye kısayolları ----------
+// Boşluk: çal / durdur, ← →: 5 saniye geri / ileri, Shift + ← →: önceki / sonraki şarkı
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea, select, [contenteditable]')) return;   // yazı yazarken karışmasın
+  if (e.code === 'Space' && !e.target.closest('button, a, .kilif')) { e.preventDefault(); $('o-cal').click(); }
+  else if (e.key === 'ArrowRight' && e.shiftKey) $('o-sonraki').click();
+  else if (e.key === 'ArrowLeft' && e.shiftKey) $('o-onceki').click();
+  else if (e.key === 'ArrowRight' && ses.duration) ses.currentTime = Math.min(ses.duration, ses.currentTime + 5);
+  else if (e.key === 'ArrowLeft') ses.currentTime = Math.max(0, ses.currentTime - 5);
+});
+
+$('o-ilerleme').oninput =e => { if (ses.duration) ses.currentTime = ses.duration * e.target.value / 100; };
 $('o-ses').oninput = e => { ses.volume = e.target.value; };
 
 ses.addEventListener('play', () => { arayuzuGuncelle(); nabiz(); });
