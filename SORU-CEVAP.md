@@ -7,7 +7,7 @@ Her cevabın yanında kodun bulunduğu dosya ve fonksiyon yazıyor. Sunumdan ön
 ## Genel
 
 **Proje ne?**
-**İlmek**: el yapımı ürünlerin pazar yeri. Örgü, takı, seramik, ahşap gibi ürünleri yapan üyeler mağaza açıp ürün ekliyor, diğer üyeler sipariş talebi gönderiyor. Gerçek ödeme yok: satıcı talebi onaylıyor, sonra durumu "hazırlanıyor → kargoda → teslim edildi" diye ilerletiyor. Ürünü teslim alan alıcı yorum ve puan yazabiliyor.
+**İlmek**: el örgüsü ürünlerin pazar yeri. Şişle ve tığla ören üyeler mağaza açıp kazak, bere, bebek patiği, amigurumi gibi örgülerini ekliyor, diğer üyeler sipariş talebi gönderiyor. Her ürünün iplik türü ve kaç günde örüleceği (hazırlanma süresi) yazıyor. Gerçek ödeme yok: satıcı talebi onaylıyor, sonra durumu "hazırlanıyor → kargoda → teslim edildi" diye ilerletiyor. Ürünü teslim alan alıcı yorum ve puan yazabiliyor.
 
 **Projenin yapısı nasıl?**
 Derste kullandığımız **MVC** yapısı:
@@ -202,8 +202,11 @@ Derste kullandığımız `slugify` paketiyle, `helpers/slugfield.js` dosyasında
 
 Örnek: "Çılgın Şubat İndirimleri Başladı!" → `cilgin-subat-indirimleri-basladi`
 
+**Kategori adındaki "&" nasıl çevriliyor?**
+slugify "&" işaretini İngilizce "and" yapıyor ("Bere & Şapka" → `bere-and-sapka`). Türkçe olsun diye `slugField()` içinde önce `str.replace(/&/g, " ve ")` yapıyoruz, sonuç `bere-ve-sapka` oluyor.
+
 **Hangi sayfalarda var?**
-Ürün (`/urun/sirli-seramik-kupa`), kategori (`/kategori/mum-sabun`), duyuru (`/duyuru/ilmek-acildi`). Mağazalarda kullanıcı adı kullanılıyor (`/magaza/ayse`).
+Ürün (`/urun/sac-orgulu-kazak`), kategori (`/kategori/bere-ve-sapka`), duyuru (`/duyuru/ilmek-acildi`). Mağazalarda kullanıcı adı kullanılıyor (`/magaza/ayse`).
 
 **Aynı başlıktan iki tane olursa?**
 `benzersizSlug()` fonksiyonu veritabanına bakıyor. Slug alınmışsa sonuna `-2`, `-3` ekliyor.
@@ -251,27 +254,33 @@ Hayır, sadece ürünü satın alıp **teslim almış** üye (`controller/hesap.
 **Favori (kalp) nasıl çalışıyor?**
 Çoka çok ilişki: `Kullanici.belongsToMany(Urun, { through: "favori", as: { singular: "favori", plural: "favoriler" } })`. `as` sayesinde `ben.addFavori(urun)`, `ben.removeFavori(urun)`, `ben.hasFavori(urun)`, `ben.getFavoriler()` fonksiyonları kendiliğinden oluşuyor. Kalbe basınca `site.js` `fetch` ile `/hesap/favori/5` adresine POST atıyor, sunucu varsa siliyor yoksa ekliyor ve `{ favori: true }` gibi JSON döndürüyor. Sayfa yenilenmiyor, kalp dolup boşalıyor ve altta bildirim çıkıyor.
 
-**Mağaza takibi?**
-Kullanıcının kendisiyle çoka çok ilişkisi (`takip` tablosu: `takipciId`, `takipEdilenId`). Takip ettiğin mağazaların yeni ürünleri ana sayfada "Takip ettiğin mağazalardan" bölümünde çıkıyor: `Urun.findAll({ where: { kullaniciId: [2, 4] } })`. Sequelize `where`'e dizi verilince SQL'de `IN (2, 4)` yazıyor.
+**Örgücü (mağaza) takibi?**
+Kullanıcının kendisiyle çoka çok ilişkisi (`takip` tablosu: `takipciId`, `takipEdilenId`). Takip ettiğin örgücülerin yeni ürünleri ana sayfada "Takip ettiğin örgücülerden" bölümünde çıkıyor: `Urun.findAll({ where: { kullaniciId: [2, 4] } })`. Sequelize `where`'e dizi verilince SQL'de `IN (2, 4)` yazıyor.
 
 **Sıralama ve fiyat filtresi?**
 `/urunler?sirala=ucuz&min=100&max=500` (`controller/user.js` → `urunler`). Sıralama seçenekleri `SIRALAMALAR` nesnesinde, her birinin `order` dizisi var. Fiyat aralığı `Op.gte` (büyük eşit) ve `Op.lte` (küçük eşit) ile. Form `method="get"` olduğu için seçimler adreste görünüyor, sayfa paylaşılabiliyor. Kategori sayfası da aynı fonksiyonu kullanıyor (`/kategori/:slug`).
 
+**İplik türü ve hazırlanma süresi nasıl tutuluyor?**
+`models/urun.js` içinde iki sütun: `iplik` (metin) ve `hazirlikGunu` (sayı). Seçilebilecek iplikler aynı dosyada bir dizi: `Urun.IPLIKLER = ["Yün", "Merinos", "Alpaka", "Moher", "Pamuk", "Bambu", "Akrilik"]`. Ürün formundaki açılır liste bu diziden oluşuyor. Kaydederken `Urun.IPLIKLER.includes(req.body.iplik)` ile kontrol ediliyor, listede olmayan bir değer gönderilirse "Yün" yazılıyor. Hazırlanma süresi 1 ile 60 gün arasına sınırlanıyor. Ürün sayfasında "12 günde örülür" gibi gösteriliyor.
+
+**İplik türüne göre süzme?**
+Ürünler sayfasındaki çipler `/urunler?iplik=Alpaka` adresine gidiyor. `controller/user.js` → `urunler` fonksiyonu değer listede varsa `where.iplik = "Alpaka"` ekliyor. Sıralama ve fiyat aralığıyla birlikte de çalışıyor (çiplerin adresine diğer seçimler de ekleniyor).
+
 **Arama?**
-Üst menüdeki kutu `/?q=kupa` adresine gidiyor. `Op.like` ile ürün adında/açıklamasında ve mağaza adında/kullanıcı adında arıyor: `{ [Op.like]: "%kupa%" }`.
+Üst menüdeki kutu `/?q=kazak` adresine gidiyor. `Op.like` ile ürün adında, açıklamasında ve iplik türünde, ayrıca mağaza adında ve kullanıcı adında arıyor: `{ [Op.like]: "%kazak%" }`. "merinos" yazınca merinos iplikten örülmüş ürünler de çıkıyor.
 
 ---
 
 ## Tasarım ve telefon
 
 **Tasarımı nasıl yaptın?**
-Bootstrap 5 + kendi `public/css/stil.css` dosyam. Bootstrap'ten navbar (telefonda hamburger menü: `navbar-toggler` + `collapse`), açılır menü (`dropdown`), ızgara (`row`, `col-md-6`) ve yardımcı sınıfları (`d-flex`, `gap-2`) kullandım. Görünüm el işine uygun "sıcak" bir tema: krem kâğıt zemin, kiremit ve zeytin yeşili renkler, dikiş çizgisi gibi kesikli kenarlar (`outline: dashed`), el yazısı notlar, galeride polaroid fotoğraflar.
+Bootstrap 5 + kendi `public/css/stil.css` dosyam. Bootstrap'ten navbar (telefonda hamburger menü: `navbar-toggler` + `collapse`), açılır menü (`dropdown`), ızgara (`row`, `col-md-6`) ve yardımcı sınıfları (`d-flex`, `gap-2`) kullandım. Görünüm örgüye uygun "sıcak" bir tema: krem kâğıt zemin, kiremit ve zeytin yeşili renkler, dikiş çizgisi gibi kesikli kenarlar (`outline: dashed`), el yazısı notlar, galeride polaroid fotoğraflar.
 
 **Renkler nasıl yönetiliyor?**
 `stil.css`'in başındaki `:root` içinde CSS değişkenleri: `--zemin`, `--turuncu` (kiremit), `--yesil` (zeytin) ... Bütün site bu değişkenleri kullandığı için bir rengi değiştirmek tek satır.
 
 **Yazı tipleri?**
-Üç tane, hepsi `@fontsource` paketlerinden ve `node_modules`'tan sunuluyor (internete gerek yok): **Fraunces** (başlıklar, fiyatlar), **Caveat** (el yazısı notlar: "el yapımı" etiketi, logo altı yazısı), **Inter** (gövde yazısı). `index.js`'te `/vendor/fraunces` gibi statik yollar var.
+Üç tane, hepsi `@fontsource` paketlerinden ve `node_modules`'tan sunuluyor (internete gerek yok): **Fraunces** (başlıklar, fiyatlar), **Caveat** (el yazısı notlar: "el örgüsü" etiketi, logo altı yazısı), **Inter** (gövde yazısı). `index.js`'te `/vendor/fraunces` gibi statik yollar var.
 
 **Telefonda nasıl görünüyor?**
 - Navbar 992px altında hamburger menüye dönüşüyor (Bootstrap `navbar-expand-lg`).
@@ -287,7 +296,7 @@ Bootstrap 5 + kendi `public/css/stil.css` dosyam. Bootstrap'ten navbar (telefond
 ## Test
 
 **Projeyi nasıl test ettin?**
-`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla siteyi gerçek bir kullanıcı gibi geziyor: misafir, alıcı, satıcı ve admin olarak giriş yapıyor, ürün ekliyor, sipariş veriyor, durumu ilerletiyor, yorum yazıyor ve sonuçları kontrol ediyor (43 kontrol). Örnekler: CSRF anahtarı olmadan gönderilen form 403 alıyor; ürün adındaki `<script>` sayfada çalışmadan düz yazı görünüyor; onaysız ürün 404 veriyor; teslim almadan yorum yazılamıyor; satıcı onaylayınca stok düşüyor; "beklemede"den doğrudan "teslim"e geçilemiyor; başkası siparişin durumunu değiştiremiyor. Çalıştırmak için: `ilmek.db`'yi sil, `npm start`, başka terminalde `npm test`.
+`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla siteyi gerçek bir kullanıcı gibi geziyor: misafir, alıcı, satıcı ve admin olarak giriş yapıyor, ürün ekliyor, sipariş veriyor, durumu ilerletiyor, yorum yazıyor ve sonuçları kontrol ediyor (46 kontrol). Örnekler: CSRF anahtarı olmadan gönderilen form 403 alıyor; ürün adındaki `<script>` sayfada çalışmadan düz yazı görünüyor; onaysız ürün 404 veriyor; teslim almadan yorum yazılamıyor; satıcı onaylayınca stok düşüyor; "beklemede"den doğrudan "teslim"e geçilemiyor; başkası siparişin durumunu değiştiremiyor. Çalıştırmak için: `ilmek.db`'yi sil, `npm start`, başka terminalde `npm test`.
 
 ---
 
@@ -297,7 +306,7 @@ Bootstrap 5 + kendi `public/css/stil.css` dosyam. Bootstrap'ten navbar (telefond
 Kurulum gerektirmediği için, proje her bilgisayarda `npm install` ve `npm start` ile çalışıyor. Sequelize kullandığımız için kodun geri kalanı veritabanından bağımsız. MySQL'e geçmek için `data/db.js`'te dersteki satırı yazmak ve `mysql2` paketini kurmak yeterli.
 
 **Neden gerçek ödeme yok?**
-Ders projesi olduğu için ve gerçek ödeme almak güvenlik, sözleşme ve banka entegrasyonu gerektirdiği için. Bunun yerine sipariş talebi + durum takibi yaptık; el yapımı ürünlerde zaten çoğu zaman satıcıyla konuşup kişiye özel ayarlama yapılıyor.
+Ders projesi olduğu için ve gerçek ödeme almak güvenlik, sözleşme ve banka entegrasyonu gerektirdiği için. Bunun yerine sipariş talebi + durum takibi yaptık; örgüde zaten çoğu zaman örgücüyle konuşup beden, renk gibi kişiye özel ayarlama yapılıyor.
 
 **Aynı anda iki kişi son ürünü alırsa?**
 Sipariş talebi stoğu düşürmüyor, satıcı onaylarken düşüyor. Satıcı onaylamaya çalıştığında stok yetmiyorsa "Stok yetersiz" uyarısı alıyor, o siparişi reddedebiliyor.

@@ -37,7 +37,7 @@ exports.urunFormu = async (req, res, next) => {
       if (!urun || urun.kullaniciId !== benimId(req)) return next(); // başkasının ürünü -> 404
     }
     const kategoriler = await Kategori.findAll({ order: [["ad", "ASC"]] });
-    res.render("hesap/urun-formu", { urun, kategoriler });
+    res.render("hesap/urun-formu", { urun, kategoriler, IPLIKLER: Urun.IPLIKLER });
   } catch (err) {
     next(err);
   }
@@ -49,6 +49,8 @@ exports.urunKaydet = async (req, res, next) => {
   try {
     const { baslik, aciklama, kategoriId } = req.body;
     const fiyat = parseInt(req.body.fiyat), stok = parseInt(req.body.stok);
+    const hazirlikGunu = parseInt(req.body.hazirlikGunu) || 3;
+    const iplik = Urun.IPLIKLER.includes(req.body.iplik) ? req.body.iplik : "Yün"; // sadece listedeki iplikler
     let urun = null;
     if (req.params.id) {
       urun = await Urun.findByPk(req.params.id);
@@ -66,7 +68,8 @@ exports.urunKaydet = async (req, res, next) => {
       return res.redirect(formAdresi);
     }
 
-    const veri = { baslik: baslik.trim().slice(0, 100), aciklama: (aciklama || "").slice(0, 3000), fiyat, stok, kategoriId };
+    const veri = { baslik: baslik.trim().slice(0, 100), aciklama: (aciklama || "").slice(0, 3000), fiyat, stok, kategoriId,
+      iplik, hazirlikGunu: Math.min(Math.max(hazirlikGunu, 1), 60) };   // 1-60 gün arası
     if (req.file) veri.resim = "/img/yuklenen/" + req.file.filename; // resim dosyası klasörde, veritabanında adresi
 
     const admin = req.session.kullanici.admin;

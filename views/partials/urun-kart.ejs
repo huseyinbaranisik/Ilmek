@@ -13,6 +13,7 @@
   <div class="urun-bilgi">
     <a href="/urun/<%= u.slug %>" class="urun-ad"><%= u.baslik %></a>
     <% if (u.kullanici) { %><a href="/magaza/<%= u.kullanici.kullaniciAdi %>" class="urun-magaza"><%= u.kullanici.magazaAdi || u.kullanici.kullaniciAdi %></a><% } %>
+    <span class="iplik-etiket"><i class="bi bi-bullseye"></i> <%= u.iplik %></span>
     <div class="d-flex align-items-center justify-content-between mt-1">
       <span class="fiyat"><%= tl(u.fiyat) %></span>
       <% if (u.yorumSayisi > 0) { %><span class="yildiz-kucuk">★ <%= u.ortPuan.toFixed(1) %> <span class="soluk">(<%= u.yorumSayisi %>)</span></span><% } %>

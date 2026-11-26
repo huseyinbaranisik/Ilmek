@@ -1,8 +1,8 @@
-# İlmek · el emeği pazarı
+# İlmek · el örgüsü pazarı
 
 MYAZ470 İnternet ve Web Programlama dönem projesi.
 
-**İlmek**, el yapımı ürünlerin pazar yeri. Örgü, takı, seramik, ahşap, mum ve sabun yapan üyeler kendi mağazalarını açıp ürün ekler. Diğer üyeler ürünleri favorilerine ekler, mağazaları takip eder ve sipariş talebi gönderir. Satıcı talebi onaylayıp durumu "hazırlanıyor → kargoda → teslim edildi" diye ilerletir. Ürünü teslim alan alıcı yorum ve puan yazabilir. Gerçek ödeme yoktur.
+**İlmek**, el örgüsü ürünlerin pazar yeri. Şişle ve tığla ören üyeler kendi mağazalarını açıp kazak, hırka, bere, atkı, bebek patiği, amigurumi gibi örgülerini ekler. Her ürünün **iplik türü** (yün, merinos, alpaka, pamuk...) ve **hazırlanma süresi** (kaç günde örüleceği) vardır. Diğer üyeler ürünleri favorilerine ekler, örgücüleri takip eder ve sipariş talebi gönderir. Örgücü talebi onaylayıp durumu "hazırlanıyor → kargoda → teslim edildi" diye ilerletir. Ürünü teslim alan alıcı yorum ve puan yazabilir. Gerçek ödeme yoktur.
 
 ## Kurulum ve çalıştırma
 
@@ -18,10 +18,10 @@ Tarayıcıda: http://localhost:3000
 | Hesap | Kullanıcı adı | Şifre |
 |---|---|---|
 | Yönetici | `admin` | `admin123` |
-| Satıcı (örgü) | `ayse` | `123456` |
-| Satıcı (seramik, mum) | `zeynep` | `123456` |
-| Satıcı (ahşap) | `mehmet` | `123456` |
-| Satıcı (takı, çanta) | `elif` | `123456` |
+| Örgücü (kazak, hırka, bere, atkı) | `ayse` | `123456` |
+| Örgücü (bebek örgüleri, battaniye) | `zeynep` | `123456` |
+| Örgücü (amigurumi, tığ işi çiçek) | `mehmet` | `123456` |
+| Örgücü (çorap, eldiven, şal, çanta) | `elif` | `123456` |
 | Alıcı | `can` | `123456` |
 
 İlk çalıştırmada `ilmek.db` veritabanı dosyası otomatik oluşur ve örnek veriler eklenir. Sıfırlamak için sunucuyu durdurup `ilmek.db` dosyasını silmeniz ve tekrar başlatmanız yeterli.
@@ -30,9 +30,13 @@ Tarayıcıda: http://localhost:3000
 
 | Kim | Ne yapabilir |
 |---|---|
-| **Misafir** (giriş yapmamış) | Ürünlere, kategorilere, mağazalara, yorumlara, galeriye ve duyurulara bakar. Arar, sıralar, fiyata göre süzer. S.S.S.'e soru gönderir. |
-| **Üye** | Hem alıcı hem satıcı. Sipariş talebi gönderir ve iptal eder, favoriler, mağaza takip eder, teslim aldığı ürüne yorum yazar. Kendi mağazasına ürün ekler (admin onayından sonra yayınlanır), gelen siparişleri onaylar ve durumunu ilerletir. |
+| **Misafir** (giriş yapmamış) | Örgülere, kategorilere, örgücülere, yorumlara, galeriye ve duyurulara bakar. Arar, sıralar, fiyata ve iplik türüne göre süzer. S.S.S.'e soru gönderir. |
+| **Üye** | Hem alıcı hem örgücü. Sipariş talebi gönderir ve iptal eder, favoriler, örgücü takip eder, teslim aldığı ürüne yorum yazar. Kendi mağazasına ürün ekler (admin onayından sonra yayınlanır), gelen siparişleri onaylar ve durumunu ilerletir. |
 | **Admin** | Ürünleri onaylar ya da reddeder. Kategorileri, duyuruları, galeriyi, S.S.S.'i yönetir. Bütün siparişleri, kullanıcıları ve istatistikleri görür. |
+
+## Kategoriler
+
+Bere & Şapka · Atkı & Şal · Kazak & Hırka · Bebek Örgüleri · Amigurumi · Ev & Dekor · Çorap & Eldiven · Çanta & Aksesuar. Admin panelinden yenileri eklenebilir.
 
 ## Kullanılan teknolojiler (derste işlenenler)
 
@@ -65,7 +69,7 @@ helpers/              slugfield (slugify), yukle (multer), canli (online sayıs�
 views/                EJS sayfaları (partials/ ortak parçalar, admin/, hesap/)
 public/css/stil.css   Sıcak el işi teması
 public/js/site.js     Favori kalbi, nabız (online sayısı), adet x fiyat, resim önizleme
-public/img            Bütün resimler: urunler/ (örnek ürün resimleri), yuklenen/ (yüklenen resimler), logo.svg
+public/img            Bütün resimler: urunler/ (ürün ve galeri fotoğrafları), yuklenen/ (yüklenen resimler), logo.svg
 test/test.mjs         Uçtan uca test (npm test)
 ```
 
@@ -75,7 +79,7 @@ Resimler veritabanına konmaz. Dosyanın kendisi `public/img/` klasöründe duru
 
 ## Test
 
-`test/test.mjs` misafir, alıcı, satıcı ve admin akışlarını uçtan uca dener: CSRF, XSS, slug, sıralama ve fiyat filtresi, ürün ekleme ve onay, sipariş durumları ve stok, "sadece teslim alan yorum yazabilir" kuralı, favori, takip, kategori yönetimi (43 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
+`test/test.mjs` misafir, alıcı, örgücü ve admin akışlarını uçtan uca dener: CSRF, XSS, slug, sıralama, fiyat ve iplik filtresi, arama, ürün ekleme ve onay, sipariş durumları ve stok, "sadece teslim alan yorum yazabilir" kuralı, favori, takip, kategori yönetimi (46 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
 
 ```bash
 # ilmek.db dosyasını silin, sonra:
@@ -91,28 +95,33 @@ npm test       # başka bir terminalde
 | Ziyaretçi sayacı | Sayfanın altında (footer) ve admin panelinde. Her yeni oturum bir kez sayılır. |
 | Online kullanıcı sayısı | Sayfanın altında. Ayrıca ürün sayfasında "şu an kaç kişi bu ürüne bakıyor". |
 | Duyuru-Haber modülü | `/duyurular`, ana sayfadaki duyuru şeridi, admin panelinden ekleme ve silme |
-| Resim galerisi | `/galeri` ("atölyelerden kareler"), tıklayınca büyür. Admin panelinden resim yüklenir. |
+| Resim galerisi | `/galeri` (atölyelerden kareler, polaroid görünüm), tıklayınca büyür. Admin panelinden resim yüklenir. |
 | Admin paneli ve yetkilendirme | `/admin`. Misafir, üye ve admin olmak üzere 3 seviye (`isAuth`, `isAdmin`). |
 | CSRF | `csurf` paketi. Bütün formlarda gizli `_csrf` alanı, fetch isteklerinde `x-csrf-token` başlığı. |
-| Slugify | `/urun/el-orgusu-bere`, `/kategori/mum-sabun`, `/duyuru/ilmek-acildi` |
+| Slugify | `/urun/sac-orgulu-kazak`, `/kategori/bere-ve-sapka`, `/duyuru/ilmek-acildi` |
 | Soru-Cevap | `/sss`: ziyaretçi soru gönderir, admin cevaplayınca yayınlanır |
 
 ## Fotoğraf kaynakları
 
-`public/img/urunler/` klasöründeki ürün fotoğrafları [Unsplash](https://unsplash.com)'ten indirildi ve [Unsplash Lisansı](https://unsplash.com/license) ile kullanılıyor (ücretsiz, ticari kullanım dahil, izin gerekmez). 800x800 piksel kare JPG olarak kırpıldı.
+`public/img/urunler/` klasöründeki fotoğraflar [Unsplash](https://unsplash.com)'ten indirildi ve [Unsplash Lisansı](https://unsplash.com/license) ile kullanılıyor (ücretsiz, ticari kullanım dahil, izin gerekmez). 800x800 piksel kare JPG olarak kırpıldı.
 
 | Dosya | Fotoğrafçı | Kaynak |
 |---|---|---|
 | `bere.jpg` | la crafter | https://unsplash.com/photos/y7NBxZuL-_w |
 | `atki.jpg` | Susan Wilkinson | https://unsplash.com/photos/red-and-black-striped-textile-9dDJk8lvUwg |
+| `kazak.jpg` | Tijana Drndarski | https://unsplash.com/photos/white-and-brown-knit-textile-Ds4TsdS095U |
+| `hirka.jpg` | Andreas Eriksson | https://unsplash.com/photos/rose-knit-cardigan-with-white-yoke-detail-MvulYlZRyFI |
+| `patik.jpg` | Elsa Lilja | https://unsplash.com/photos/white-bear-plush-toy-on-white-table-xlkuA0VQshU |
+| `bebek.jpg` | Justin Simmonds | https://unsplash.com/photos/cozy-nursery-decor-with-shelves-and-a-sweater-J6H8G9jCXVc |
+| `battaniye.jpg` | Sarah Claeys | https://unsplash.com/photos/brown-knit-textile-in-close-up-photography-lxw686JyMT8 |
 | `ayicik.jpg` | Moon Moons | https://unsplash.com/photos/6bFNsRzla_c |
-| `kolye.jpg` | Andres Vera | https://unsplash.com/photos/CmmYT6Mm948 |
-| `kupe.jpg` | Barry A | https://unsplash.com/photos/06ky0cL_6X0 |
-| `kupa.jpg` | Annie Spratt | https://unsplash.com/photos/n42ogaQn32o |
-| `vazo.jpg` | Yana Hurska | https://unsplash.com/photos/zeGT9j4ltRA |
-| `kasik.jpg` | Andrew Valdivia | https://unsplash.com/photos/4lUI9_v0Sos |
-| `tahta.jpg` | Towfiqu barbhuiya | https://unsplash.com/photos/oMCQAjEtbGI |
-| `mum.jpg` | pmv chamara | https://unsplash.com/photos/KLU0scqbKQ0 |
-| `sabun.jpg` | Aurélia Dubois | https://unsplash.com/photos/6J0MUsmS4fQ |
-| `canta.jpg` | Brando Makes Branding | https://unsplash.com/photos/smTDI-z1rlY |
+| `tavsan.jpg` | Hasnain Ayaz | https://unsplash.com/photos/crocheted-rabbit-with-orange-carrot-OAyiEB_jw2s |
+| `cicek.jpg` | Jason Leung | https://unsplash.com/photos/a-vase-filled-with-blue-and-white-flowers-_1UY85AM1j8 |
+| `corap.jpg` | Kate Laine | https://unsplash.com/photos/a-pair-of-socks-and-a-hat-on-a-wooden-table-xERcZRbf42E |
+| `eldiven.jpg` | Ahmadreza Rezaie | https://unsplash.com/photos/cozy-knitted-mittens-and-mugs-on-snow-x5yedveMCbw |
+| `sal.jpg` | Giulia Bertelli | https://unsplash.com/photos/a-knitted-teddy-bear-laying-on-top-of-a-blanket-7j737kkSoBs |
+| `canta.jpg` | Anna Tukhfatullina | https://unsplash.com/photos/brown-knit-handbag-PF-PYpnA0JM |
 | `yastik.jpg` | la crafter | https://unsplash.com/photos/white-and-brown-knit-textile-0-i_R_vSpOI |
+| `yumak.jpg` | Margarida Afonso | https://unsplash.com/photos/orange-blue-and-white-yarn-ahMCpXdUjv0 |
+| `ip_rafi.jpg` | Paul Hanaoka | https://unsplash.com/photos/assorted-color-textiles-4nabmlliGdU |
+| `orgu_eller.jpg` | Tanaphong Toochinda | https://unsplash.com/photos/a-woman-is-knitting-a-piece-of-fabric-WddCult7llk |

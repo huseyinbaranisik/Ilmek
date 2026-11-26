@@ -13,7 +13,8 @@ const options = {
 };
 
 function slugField(str) {
-  return slugify(str, options) || "icerik";
+  // slugify "&" işaretini İngilizce "and" yapar. Türkçe "ve" olsun: "Bere & Şapka" -> "bere-ve-sapka"
+  return slugify(str.replace(/&/g, " ve "), options) || "icerik";
 }
 
 // Aynı slug veritabanında varsa sonuna -2, -3 ... ekler ("kor", "kor-2")

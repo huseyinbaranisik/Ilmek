@@ -27,8 +27,8 @@ exports.anaSayfa = async (req, res, next) => {
     const q = (req.query.q || "").trim();
     if (q) {
       const ara = { [Op.like]: "%" + q + "%" };
-      // Ürün adında ya da açıklamasında geçenler + mağaza adında ya da kullanıcı adında geçenler
-      const urunler = await Urun.findAll({ where: { onayli: true, [Op.or]: [{ baslik: ara }, { aciklama: ara }] }, include: Kullanici, order: [["baslik", "ASC"]] });
+      // Ürün adında, açıklamasında ya da iplik türünde geçenler + mağaza adında ya da kullanıcı adında geçenler
+      const urunler = await Urun.findAll({ where: { onayli: true, [Op.or]: [{ baslik: ara }, { aciklama: ara }, { iplik: ara }] }, include: Kullanici, order: [["baslik", "ASC"]] });
       const magazalar = await Kullanici.findAll({ where: { [Op.or]: [{ magazaAdi: ara }, { kullaniciAdi: ara }] }, limit: 8 });
       return res.render("arama", { q, urunler, magazalar });
     }
@@ -68,10 +68,13 @@ exports.urunler = async (req, res, next) => {
     // Fiyat aralığı (?min=100&max=500)
     const min = Number(req.query.min), max = Number(req.query.max);
     if (min || max) where.fiyat = { ...(min && { [Op.gte]: min }), ...(max && { [Op.lte]: max }) };
+    // İplik türü (?iplik=Alpaka). Sadece listedeki değerler kabul edilir.
+    const iplik = Urun.IPLIKLER.includes(req.query.iplik) ? req.query.iplik : "";
+    if (iplik) where.iplik = iplik;
 
     const sirala = SIRALAMALAR[req.query.sirala] ? req.query.sirala : "yeni";
     const urunler = await Urun.findAll({ where, include: Kullanici, order: SIRALAMALAR[sirala].order });
-    res.render("urunler", { kategori, urunler, sirala, SIRALAMALAR, min: min || "", max: max || "" });
+    res.render("urunler", { kategori, urunler, sirala, SIRALAMALAR, min: min || "", max: max || "", iplik, IPLIKLER: Urun.IPLIKLER });
   } catch (err) {
     next(err);
   }

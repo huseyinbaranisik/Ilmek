@@ -3,12 +3,12 @@
 <!-- Vitrin -->
 <section class="vitrin">
   <div class="vitrin-yazi">
-    <span class="el-yazisi">elden, gönülden...</span>
-    <h1>Her ürünün arkasında bir <em>emek</em> var.</h1>
-    <p>Örgüden seramiğe, ahşaptan takıya; el yapımı ürünleri doğrudan üreticisinden al. Ya da sen de mağazanı aç, ürettiklerini sat.</p>
+    <span class="el-yazisi">şişten, tığdan, gönülden...</span>
+    <h1>Her <em>ilmekte</em> bir emek var.</h1>
+    <p>Kazaklar, bereler, bebek patikleri, amigurumiler... Elde örülmüş ürünleri doğrudan örgücüsünden al. Ya da sen de mağazanı aç, ördüklerini sat.</p>
     <div class="d-flex gap-2 flex-wrap">
-      <a href="/urunler" class="btn-turuncu buyuk">Ürünlere göz at</a>
-      <a href="<%= kullanici ? '/hesap/urun/yeni' : '/auth/kayit' %>" class="btn-cizgi buyuk">Mağazanı aç</a>
+      <a href="/urunler" class="btn-turuncu buyuk">Örgülere göz at</a>
+      <a href="<%= kullanici ? '/hesap/urun/yeni' : '/auth/kayit' %>" class="btn-cizgi buyuk">Örgülerini sat</a>
     </div>
   </div>
   <div class="vitrin-resimler" aria-hidden="true">
@@ -33,7 +33,7 @@
 </div>
 
 <% if (takipUrunleri.length) { %>
-  <h2 class="bolum-baslik">Takip ettiğin mağazalardan</h2>
+  <h2 class="bolum-baslik">Takip ettiğin örgücülerden</h2>
   <div class="urun-izgara">
     <% takipUrunleri.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
   </div>
@@ -67,8 +67,8 @@
   <!-- Misafirlere üye olmanın ne kazandıracağını anlatan şerit -->
   <div class="davet-serit mt-5">
     <div>
-      <div class="el-yazisi">Sen de üret, sen de sat!</div>
-      <p class="mb-0">Üye ol, ürettiklerini birkaç dakikada mağazana ekle. Beğendiğin ürünleri favorile, siparişlerini takip et.</p>
+      <div class="el-yazisi">Şişlerin boş durmasın!</div>
+      <p class="mb-0">Üye ol, ördüklerini birkaç dakikada mağazana ekle. Beğendiğin örgüleri favorile, siparişlerini takip et.</p>
     </div>
     <a href="/auth/kayit" class="btn-turuncu buyuk">Ücretsiz üye ol</a>
   </div>

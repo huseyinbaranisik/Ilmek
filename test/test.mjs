@@ -39,16 +39,21 @@ sonuc('yanlış CSRF -> 403', r.durum === 403);
 r = await m.istek('/sss', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'soru=anahtarsiz+soru' });
 sonuc('CSRF yok -> 403', r.durum === 403);
 sonuc('onaysız ürün misafire görünmez (404)', (await m.istek('/urun/orgu-yastik-kilifi')).durum === 404);
-let sayfa = (await m.istek('/kategori/orgu')).metin;
-sonuc('kategori sayfası (slug)', sayfa.includes('/urun/el-orgusu-bere') && !sayfa.includes('/urun/soya-mumu'));
+let sayfa = (await m.istek('/kategori/bere-ve-sapka')).metin;
+sonuc('kategori sayfası (slug, & -> ve)', sayfa.includes('/urun/el-orgusu-bere') && !sayfa.includes('/urun/bebek-patigi'));
 sayfa = (await m.istek('/urunler?sirala=ucuz')).metin;
-sonuc('sıralama: en ucuz önce', sayfa.indexOf('/urun/zeytinyagli-sabun') < sayfa.indexOf('/urun/ceviz-kesme-tahtasi'));
-sayfa = (await m.istek('/urunler?min=500')).metin;
-sonuc('fiyat filtresi (en az 500)', sayfa.includes('/urun/el-yapimi-vazo') && !sayfa.includes('/urun/zeytinyagli-sabun'));
-sonuc('arama ürün buluyor', (await m.istek('/?q=kupa')).metin.includes('/urun/sirli-seramik-kupa'));
-sonuc('arama mağaza buluyor', (await m.istek('/?q=Toprak')).metin.includes('/magaza/zeynep'));
+sonuc('sıralama: en ucuz önce', sayfa.indexOf('/urun/bebek-patigi') < sayfa.indexOf('/urun/kalin-orgu-battaniye'));
+sayfa = (await m.istek('/urunler?min=1000')).metin;
+sonuc('fiyat filtresi (en az 1000)', sayfa.includes('/urun/sac-orgulu-kazak') && !sayfa.includes('/urun/bebek-patigi'));
+sayfa = (await m.istek('/urunler?iplik=Alpaka')).metin;
+sonuc('iplik filtresi (Alpaka)', sayfa.includes('/urun/pembe-motifli-hirka') && !sayfa.includes('/urun/el-orgusu-bere'));
+sonuc('arama ürün buluyor', (await m.istek('/?q=pati')).metin.includes('/urun/bebek-patigi'));
+sonuc('arama iplik türünü buluyor', (await m.istek('/?q=merinos')).metin.includes('/urun/sac-orgulu-kazak'));
+sonuc('arama örgücü buluyor', (await m.istek('/?q=Minik')).metin.includes('/magaza/zeynep'));
+sayfa = (await m.istek('/urun/sac-orgulu-kazak')).metin;
+sonuc('ürün sayfasında iplik ve hazırlanma süresi', sayfa.includes('Merinos') && sayfa.includes('12 günde örülür'));
 sayfa = (await m.istek('/sitemap.xml')).metin;
-sonuc('sitemap.xml', sayfa.includes('/urun/el-orgusu-bere') && sayfa.includes('/magaza/ayse') && sayfa.includes('/kategori/seramik'));
+sonuc('sitemap.xml', sayfa.includes('/urun/el-orgusu-bere') && sayfa.includes('/magaza/ayse') && sayfa.includes('/kategori/bebek-orguleri'));
 
 // ================= YENİ ÜYE (alıcı + satıcı) =================
 const u = istemci();
@@ -60,48 +65,48 @@ sonuc('kayıt', r.durum === 302 && r.yer === '/', r.yer);
 tk = await u.token('/hesap/urun/yeni');
 const kategoriId = (await u.istek('/hesap/urun/yeni')).metin.match(/<option value="(\d+)"/)[1];
 const fd = new FormData();
-fd.append('baslik', 'Test Kolye <script>alert(1)</script>'); fd.append('fiyat', '150'); fd.append('stok', '4');
-fd.append('kategoriId', kategoriId); fd.append('aciklama', 'deneme');
+fd.append('baslik', 'Test Bere <script>alert(1)</script>'); fd.append('fiyat', '150'); fd.append('stok', '4');
+fd.append('kategoriId', kategoriId); fd.append('aciklama', 'deneme'); fd.append('iplik', 'Moher'); fd.append('hazirlikGunu', '6');
 fd.append('resim', new Blob([PNG], { type: 'image/png' }), 'resim.png');
 r = await u.istek('/hesap/urun/yeni?_csrf=' + encodeURIComponent(tk), { method: 'POST', body: fd });
 sonuc('ürün eklendi -> ürünlerim', r.durum === 302 && r.yer === '/hesap/urunlerim', r.yer);
 sayfa = (await u.istek('/hesap/urunlerim')).metin;
 sonuc('ürünlerimde "Onay bekliyor"', sayfa.includes('Onay bekliyor'));
 sonuc('XSS kaçırıldı', sayfa.includes('&lt;script&gt;') && !sayfa.includes('<script>alert'));
-const yeniSlug = sayfa.match(/href="\/urun\/(test-kolye[^"]*)"/)[1];
+const yeniSlug = sayfa.match(/href="\/urun\/(test-bere[^"]*)"/)[1];
 sonuc('yüklenen resim /img/yuklenen/ adresinde', /\/img\/yuklenen\/\d+-\d+\.png/.test(sayfa));
 sonuc('onaysız ürün misafire görünmez', (await m.istek('/urun/' + yeniSlug)).durum === 404);
 
 // Sipariş
-const mumId = await urunId(u, 'soya-mumu');
-tk = await u.token('/urun/soya-mumu');
-r = await u.form('/hesap/siparis/' + mumId, { adet: 999, adres: 'Deneme Mah. Test Sok. No:5 Ankara' }, tk);
+const patikId = await urunId(u, 'bebek-patigi');
+tk = await u.token('/urun/bebek-patigi');
+r = await u.form('/hesap/siparis/' + patikId, { adet: 999, adres: 'Deneme Mah. Test Sok. No:5 Ankara' }, tk);
 sonuc('stoktan fazla adet reddedildi', (await u.istek(r.yer)).metin.includes('Adet 1 ile'));
-r = await u.form('/hesap/siparis/' + mumId, { adet: 2, adres: 'Deneme Mah. Test Sok. No:5 Ankara', aliciNotu: 'Lavanta olsun' }, tk);
+r = await u.form('/hesap/siparis/' + patikId, { adet: 2, adres: 'Deneme Mah. Test Sok. No:5 Ankara', aliciNotu: 'Mavi olsun' }, tk);
 sonuc('sipariş talebi -> siparişlerim', r.yer === '/hesap/siparislerim', r.yer);
 sayfa = (await u.istek('/hesap/siparislerim')).metin;
-sonuc('siparişte "Onay bekliyor" ve tutar', sayfa.includes('Onay bekliyor') && sayfa.includes('360 ₺'));
-r = await u.form('/hesap/yorum/' + mumId, { puan: 5, metin: 'erken yorum' }, tk);
+sonuc('siparişte "Onay bekliyor" ve tutar', sayfa.includes('Onay bekliyor') && sayfa.includes('440 ₺'));
+r = await u.form('/hesap/yorum/' + patikId, { puan: 5, metin: 'erken yorum' }, tk);
 sonuc('teslim almadan yorum yazılamaz', (await u.istek(r.yer)).metin.includes('Sadece teslim aldığınız'));
 
 // Favori ve takip
-let j = await u.json('/hesap/favori/' + mumId, tk);
+let j = await u.json('/hesap/favori/' + patikId, tk);
 sonuc('favoriye ekle (JSON)', j.favori === true);
-sonuc('favorilerimde görünüyor', (await u.istek('/hesap/favorilerim')).metin.includes('/urun/soya-mumu'));
-j = await u.json('/hesap/favori/' + mumId, tk);
+sonuc('favorilerimde görünüyor', (await u.istek('/hesap/favorilerim')).metin.includes('/urun/bebek-patigi'));
+j = await u.json('/hesap/favori/' + patikId, tk);
 sonuc('tekrar basınca favoriden çıkar', j.favori === false);
-r = await m.istek('/hesap/favori/' + mumId, { method: 'POST', headers: { 'x-csrf-token': await m.token() } });
+r = await m.istek('/hesap/favori/' + patikId, { method: 'POST', headers: { 'x-csrf-token': await m.token() } });
 sonuc('misafir favorileyemez -> girişe', r.durum === 302 && r.yer.startsWith('/auth/giris'));
 await u.form('/hesap/takip/zeynep', {}, tk);
 sonuc('mağaza takip ediliyor', (await u.istek('/magaza/zeynep')).metin.includes('Takip ediliyor'));
-sonuc('ana sayfada takip edilen mağazanın ürünleri', (await u.istek('/')).metin.includes('Takip ettiğin mağazalardan'));
+sonuc('ana sayfada takip edilen mağazanın ürünleri', (await u.istek('/')).metin.includes('Takip ettiğin örgücülerden'));
 sonuc('üye admin paneline giremez (403)', (await u.istek('/admin')).durum === 403);
 
 // ================= SATICI (zeynep) =================
 const z = istemci();
 await z.giris('zeynep', '123456');
 sayfa = (await z.istek('/hesap/gelen-siparisler')).metin;
-sonuc('satıcıya sipariş geldi', sayfa.includes('testuye') && sayfa.includes('Lavanta olsun'));
+sonuc('satıcıya sipariş geldi', sayfa.includes('testuye') && sayfa.includes('Mavi olsun'));
 // Bu testin siparişi: en yeni sipariş, sayfada ilk sıradaki
 const siparisId = sayfa.match(/\/hesap\/siparis\/(\d+)\/durum/)[1];
 tk = await z.token('/hesap/gelen-siparisler');
@@ -110,20 +115,20 @@ sonuc('yanlış durum geçişi reddedildi', (await z.istek(r.yer)).metin.include
 r = await u.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'hazirlaniyor' }, await u.token());
 sonuc('başkasının siparişini değiştiremez (404)', r.durum === 404);
 await z.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'hazirlaniyor' }, tk);
-sonuc('onaylayınca stoktan düştü (15 -> 13)', (await z.istek('/urun/soya-mumu')).metin.includes('Stok: <b>13</b>'));
+sonuc('onaylayınca stoktan düştü (8 -> 6)', (await z.istek('/urun/bebek-patigi')).metin.includes('Stok: <b>6</b>'));
 await z.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'kargoda' }, tk);
 await z.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'teslim' }, tk);
 sonuc('alıcı "Teslim edildi" görüyor', (await u.istek('/hesap/siparislerim')).metin.includes('Teslim edildi'));
 
 // Teslimden sonra yorum
-tk = await u.token('/urun/soya-mumu');
-r = await u.form('/hesap/yorum/' + mumId, { puan: 3, metin: 'Güzel ama <b>biraz</b> küçük' }, tk);
-sonuc('teslimden sonra yorum yazıldı', r.yer.startsWith('/urun/soya-mumu'), r.yer);
-sayfa = (await m.istek('/urun/soya-mumu')).metin;
+tk = await u.token('/urun/bebek-patigi');
+r = await u.form('/hesap/yorum/' + patikId, { puan: 3, metin: 'Güzel ama <b>biraz</b> küçük' }, tk);
+sonuc('teslimden sonra yorum yazıldı', r.yer.startsWith('/urun/bebek-patigi'), r.yer);
+sayfa = (await m.istek('/urun/bebek-patigi')).metin;
 sonuc('yorum görünüyor ve ortalama güncellendi (5 ve 3 -> 4.0)', sayfa.includes('&lt;b&gt;biraz&lt;/b&gt;') && sayfa.includes('<b>4.0</b>'));
 
 // İptal: sadece onay beklerken
-r = await u.form('/hesap/siparis/' + mumId, { adet: 1, adres: 'Deneme Mah. Test Sok. No:5 Ankara' }, tk);
+r = await u.form('/hesap/siparis/' + patikId, { adet: 1, adres: 'Deneme Mah. Test Sok. No:5 Ankara' }, tk);
 const iptalId = (await u.istek('/hesap/siparislerim')).metin.match(/\/hesap\/siparis\/(\d+)\/iptal/)[1];
 await u.form('/hesap/siparis/' + iptalId + '/iptal', {}, tk);
 sonuc('alıcı onay bekleyen siparişi iptal etti', (await u.istek('/hesap/siparislerim')).metin.includes('İptal edildi'));

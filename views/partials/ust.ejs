@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="<%= csrfToken %>">
-  <title><%= typeof sayfaBaslik !== 'undefined' ? sayfaBaslik + ' · İlmek' : 'İlmek · el emeği pazarı' %></title>
+  <title><%= typeof sayfaBaslik !== 'undefined' ? sayfaBaslik + ' · İlmek' : 'İlmek · el örgüsü pazarı' %></title>
   <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/vendor/icons/bootstrap-icons.min.css">
@@ -21,7 +21,7 @@
     <div class="container">
       <a href="/" class="navbar-brand logo">
         <img src="/img/logo.svg" alt="">
-        <span>İlmek<small>el emeği pazarı</small></span>
+        <span>İlmek<small>el örgüsü pazarı</small></span>
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ustMenu" aria-controls="ustMenu" aria-expanded="false" aria-label="Menüyü aç">
         <i class="bi bi-list"></i>
@@ -30,10 +30,10 @@
       <div class="collapse navbar-collapse" id="ustMenu">
         <form action="/" method="get" class="arama mx-lg-4 my-3 my-lg-0">
           <i class="bi bi-search"></i>
-          <input type="search" name="q" placeholder="Bere, kupa, kolye, mağaza..." value="<%= typeof q !== 'undefined' ? q : '' %>" aria-label="Ara">
+          <input type="search" name="q" placeholder="Kazak, bere, amigurumi, örgücü..." value="<%= typeof q !== 'undefined' ? q : '' %>" aria-label="Ara">
         </form>
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
-          <li class="nav-item"><a class="nav-link <%= yol === '/magazalar' ? 'active' : '' %>" href="/magazalar"><i class="bi bi-shop"></i> Mağazalar</a></li>
+          <li class="nav-item"><a class="nav-link <%= yol === '/magazalar' ? 'active' : '' %>" href="/magazalar"><i class="bi bi-shop"></i> Örgücüler</a></li>
           <% if (kullanici) { %>
             <li class="nav-item"><a class="nav-link <%= yol === '/hesap/favorilerim' ? 'active' : '' %>" href="/hesap/favorilerim"><i class="bi bi-heart"></i> Favoriler</a></li>
             <li class="nav-item dropdown">
@@ -77,7 +77,7 @@
   <!-- Kategori şeridi: telefonda yana kaydırılır -->
   <div class="kategori-serit">
     <div class="container">
-      <a href="/urunler" class="<%= yol === '/urunler' ? 'aktif' : '' %>"><i class="bi bi-grid-3x3-gap"></i> Tüm ürünler</a>
+      <a href="/urunler" class="<%= yol === '/urunler' ? 'aktif' : '' %>"><i class="bi bi-grid-3x3-gap"></i> Tüm örgüler</a>
       <% menuKategoriler.forEach(k => { %>
         <a href="/kategori/<%= k.slug %>" class="<%= yol === '/kategori/' + k.slug ? 'aktif' : '' %>"><i class="bi bi-<%= k.ikon %>"></i> <%= k.ad %></a>
       <% }) %>

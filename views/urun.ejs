@@ -16,7 +16,7 @@
     <div class="col-md-6">
       <div class="urun-buyuk-resim">
         <img src="<%= urun.resim %>" alt="<%= urun.baslik %>">
-        <span class="el-yazisi etiket-el">el yapımı</span>
+        <span class="el-yazisi etiket-el">el örgüsü</span>
       </div>
     </div>
 
@@ -31,6 +31,13 @@
       </div>
       <div class="buyuk-fiyat"><%= tl(urun.fiyat) %></div>
       <p class="canli-not kucuk"><span class="nokta"></span> Şu an <b id="bakan-sayi"><%= bakan %></b> kişi bu ürüne bakıyor</p>
+
+      <!-- Örgüye özel bilgiler -->
+      <div class="orgu-bilgi">
+        <a href="/urunler?iplik=<%= encodeURIComponent(urun.iplik) %>"><i class="bi bi-bullseye"></i> <span><small>İplik</small><%= urun.iplik %></span></a>
+        <span><i class="bi bi-hourglass-split"></i> <span><small>Hazırlanma</small><%= urun.hazirlikGunu %> günde örülür</span></span>
+        <span><i class="bi bi-hand-index-thumb"></i> <span><small>Yapım</small>%100 el örgüsü</span></span>
+      </div>
 
       <% if (urun.aciklama) { %><p class="urun-aciklama"><%= urun.aciklama %></p><% } %>
 

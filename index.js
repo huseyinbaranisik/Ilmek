@@ -1,5 +1,5 @@
 // ============================================================
-//  İLMEK - El yapımı ürün pazarı
+//  İLMEK - El örgüsü ürünler pazarı
 //  MYAZ470 İnternet ve Web Programlama dönem projesi
 //
 //  Çalıştırmak için:  npm install   ->   npm start
