@@ -63,7 +63,7 @@ exports.postKayit = async (req, res, next) => {
       rolId: 2,                            // yeni kayıtlar "Üye" olur
     });
     oturumAc(req, await Kullanici.findByPk(yeni.id, { include: Rol }));
-    req.session.mesaj = { tur: "basari", metin: "Hoş geldin " + kullaniciAdi + "! Artık şarkılara puan verebilir, liste oluşturabilir ve şarkı yükleyebilirsin." };
+    req.session.mesaj = { tur: "basari", metin: "Hoş geldin " + kullaniciAdi + "! Artık sipariş verebilir, ürünleri favorilerine ekleyebilir ve kendi mağazanı açabilirsin." };
     res.redirect("/");
   } catch (err) {
     next(err);

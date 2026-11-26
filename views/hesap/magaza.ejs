@@ -1,0 +1,24 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Mağaza ayarları' }) %>
+<div class="kutu form-kutu genis">
+  <h1 class="fs-3 mb-1">Mağaza ayarları</h1>
+  <p class="soluk kucuk">Bu bilgiler mağaza sayfanda ve ürünlerinde görünür. Hepsi isteğe bağlı.</p>
+  <form action="/hesap/magaza" method="post" class="d-grid gap-3">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="row g-2">
+      <div class="col-sm-8">
+        <label class="form-etiket" for="magazaAdi">Mağaza adı</label>
+        <input name="magazaAdi" id="magazaAdi" class="giris-kutu w-100" maxlength="60" value="<%= ben.magazaAdi || '' %>" placeholder="Örn: Nine'nin Şişleri">
+      </div>
+      <div class="col-sm-4">
+        <label class="form-etiket" for="sehir">Şehir</label>
+        <input name="sehir" id="sehir" class="giris-kutu w-100" maxlength="40" value="<%= ben.sehir || '' %>">
+      </div>
+    </div>
+    <div>
+      <label class="form-etiket" for="hakkinda">Hakkında</label>
+      <textarea name="hakkinda" id="hakkinda" class="giris-kutu w-100" rows="4" maxlength="1000" placeholder="Ne üretiyorsun, nasıl başladın?"><%= ben.hakkinda || '' %></textarea>
+    </div>
+    <div><button class="btn-turuncu buyuk">Kaydet</button></div>
+  </form>
+</div>
+<%- include('../partials/alt') %>

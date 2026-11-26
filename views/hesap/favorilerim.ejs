@@ -1,0 +1,14 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Favorilerim' }) %>
+<div class="sayfa-ust">
+  <div>
+    <h1><i class="bi bi-heart-fill turuncu"></i> Favorilerim</h1>
+    <p class="soluk mb-0"><%= urunler.length %> ürün</p>
+  </div>
+</div>
+<div class="urun-izgara">
+  <% urunler.forEach(u => { %><%- include('../partials/urun-kart', { u }) %><% }) %>
+</div>
+<% if (urunler.length === 0) { %>
+  <div class="bos-durum"><i class="bi bi-heart"></i><p>Beğendiğin ürünlerdeki kalbe bas, burada toplansın.</p><a href="/urunler" class="btn-turuncu">Ürünlere göz at</a></div>
+<% } %>
+<%- include('../partials/alt') %>

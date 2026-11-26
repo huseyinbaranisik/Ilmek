@@ -1,0 +1,51 @@
+<%- include('../partials/ust', { sayfaBaslik: urun ? 'Ürünü düzenle' : 'Yeni ürün' }) %>
+<% const adres = urun ? '/hesap/urun/' + urun.id + '/duzenle' : '/hesap/urun/yeni'; %>
+<div class="sayfa-ust">
+  <div>
+    <h1><%= urun ? 'Ürünü düzenle' : 'Yeni ürün ekle' %></h1>
+    <p class="soluk mb-0"><%= urun ? 'Değişiklikten sonra ürün tekrar yönetici onayına gider.' : 'Ürünün yönetici onayından sonra yayınlanır.' %></p>
+  </div>
+</div>
+
+<!-- Dosya yüklenen form (multipart): CSRF anahtarı adreste gider, çünkü csurf multer'dan önce çalışır -->
+<form action="<%= adres %>?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data" class="row g-4">
+  <div class="col-md-5">
+    <label class="form-etiket">Ürün resmi <%= urun ? '(değiştirmek istemiyorsan boş bırak)' : '' %></label>
+    <label class="resim-sec">
+      <img id="resim-onizleme" src="<%= urun ? urun.resim : '/img/logo.svg' %>" alt="Önizleme">
+      <span><i class="bi bi-camera"></i> Resim seç (jpg, png, webp · en fazla 5 MB)</span>
+      <input type="file" name="resim" id="resim-sec" accept=".jpg,.jpeg,.png,.webp,.gif" <%= urun ? '' : 'required' %>>
+    </label>
+  </div>
+  <div class="col-md-7 d-grid gap-3 align-content-start">
+    <div>
+      <label class="form-etiket" for="baslik">Ürün adı</label>
+      <input name="baslik" id="baslik" class="giris-kutu w-100" required maxlength="100" value="<%= urun ? urun.baslik : '' %>" placeholder="Örn: El örgüsü bebek patiği">
+    </div>
+    <div class="row g-2">
+      <div class="col-sm-6">
+        <label class="form-etiket" for="kategoriId">Kategori</label>
+        <select name="kategoriId" id="kategoriId" class="giris-kutu w-100" required>
+          <% kategoriler.forEach(k => { %><option value="<%= k.id %>" <%= urun && urun.kategoriId === k.id ? 'selected' : '' %>><%= k.ad %></option><% }) %>
+        </select>
+      </div>
+      <div class="col-6 col-sm-3">
+        <label class="form-etiket" for="fiyat">Fiyat (₺)</label>
+        <input type="number" name="fiyat" id="fiyat" class="giris-kutu w-100" required min="1" value="<%= urun ? urun.fiyat : '' %>">
+      </div>
+      <div class="col-6 col-sm-3">
+        <label class="form-etiket" for="stok">Stok</label>
+        <input type="number" name="stok" id="stok" class="giris-kutu w-100" required min="0" value="<%= urun ? urun.stok : 1 %>">
+      </div>
+    </div>
+    <div>
+      <label class="form-etiket" for="aciklama">Açıklama</label>
+      <textarea name="aciklama" id="aciklama" class="giris-kutu w-100" rows="6" maxlength="3000" placeholder="Malzeme, ölçüler, bakım önerileri..."><%= urun ? urun.aciklama || '' : '' %></textarea>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn-turuncu buyuk"><%= urun ? 'Kaydet' : 'Ürünü ekle' %></button>
+      <a href="/hesap/urunlerim" class="btn-cizgi buyuk">Vazgeç</a>
+    </div>
+  </div>
+</form>
+<%- include('../partials/alt') %>

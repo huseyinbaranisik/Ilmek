@@ -1,0 +1,26 @@
+<%- include('partials/ust', { sayfaBaslik: 'Mağazalar' }) %>
+<div class="sayfa-ust">
+  <div>
+    <h1>Mağazalar</h1>
+    <p class="soluk mb-0">Ürünlerini elleriyle yapan <%= magazalar.length %> üretici</p>
+  </div>
+</div>
+
+<div class="magaza-izgara">
+  <% magazalar.forEach(m => { %>
+    <a href="/magaza/<%= m.kullaniciAdi %>" class="magaza-kart">
+      <!-- Mağazanın ilk 3 ürününün resmi -->
+      <div class="magaza-resimler">
+        <% m.urunler.slice(0, 3).forEach(u => { %><img src="<%= u.resim %>" alt=""><% }) %>
+      </div>
+      <div class="d-flex align-items-center gap-2 mt-2">
+        <span class="avatar kucuk-avatar"><%= m.kullaniciAdi[0].toUpperCase() %></span>
+        <div class="min-w-0">
+          <div class="fw-semibold text-truncate"><%= m.magazaAdi || m.kullaniciAdi %></div>
+          <div class="soluk kucuk"><% if (m.sehir) { %><%= m.sehir %> · <% } %><%= m.urunler.length %> ürün · <%= m.takipciSayisi %> takipçi</div>
+        </div>
+      </div>
+    </a>
+  <% }) %>
+</div>
+<%- include('partials/alt') %>

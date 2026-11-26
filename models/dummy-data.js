@@ -1,14 +1,14 @@
 // ============================================================
 //  models/dummy-data.js - Örnek veriler (dersteki dummy-data.js gibi)
 //  Sadece veritabanı boşsa (hiç rol yoksa) çalışır.
-//  Müzikler bu proje için bir script'le üretildi, telifsizdir.
 // ============================================================
 const bcrypt = require("bcrypt");
 const Rol = require("./rol");
 const Kullanici = require("./kullanici");
-const Sarki = require("./sarki");
-const Inceleme = require("./inceleme");
-const Liste = require("./liste");
+const Kategori = require("./kategori");
+const Urun = require("./urun");
+const Siparis = require("./siparis");
+const Yorum = require("./yorum");
 const Duyuru = require("./duyuru");
 const Soru = require("./soru");
 const Galeri = require("./galeri");
@@ -23,73 +23,96 @@ async function populate() {
 
   // ---------- Roller ve kullanıcılar ----------
   await Rol.bulkCreate([{ ad: "Admin" }, { ad: "Üye" }]); // id: 1 = Admin, 2 = Üye
-
-  const admin = await Kullanici.create({ kullaniciAdi: "admin", sifre: await bcrypt.hash("admin123", 10), rolId: 1 });
-  const deniz = await Kullanici.create({ kullaniciAdi: "deniz", sifre: await bcrypt.hash("123456", 10), rolId: 2 });
-  const ece = await Kullanici.create({ kullaniciAdi: "ece", sifre: await bcrypt.hash("123456", 10), rolId: 2 });
+  const sifre = await bcrypt.hash("123456", 10);
+  await Kullanici.create({ kullaniciAdi: "admin", sifre: await bcrypt.hash("admin123", 10), rolId: 1 });
+  const ayse = await Kullanici.create({ kullaniciAdi: "ayse", sifre, rolId: 2, magazaAdi: "Ayşe'nin İlmekleri", sehir: "İzmir",
+    hakkinda: "30 yıldır örgü örüyorum. Bereler, atkılar ve amigurumi oyuncaklar; hepsi doğal yünden, sipariş üzerine." });
+  const mehmet = await Kullanici.create({ kullaniciAdi: "mehmet", sifre, rolId: 2, magazaAdi: "Bolu Ahşap Atölyesi", sehir: "Bolu",
+    hakkinda: "Ceviz ve gürgen ağacından mutfak eşyaları. Her parça elde oyulup zeytinyağıyla cilalanır." });
+  const zeynep = await Kullanici.create({ kullaniciAdi: "zeynep", sifre, rolId: 2, magazaAdi: "Toprak & Fitil", sehir: "Eskişehir",
+    hakkinda: "Çarkta şekillendirilmiş seramikler, soya mumları ve soğuk yöntemle yapılmış sabunlar." });
+  const elif = await Kullanici.create({ kullaniciAdi: "elif", sifre, rolId: 2, magazaAdi: "Elif Takı & Bez", sehir: "İstanbul",
+    hakkinda: "Doğal taşlı takılar ve kendi desenlerimle boyadığım bez çantalar." });
+  const can = await Kullanici.create({ kullaniciAdi: "can", sifre, rolId: 2 }); // sadece alıcı
 
   await Sayac.create({ ad: "ziyaretci", deger: 0 });
 
-  // ---------- Albümler ve şarkılar ----------
-  // En son eklenen albüm ana sayfada "Haftanın albümü" olarak görünür.
-  const albumler = [
-    { album: "Eski Plak",   sanatci: "Gramofon",    renk: "#444441", sarkilar: ["Eski Plak"] },
-    { album: "Pembe Neon",  sanatci: "Gece Kulübü", renk: "#72243E", sarkilar: ["Pembe Neon"], kapak: "pembe-neon.png" },
-    { album: "Gün Batımı",  sanatci: "Kum Tanesi",  renk: "#854F0B", sarkilar: ["Gün Batımı"] },
-    { album: "Orman Yolu",  sanatci: "Yeşil Vadi",  renk: "#0F6E56", sarkilar: ["Orman Yolu", "Sabah Çiyi"] },
-    { album: "Kızıl Gün",   sanatci: "Ateş Böceği", renk: "#993C1D", sarkilar: ["Kızıl Gün", "Kor"] },
-    { album: "Gece Yarısı", sanatci: "Mavi Gece",   renk: "#185FA5", sarkilar: ["Sessiz Sokaklar", "Yağmur Sonrası", "Neon Işıklar"] },
-  ];
-  const ornekDinlenme = [412, 1890, 2650, 3120, 980, 2210, 1540, 2930, 1170, 640];
-  const sarkilar = {}; // { "Kor": sarkiNesnesi, ... } -> aşağıda inceleme eklerken lazım
-  let sira = 0;
-  for (const a of albumler) {
-    const albumSlug = slugField(a.album);
-    // Resimler veritabanına konmaz: dosya public/img/kapaklar/ klasöründe durur, veritabanına sadece adresi (URL) yazılır
-    // Kapak dosyası belirtilmediyse albüm adıyla aynı isimli .svg kullanılır
-    const kapak = "/img/kapaklar/" + (a.kapak || albumSlug + ".svg");
-    for (const baslik of a.sarkilar) {
-      const slug = slugField(baslik);
-      sarkilar[baslik] = await Sarki.create({
-        baslik, slug, sanatci: a.sanatci, album: a.album, albumSlug, kapak,
-        dosya: "/muzik/" + slug + ".wav", renk: a.renk, dinlenme: ornekDinlenme[sira++],
-        onayli: true, kullaniciId: admin.id,
-      });
-    }
-    await Galeri.create({ resim: kapak, aciklama: a.album + " - " + a.sanatci });
+  // ---------- Kategoriler ----------
+  const kategoriler = {};
+  for (const [ad, ikon] of [["Örgü", "basket"], ["Takı", "gem"], ["Seramik", "cup-hot"], ["Ahşap", "tree"], ["Mum & Sabun", "fire"], ["Dikiş & Kumaş", "bag-heart"]]) {
+    kategoriler[ad] = await Kategori.create({ ad, ikon, slug: slugField(ad) });
   }
 
-  // ---------- İncelemeler (Letterboxd kısmı) ----------
-  const incelemeler = [
-    [deniz, "Sessiz Sokaklar", 5, "Gece yürüyüşlerinin şarkısı. Synth girişi tüyleri diken diken ediyor."],
-    [deniz, "Yağmur Sonrası", 4, "Albümün en sakin parçası, pencere kenarında dinlenir."],
-    [deniz, "Kor", 3, null],
-    [ece, "Sessiz Sokaklar", 4, "Güzel ama biraz kısa kalmış, keşke 2 dakika daha sürseydi."],
-    [ece, "Orman Yolu", 5, "Sabah işe giderken açıyorum, günü güzel başlatıyor."],
-    [ece, "Pembe Neon", 3, "Fena değil, nakarat akılda kalıyor."],
+  // ---------- Ürünler ----------
+  // Resimler public/img/urunler/ klasöründe, veritabanına sadece adresleri yazılır
+  const urunler = {};
+  const liste = [
+    ["El Örgüsü Bere", "Örgü", ayse, 350, 5, "bere.svg", "Yüzde yüz yün, içi astarlı. Kış için sıcacık. Renk seçeneği için sipariş notuna yazabilirsiniz."],
+    ["Yün Atkı", "Örgü", ayse, 480, 3, "atki.svg", "180 cm uzunluğunda, saç örgüsü desenli, püsküllü atkı."],
+    ["Amigurumi Ayıcık", "Örgü", ayse, 290, 8, "ayicik.svg", "Pamuk iplikten, 20 cm boyunda. Göz ve burun işlemedir, küçük çocuklar için güvenlidir."],
+    ["Doğal Taşlı Kolye", "Takı", elif, 420, 4, "kolye.svg", "Amazonit ve kehribar taşlı, ayarlanabilir mumlu ipli kolye."],
+    ["Gümüş Halka Küpe", "Takı", elif, 260, 6, "kupe.svg", "925 ayar gümüş, el dövmesi halka küpe. Ucunda akuamarin boncuk."],
+    ["Sırlı Seramik Kupa", "Seramik", zeynep, 220, 10, "kupa.svg", "Çarkta şekillendirilmiş, 350 ml. Bulaşık makinesinde yıkanabilir."],
+    ["El Yapımı Vazo", "Seramik", zeynep, 540, 2, "vazo.svg", "30 cm yüksekliğinde, el boyaması desenli vazo. Her biri birbirinden biraz farklıdır."],
+    ["Ahşap Kaşık Seti", "Ahşap", mehmet, 310, 7, "kasik.svg", "Gürgen ve ceviz, iki kaşıklık set. Zeytinyağı ile cilalanmıştır."],
+    ["Ceviz Kesme Tahtası", "Ahşap", mehmet, 650, 3, "tahta.svg", "Tek parça ceviz, 40x25 cm. Ömürlük bir mutfak dostu."],
+    ["Soya Mumu", "Mum & Sabun", zeynep, 180, 15, "mum.svg", "Cam kavanozda, pamuk fitilli. Lavanta ve portakal kokulu, yaklaşık 40 saat yanar."],
+    ["Zeytinyağlı Sabun", "Mum & Sabun", zeynep, 90, 30, "sabun.svg", "Soğuk yöntemle, saf zeytinyağından. Katkısız ve kokusuz."],
+    ["Desenli Bez Çanta", "Dikiş & Kumaş", elif, 240, 9, "canta.svg", "Kalın kanvas kumaş, elde baskı desen. İç cepli."],
   ];
-  for (const [k, baslik, puan, yorum] of incelemeler) {
-    await Inceleme.create({ kullaniciId: k.id, sarkiId: sarkilar[baslik].id, puan, yorum });
+  for (const [baslik, kategori, satici, fiyat, stok, resim, aciklama] of liste) {
+    urunler[baslik] = await Urun.create({
+      baslik, slug: slugField(baslik), aciklama, fiyat, stok, onayli: true,
+      resim: "/img/urunler/" + resim,
+      goruntulenme: Math.floor(Math.random() * 900) + 100,
+      kategoriId: kategoriler[kategori].id, kullaniciId: satici.id,
+    });
   }
-  for (const baslik in sarkilar) await puanGuncelle(sarkilar[baslik].id);
+  // Onay bekleyen örnek ürün (admin panelinde görünür)
+  await Urun.create({ baslik: "Örgü Yastık Kılıfı", slug: "orgu-yastik-kilifi", aciklama: "40x40 cm, düğmeli.", fiyat: 390, stok: 2,
+    resim: "/img/urunler/atki.svg", onayli: false, kategoriId: kategoriler["Örgü"].id, kullaniciId: ayse.id });
 
-  // ---------- Listeler ----------
-  const liste1 = await Liste.create({ baslik: "Yağmurlu gün şarkıları", slug: "yagmurlu-gun-sarkilari", aciklama: "Cam kenarı, sıcak çay, bu liste.", kullaniciId: deniz.id });
-  await liste1.addSarkilar([sarkilar["Yağmur Sonrası"], sarkilar["Sessiz Sokaklar"], sarkilar["Eski Plak"]]);
-  const liste2 = await Liste.create({ baslik: "Sabah enerjisi", slug: "sabah-enerjisi", aciklama: "Güne iyi başlamak için.", kullaniciId: ece.id });
-  await liste2.addSarkilar([sarkilar["Orman Yolu"], sarkilar["Sabah Çiyi"], sarkilar["Gün Batımı"], sarkilar["Kızıl Gün"]]);
+  // ---------- Siparişler ve yorumlar ----------
+  // can birkaç şey sipariş etmiş: bazıları teslim edilmiş (yorum yazabilir), biri yolda, biri onay bekliyor
+  const siparisler = [
+    [can, "El Örgüsü Bere", 1, "teslim", "Hardal renk olursa çok sevinirim."],
+    [can, "Sırlı Seramik Kupa", 2, "teslim", null],
+    [can, "Ahşap Kaşık Seti", 1, "kargoda", null],
+    [can, "Doğal Taşlı Kolye", 1, "beklemede", "Hediye paketi yapabilir misiniz?"],
+    [elif, "Soya Mumu", 3, "teslim", null],
+    [mehmet, "El Örgüsü Bere", 1, "teslim", null],
+  ];
+  for (const [alici, baslik, adet, durum, aliciNotu] of siparisler) {
+    const u = urunler[baslik];
+    await Siparis.create({ adet, toplam: adet * u.fiyat, durum, aliciNotu, adres: "Örnek Mah. Deneme Sok. No:1, " + (alici.sehir || "Ankara"),
+      urunId: u.id, aliciId: alici.id, saticiId: u.kullaniciId });
+  }
+  const yorumlar = [
+    [can, "El Örgüsü Bere", 5, "Tam istediğim renk, çok sıcak tutuyor. Ayşe Hanım'a teşekkürler!"],
+    [can, "Sırlı Seramik Kupa", 4, "Çok güzel ama biraz küçük, yine de her sabah bununla içiyorum."],
+    [elif, "Soya Mumu", 5, "Lavanta kokusu odayı sarıyor, tekrar alacağım."],
+    [mehmet, "El Örgüsü Bere", 4, "Kızıma aldım, çok beğendi."],
+  ];
+  for (const [k, baslik, puan, metin] of yorumlar) await Yorum.create({ puan, metin, kullaniciId: k.id, urunId: urunler[baslik].id });
+  for (const baslik in urunler) await puanGuncelle(urunler[baslik].id);
 
-  // ---------- Beğeniler ve takip (Spotify kısmı) ----------
-  await deniz.addBegenilenler([sarkilar["Yağmur Sonrası"], sarkilar["Sessiz Sokaklar"], sarkilar["Orman Yolu"]]);
-  await ece.addBegenilenler([sarkilar["Kızıl Gün"], sarkilar["Sabah Çiyi"], sarkilar["Pembe Neon"], sarkilar["Gün Batımı"]]);
-  await deniz.addTakipEdilen(ece);  // deniz, ece'yi takip ediyor
-  await ece.addTakipEdilen(deniz);  // ece, deniz'i takip ediyor
+  // ---------- Favoriler ve takip ----------
+  await can.addFavoriler([urunler["Ceviz Kesme Tahtası"], urunler["El Yapımı Vazo"], urunler["Gümüş Halka Küpe"]]);
+  await elif.addFavoriler([urunler["Yün Atkı"]]);
+  await can.addTakipEdilenler([ayse, zeynep]); // can bu mağazaları takip ediyor
+  await elif.addTakipEdilen(zeynep);
+
+  // ---------- Galeri: atölyelerden kareler ----------
+  for (const [resim, aciklama] of [["kupa.svg", "Zeynep'in atölyesinde sırlama günü"], ["bere.svg", "Ayşe'nin kış koleksiyonu"],
+    ["tahta.svg", "Bolu'dan ceviz tahtalar"], ["kolye.svg", "Elif'in taş seçimi"], ["mum.svg", "Mum dökme günü"], ["canta.svg", "Baskı kalıpları"]]) {
+    await Galeri.create({ resim: "/img/urunler/" + resim, aciklama });
+  }
 
   // ---------- Duyurular ----------
   const duyurular = [
-    ["Gramofy yayında!", "Müzik dinleme sitemiz Gramofy açıldı. Albümleri keşfedin, şarkıları dinleyin, sorularınızı S.S.S. sayfasından bize iletin.", "2026-11-10T10:00:00"],
-    ["Artık şarkılara puan verebilirsiniz", "Üye olun, dinlediğiniz şarkılara 1-5 yıldız verin, inceleme yazın ve kendi listelerinizi oluşturun. Kendi şarkılarınızı da yükleyebilirsiniz!", "2026-11-18T12:00:00"],
-    ["Yeni albüm: Gece Yarısı", "Mavi Gece grubunun yeni albümü Gece Yarısı 3 şarkıyla Gramofy'da! Sessiz Sokaklar, Yağmur Sonrası ve Neon Işıklar şarkılarını hemen dinleyebilirsiniz.", "2026-11-24T09:00:00"],
+    ["İlmek açıldı!", "El emeği ürünlerin buluşma yeri İlmek yayında. Ürünlere göz atın, beğendiklerinizi favorilere ekleyin, satıcılara sipariş talebi gönderin.", "2026-11-10T10:00:00"],
+    ["Sen de mağaza aç", "Üye olan herkes kendi el yapımı ürünlerini ekleyebilir. Ürünleriniz yönetici onayından sonra yayınlanır.", "2026-11-18T12:00:00"],
+    ["Yılbaşı hediyeleri için son sipariş tarihi", "El yapımı ürünler hazırlanmak için zaman ister. Yılbaşına yetişmesi için siparişlerinizi 20 Aralık'a kadar verin.", "2026-11-24T09:00:00"],
   ];
   for (const [baslik, icerik, tarih] of duyurular) {
     await Duyuru.create({ baslik, slug: slugField(baslik), icerik, tarih });
@@ -97,10 +120,10 @@ async function populate() {
 
   // ---------- S.S.S. ----------
   await Soru.bulkCreate([
-    { soru: "Şarkıları dinlemek için üye olmam gerekiyor mu?", cevap: "Hayır, misafir olarak bütün şarkıları dinleyebilirsiniz. Puan vermek, inceleme yazmak, liste oluşturmak ve şarkı yüklemek için üye olmanız gerekir.", yayinda: true },
-    { soru: "Yüklediğim şarkı neden hemen görünmüyor?", cevap: "Üyelerin yüklediği şarkılar yönetici onayından sonra yayınlanır. Onay bekleyen şarkılarınızı profil sayfanızda görebilirsiniz.", yayinda: true },
-    { soru: "\"Şu an dinliyor\" sayısı nasıl hesaplanıyor?", cevap: "Bir şarkıyı çalan her ziyaretçinin tarayıcısı birkaç saniyede bir sunucuya haber verir. Son 40 saniyede haber veren kişiler sayılır.", yayinda: true },
-    { soru: "Mobil uygulamanız var mı?", cevap: null, yayinda: false }, // cevapsız örnek soru
+    { soru: "Ödemeyi nasıl yapıyorum?", cevap: "İlmek'te online ödeme yok. Sipariş talebinizi satıcı kabul ettikten sonra ödeme ve kargo detaylarını satıcıyla kararlaştırırsınız.", yayinda: true },
+    { soru: "Ürün eklediğim halde neden görünmüyor?", cevap: "Eklenen ürünler yönetici onayından sonra yayınlanır. Onay bekleyen ürünlerinizi 'Ürünlerim' sayfasında görebilirsiniz.", yayinda: true },
+    { soru: "Her ürüne yorum yazabilir miyim?", cevap: "Hayır, sadece satın alıp teslim aldığınız ürünlere yorum yazabilirsiniz. Böylece yorumlar gerçek alıcılardan gelir.", yayinda: true },
+    { soru: "Yurt dışına gönderim var mı?", cevap: null, yayinda: false }, // cevapsız örnek soru
   ]);
 }
 

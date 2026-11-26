@@ -1,0 +1,31 @@
+<%- include('partials/ust', { sayfaBaslik: kategori ? kategori.ad : 'Tüm ürünler' }) %>
+<div class="sayfa-ust">
+  <div>
+    <h1><% if (kategori) { %><i class="bi bi-<%= kategori.ikon %>"></i> <%= kategori.ad %><% } else { %>Tüm ürünler<% } %></h1>
+    <p class="soluk mb-0"><%= urunler.length %> el yapımı ürün</p>
+  </div>
+</div>
+
+<!-- Sıralama ve fiyat aralığı: GET formu, değerler adreste görünür (?sirala=ucuz&min=100&max=500) -->
+<form method="get" class="suzgec">
+  <label class="kucuk soluk" for="sirala">Sırala</label>
+  <select name="sirala" id="sirala" class="giris-kutu" onchange="this.form.submit()">
+    <% Object.entries(SIRALAMALAR).forEach(([anahtar, s]) => { %>
+      <option value="<%= anahtar %>" <%= sirala === anahtar ? 'selected' : '' %>><%= s.ad %></option>
+    <% }) %>
+  </select>
+  <label class="kucuk soluk ms-sm-3" for="min">Fiyat</label>
+  <input type="number" name="min" id="min" class="giris-kutu fiyat-kutu" placeholder="en az" min="0" value="<%= min %>">
+  <span class="soluk">–</span>
+  <input type="number" name="max" class="giris-kutu fiyat-kutu" placeholder="en çok" min="0" value="<%= max %>" aria-label="En çok">
+  <button class="btn-cizgi">Uygula</button>
+  <% if (min || max) { %><a href="?sirala=<%= sirala %>" class="kucuk soluk">temizle</a><% } %>
+</form>
+
+<div class="urun-izgara">
+  <% urunler.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
+</div>
+<% if (urunler.length === 0) { %>
+  <div class="bos-durum"><i class="bi bi-basket"></i><p>Bu aramaya uygun ürün yok.</p></div>
+<% } %>
+<%- include('partials/alt') %>

@@ -1,28 +1,25 @@
 // ============================================================
-//  controller/user.js - Herkesin görebildiği sayfalar
-//  Not: Sadece onaylı (onayli: true) şarkılar gösterilir.
+//  controller/user.js - Herkesin (misafirlerin de) görebildiği sayfalar
+//  Not: Sadece onaylı (onayli: true) ürünler gösterilir.
 // ============================================================
-const { Op, fn, col } = require("sequelize");
-const Sarki = require("../models/sarki");
-const Inceleme = require("../models/inceleme");
+const { Op } = require("sequelize");
+const Urun = require("../models/urun");
+const Kategori = require("../models/kategori");
 const Kullanici = require("../models/kullanici");
-const Liste = require("../models/liste");
+const Yorum = require("../models/yorum");
+const Siparis = require("../models/siparis");
 const Duyuru = require("../models/duyuru");
 const Soru = require("../models/soru");
 const Galeri = require("../models/galeri");
-const { dinleyenler, onlineSayisi, dinleyiciSayilari, neDinliyor } = require("../helpers/canli");
+const { bakanlar, onlineSayisi, bakanSayisi } = require("../helpers/canli");
 
-// Albümleri gruplayarak getirir: her albümün adı, kapağı ve şarkı sayısı
-function albumleriGetir(siralama, limit) {
-  return Sarki.findAll({
-    attributes: ["album", "albumSlug", "sanatci", "kapak", "renk", [fn("COUNT", col("id")), "sarkiSayisi"]],
-    where: { onayli: true },
-    group: ["albumSlug"],
-    order: siralama,
-    limit: limit,
-    raw: true,
-  });
-}
+// Ürün listelerinde sıralama seçenekleri (?sirala=...)
+const SIRALAMALAR = {
+  yeni:   { ad: "En yeni",        order: [["createdAt", "DESC"]] },
+  ucuz:   { ad: "Fiyat (artan)",  order: [["fiyat", "ASC"]] },
+  pahali: { ad: "Fiyat (azalan)", order: [["fiyat", "DESC"]] },
+  puan:   { ad: "En beğenilen",   order: [["ortPuan", "DESC"], ["yorumSayisi", "DESC"]] },
+};
 
 // ---------- Ana sayfa (+ arama) ----------
 exports.anaSayfa = async (req, res, next) => {
@@ -30,198 +27,111 @@ exports.anaSayfa = async (req, res, next) => {
     const q = (req.query.q || "").trim();
     if (q) {
       const ara = { [Op.like]: "%" + q + "%" };
-      const sonuclar = await Sarki.findAll({
-        where: { onayli: true, [Op.or]: [{ baslik: ara }, { sanatci: ara }, { album: ara }] },
-        order: [["baslik", "ASC"]],
-      });
-      // Kullanıcı adında aranan kelime geçen üyeler de bulunur
-      const uyeSonuclar = await Kullanici.findAll({ where: { kullaniciAdi: ara }, order: [["kullaniciAdi", "ASC"]], limit: 8 });
-      return res.render("arama", { q, sonuclar, uyeSonuclar });
+      // Ürün adında ya da açıklamasında geçenler + mağaza adında ya da kullanıcı adında geçenler
+      const urunler = await Urun.findAll({ where: { onayli: true, [Op.or]: [{ baslik: ara }, { aciklama: ara }] }, include: Kullanici, order: [["baslik", "ASC"]] });
+      const magazalar = await Kullanici.findAll({ where: { [Op.or]: [{ magazaAdi: ara }, { kullaniciAdi: ara }] }, limit: 8 });
+      return res.render("arama", { q, urunler, magazalar });
     }
-    // Haftanın albümü = en son eklenen albüm
-    const [haftaninAlbumu] = await albumleriGetir([[fn("MAX", col("id")), "DESC"]], 1);
-    const enCokDinlenen = await Sarki.findAll({ where: { onayli: true }, order: [["dinlenme", "DESC"]], limit: 10 });
-    const enYuksekPuan = await Sarki.findAll({
-      where: { onayli: true, incelemeSayisi: { [Op.gt]: 0 } },
-      order: [["ortPuan", "DESC"], ["incelemeSayisi", "DESC"]],
-      limit: 5,
-    });
-    const sonIncelemeler = await Inceleme.findAll({
-      include: [Kullanici, Sarki],     // incelemeyi yazan kişi ve şarkı da gelsin (JOIN)
-      order: [["updatedAt", "DESC"]],
-      limit: 4,
-    });
+
+    // Kategoriler ve her birinde kaç ürün olduğu
+    const kategoriler = await Kategori.findAll({ order: [["id", "ASC"]] });
+    for (const k of kategoriler) k.urunSayisi = await Urun.count({ where: { kategoriId: k.id, onayli: true } });
+
+    const yeniUrunler = await Urun.findAll({ where: { onayli: true }, include: Kullanici, order: [["createdAt", "DESC"]], limit: 8 });
+    const sevilenler = await Urun.findAll({ where: { onayli: true, yorumSayisi: { [Op.gt]: 0 } }, include: Kullanici, order: [["ortPuan", "DESC"], ["yorumSayisi", "DESC"]], limit: 4 });
+    const sonYorumlar = await Yorum.findAll({ include: [Kullanici, Urun], order: [["updatedAt", "DESC"]], limit: 3 });
     const sonDuyuru = await Duyuru.findOne({ order: [["tarih", "DESC"]] });
 
-    // Giriş yapan üyenin takip ettiklerinin etkinliği (Spotify'daki "arkadaş etkinliği" gibi)
-    let takipVar = false, takipIncelemeleri = [], dinleyenArkadaslar = [];
+    // Giriş yaptıysa: takip ettiği mağazaların ürünleri
+    let takipUrunleri = [];
     if (req.session.isAuth) {
       const ben = await Kullanici.findByPk(req.session.kullanici.id);
-      const takipEdilenler = ben ? await ben.getTakipEdilenler() : [];
-      takipVar = takipEdilenler.length > 0;
-      // Takip ettiklerimin son incelemeleri: kullaniciId bu listedekilerden biri olsun
-      takipIncelemeleri = await Inceleme.findAll({
-        where: { kullaniciId: takipEdilenler.map(k => k.id) },
-        include: [Kullanici, Sarki],
-        order: [["updatedAt", "DESC"]],
-        limit: 4,
-      });
-      // Şu an bir şey dinleyenler
-      for (const k of takipEdilenler) {
-        const sarkiId = neDinliyor(k.kullaniciAdi);
-        if (sarkiId) dinleyenArkadaslar.push({ kullaniciAdi: k.kullaniciAdi, sarki: await Sarki.findByPk(sarkiId) });
-      }
+      const takipIdler = (await ben.getTakipEdilenler()).map(k => k.id);
+      takipUrunleri = await Urun.findAll({ where: { onayli: true, kullaniciId: takipIdler }, include: Kullanici, order: [["createdAt", "DESC"]], limit: 4 });
     }
-
-    res.render("index", {
-      haftaninAlbumu, enCokDinlenen, enYuksekPuan, sonIncelemeler, sonDuyuru,
-      takipVar, takipIncelemeleri, dinleyenArkadaslar,
-    });
+    res.render("index", { kategoriler, yeniUrunler, sevilenler, sonYorumlar, sonDuyuru, takipUrunleri });
   } catch (err) {
     next(err);
   }
 };
 
-// ---------- Albümler ----------
-exports.albumler = async (req, res, next) => {
+// ---------- Ürün listesi: bütün ürünler ya da bir kategori ----------
+exports.urunler = async (req, res, next) => {
   try {
-    const albumler = await albumleriGetir([["album", "ASC"]]);
-    res.render("albumler", { albumler });
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.album = async (req, res, next) => {
-  try {
-    const sarkilar = await Sarki.findAll({ where: { albumSlug: req.params.slug, onayli: true }, order: [["id", "ASC"]] });
-    if (sarkilar.length === 0) return next(); // bulunamadı -> 404
-    res.render("album", { sarkilar, album: sarkilar[0] });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// ---------- Şarkı sayfası: dönen plak + puan + incelemeler ----------
-exports.sarki = async (req, res, next) => {
-  try {
-    const sarki = await Sarki.findOne({ where: { slug: req.params.slug, onayli: true } });
-    if (!sarki) return next();
-    const albumdekiler = await Sarki.findAll({ where: { albumSlug: sarki.albumSlug, onayli: true }, order: [["id", "ASC"]] });
-    const incelemeler = await Inceleme.findAll({
-      where: { sarkiId: sarki.id },
-      include: Kullanici,
-      order: [["updatedAt", "DESC"]],
-    });
-
-    // Giriş yapmış üyenin kendi incelemesi ve listeleri (formları doldurmak için)
-    let benimInceleme = null, listelerim = [];
-    if (req.session.isAuth) {
-      const benimId = req.session.kullanici.id;
-      benimInceleme = incelemeler.find(i => i.kullaniciId === benimId) || null;
-      listelerim = await Liste.findAll({ where: { kullaniciId: benimId }, order: [["baslik", "ASC"]] });
+    let kategori = null;
+    const where = { onayli: true };
+    if (req.params.slug) {
+      kategori = await Kategori.findOne({ where: { slug: req.params.slug } });
+      if (!kategori) return next();   // böyle kategori yok -> 404
+      where.kategoriId = kategori.id;
     }
-    const begeniSayisi = await sarki.countBegenenler(); // kaç üye beğendi
-    const begenenler = await sarki.getBegenenler({ limit: 8 }); // beğenen üyelerden ilk 8 tanesi
-    res.render("sarki", { sarki, albumdekiler, incelemeler, benimInceleme, listelerim, begeniSayisi, begenenler });
+    // Fiyat aralığı (?min=100&max=500)
+    const min = Number(req.query.min), max = Number(req.query.max);
+    if (min || max) where.fiyat = { ...(min && { [Op.gte]: min }), ...(max && { [Op.lte]: max }) };
+
+    const sirala = SIRALAMALAR[req.query.sirala] ? req.query.sirala : "yeni";
+    const urunler = await Urun.findAll({ where, include: Kullanici, order: SIRALAMALAR[sirala].order });
+    res.render("urunler", { kategori, urunler, sirala, SIRALAMALAR, min: min || "", max: max || "" });
   } catch (err) {
     next(err);
   }
 };
 
-// ---------- Kitaplık: bütün şarkılar plak kılıfı olarak rafta ----------
-exports.kitaplik = async (req, res, next) => {
+// ---------- Ürün sayfası ----------
+exports.urun = async (req, res, next) => {
   try {
-    const sarkilar = await Sarki.findAll({ where: { onayli: true }, order: [["album", "ASC"], ["id", "ASC"]] });
-    res.render("kitaplik", { sarkilar });
-  } catch (err) {
-    next(err);
-  }
-};
+    const urun = await Urun.findOne({ where: { slug: req.params.slug }, include: [Kullanici, Kategori] });
+    // Onaysız ürünü sadece satıcısı ve admin görebilir
+    const ben = req.session.kullanici;
+    if (!urun || (!urun.onayli && !(ben && (ben.id === urun.kullaniciId || ben.admin)))) return next();
 
-// ---------- Listeler ----------
-exports.listeler = async (req, res, next) => {
-  try {
-    const listeler = await Liste.findAll({
-      include: [Kullanici, Sarki],  // listenin sahibi ve içindeki şarkılar
-      order: [["updatedAt", "DESC"]],
-    });
-    res.render("listeler", { listeler });
-  } catch (err) {
-    next(err);
-  }
-};
+    await urun.increment("goruntulenme"); // görüntülenme sayısı +1
+    const yorumlar = await Yorum.findAll({ where: { urunId: urun.id }, include: Kullanici, order: [["updatedAt", "DESC"]] });
+    const saticininDigerleri = await Urun.findAll({ where: { onayli: true, kullaniciId: urun.kullaniciId, id: { [Op.ne]: urun.id } }, include: Kullanici, limit: 4 });
+    const benzerler = await Urun.findAll({ where: { onayli: true, kategoriId: urun.kategoriId, id: { [Op.ne]: urun.id } }, include: Kullanici, limit: 4 });
+    const favoriSayisi = await urun.countFavorileyenler();
 
-exports.liste = async (req, res, next) => {
-  try {
-    const liste = await Liste.findOne({ where: { slug: req.params.slug }, include: [Kullanici, Sarki] });
-    if (!liste) return next();
-    res.render("liste", { liste });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// ---------- Üye profili: incelemeleri, listeleri, yüklediği şarkılar ----------
-exports.profil = async (req, res, next) => {
-  try {
-    const uye = await Kullanici.findOne({ where: { kullaniciAdi: req.params.kullaniciAdi } });
-    if (!uye) return next();
-    const incelemeler = await Inceleme.findAll({ where: { kullaniciId: uye.id }, include: Sarki, order: [["updatedAt", "DESC"]] });
-    const listeler = await Liste.findAll({ where: { kullaniciId: uye.id }, include: Sarki, order: [["updatedAt", "DESC"]] });
-
-    // Onay bekleyen şarkıları sadece sahibi görür
-    const kendisiMi = req.session.isAuth && req.session.kullanici.id === uye.id;
-    const yuklemeFiltre = kendisiMi ? { kullaniciId: uye.id } : { kullaniciId: uye.id, onayli: true };
-    const yuklemeler = await Sarki.findAll({ where: yuklemeFiltre, order: [["id", "DESC"]] });
-
-    // Beğendiği şarkılar ve takip bilgileri (belongsToMany ilişkilerinin get... fonksiyonları)
-    const begenilenler = await uye.getBegenilenler({ where: { onayli: true }, order: [["baslik", "ASC"]] });
-    const takipciler = await uye.getTakipciler();
-    const takipEdilenler = await uye.getTakipEdilenler();
-    // Ben bu üyeyi takip ediyor muyum? (takip et / takibi bırak düğmesi için)
-    const takipEdiyorum = req.session.isAuth && takipciler.some(t => t.id === req.session.kullanici.id);
-
-    // Şu an bir şarkı dinliyorsa (oynatıcının nabzından)
-    const dinlenenId = neDinliyor(uye.kullaniciAdi);
-    const simdiDinliyor = dinlenenId ? await Sarki.findByPk(dinlenenId) : null;
-
-    res.render("profil", {
-      uye, incelemeler, listeler, yuklemeler, kendisiMi,
-      begenilenler, takipciler, takipEdilenler, takipEdiyorum, simdiDinliyor,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// ---------- Üyeler: herkesin profiline buradan gidilir ----------
-exports.uyeler = async (req, res, next) => {
-  try {
-    const uyeler = await Kullanici.findAll({ order: [["kullaniciAdi", "ASC"]] });
-    // Her üye için inceleme, liste, beğeni ve takipçi sayıları
-    for (const u of uyeler) {
-      u.sayilar = {
-        inceleme: await u.countIncelemeler(),
-        liste: await u.countListeler(),
-        begeni: await u.countBegenilenler(),
-        takipci: await u.countTakipciler(),
-      };
-      u.dinliyor = neDinliyor(u.kullaniciAdi) !== null;
+    // Giriş yapan üye bu ürünü teslim aldıysa yorum yazabilir
+    let yorumYazabilir = false, benimYorum = null;
+    if (ben) {
+      yorumYazabilir = !!(await Siparis.findOne({ where: { urunId: urun.id, aliciId: ben.id, durum: "teslim" } }));
+      benimYorum = yorumlar.find(y => y.kullaniciId === ben.id) || null;
     }
-    res.render("uyeler", { uyeler });
+    res.render("urun", { urun, yorumlar, saticininDigerleri, benzerler, favoriSayisi, yorumYazabilir, benimYorum, bakan: bakanSayisi(urun.id) });
   } catch (err) {
     next(err);
   }
 };
 
-// ---------- Bir üyenin beğendiği şarkılar (Spotify'daki "Beğenilen Şarkılar") ----------
-exports.begeniler = async (req, res, next) => {
+// ---------- Mağazalar ----------
+exports.magazalar = async (req, res, next) => {
   try {
-    const uye = await Kullanici.findOne({ where: { kullaniciAdi: req.params.kullaniciAdi } });
-    if (!uye) return next();
-    const sarkilar = await uye.getBegenilenler({ where: { onayli: true }, order: [["baslik", "ASC"]] });
-    res.render("begeniler", { uye, sarkilar });
+    // En az bir onaylı ürünü olan üyeler mağaza sayılır (include + required: true -> INNER JOIN)
+    const magazalar = await Kullanici.findAll({
+      include: { model: Urun, where: { onayli: true }, required: true },
+      order: [["kullaniciAdi", "ASC"]],
+    });
+    for (const m of magazalar) m.takipciSayisi = await m.countTakipciler();
+    res.render("magazalar", { magazalar });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.magaza = async (req, res, next) => {
+  try {
+    const satici = await Kullanici.findOne({ where: { kullaniciAdi: req.params.kullaniciAdi } });
+    if (!satici) return next();
+    const kendisiMi = req.session.isAuth && req.session.kullanici.id === satici.id;
+    // Onay bekleyen ürünleri sadece mağaza sahibi görür
+    const urunler = await Urun.findAll({ where: kendisiMi ? { kullaniciId: satici.id } : { kullaniciId: satici.id, onayli: true }, include: Kullanici, order: [["createdAt", "DESC"]] });
+    // Mağazanın ürünlerine yazılmış yorumlar (Yorum -> Urun JOIN, ürünün satıcısı bu kişi)
+    const yorumlar = await Yorum.findAll({ include: [Kullanici, { model: Urun, where: { kullaniciId: satici.id } }], order: [["updatedAt", "DESC"]] });
+    const ortalama = yorumlar.length ? yorumlar.reduce((t, y) => t + y.puan, 0) / yorumlar.length : 0;
+    const satisSayisi = await Siparis.count({ where: { saticiId: satici.id, durum: "teslim" } });
+    const takipciSayisi = await satici.countTakipciler();
+    const takipEdiyorum = req.session.isAuth && !kendisiMi ? await satici.hasTakipci(req.session.kullanici.id) : false;
+    res.render("magaza", { satici, urunler, yorumlar, ortalama, satisSayisi, takipciSayisi, takipEdiyorum, kendisiMi });
   } catch (err) {
     next(err);
   }
@@ -285,11 +195,10 @@ exports.soruGonder = async (req, res, next) => {
 // ---------- Site haritası ----------
 exports.siteHaritasi = async (req, res, next) => {
   try {
-    const albumler = await albumleriGetir([["album", "ASC"]]);
-    const sarkilar = await Sarki.findAll({ where: { onayli: true }, order: [["id", "ASC"]], raw: true });
-    const listeler = await Liste.findAll({ order: [["baslik", "ASC"]], raw: true });
+    const kategoriler = await Kategori.findAll({ include: { model: Urun, where: { onayli: true }, required: false }, order: [["id", "ASC"]] });
+    const magazalar = await Kullanici.findAll({ include: { model: Urun, where: { onayli: true }, required: true }, order: [["kullaniciAdi", "ASC"]] });
     const duyurular = await Duyuru.findAll({ order: [["tarih", "DESC"]], raw: true });
-    res.render("site-haritasi", { albumler, sarkilar, listeler, duyurular });
+    res.render("site-haritasi", { kategoriler, magazalar, duyurular });
   } catch (err) {
     next(err);
   }
@@ -299,12 +208,10 @@ exports.siteHaritasi = async (req, res, next) => {
 exports.sitemapXml = async (req, res, next) => {
   try {
     const site = req.protocol + "://" + req.get("host");
-    const adresler = ["/", "/kitaplik", "/albumler", "/listeler", "/uyeler", "/galeri", "/duyurular", "/sss", "/site-haritasi"];
-    (await Kullanici.findAll({ raw: true })).forEach(u => adresler.push("/uye/" + u.kullaniciAdi));
-    const sarkilar = await Sarki.findAll({ where: { onayli: true }, raw: true });
-    new Set(sarkilar.map(s => s.albumSlug)).forEach(a => adresler.push("/album/" + a));
-    sarkilar.forEach(s => adresler.push("/sarki/" + s.slug));
-    (await Liste.findAll({ raw: true })).forEach(l => adresler.push("/liste/" + l.slug));
+    const adresler = ["/", "/urunler", "/magazalar", "/galeri", "/duyurular", "/sss", "/site-haritasi"];
+    (await Kategori.findAll({ raw: true })).forEach(k => adresler.push("/kategori/" + k.slug));
+    (await Urun.findAll({ where: { onayli: true }, raw: true })).forEach(u => adresler.push("/urun/" + u.slug));
+    (await Kullanici.findAll({ include: { model: Urun, where: { onayli: true }, required: true } })).forEach(k => adresler.push("/magaza/" + k.kullaniciAdi));
     (await Duyuru.findAll({ raw: true })).forEach(d => adresler.push("/duyuru/" + d.slug));
 
     const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -316,22 +223,11 @@ exports.sitemapXml = async (req, res, next) => {
   }
 };
 
-// ---------- API (oynatıcı çağırır) ----------
-// Nabız: "Ben buradayım (ve şu şarkıyı dinliyorum)". Cevapta güncel sayılar döner.
+// ---------- API: nabız (public/js/site.js 15 saniyede bir çağırır) ----------
+// "Ben buradayım (ve şu ürüne bakıyorum)". Cevapta güncel online sayısı ve bu ürüne bakan sayısı döner.
 exports.nabiz = (req, res) => {
-  const sarkiId = Number(req.body.sarkiId);
-  const kullaniciAdi = req.session.kullanici ? req.session.kullanici.ad : null; // misafirse null
-  if (sarkiId) dinleyenler[req.sessionID] = { sarkiId, zaman: Date.now(), kullaniciAdi };
-  else delete dinleyenler[req.sessionID];
-  res.json({ online: onlineSayisi(), dinleyici: dinleyiciSayilari() });
-};
-
-// Şarkı çalmaya başlayınca dinlenme sayısı 1 artar
-exports.dinlendi = async (req, res, next) => {
-  try {
-    await Sarki.increment("dinlenme", { where: { id: req.params.id } });
-    res.json({ tamam: true });
-  } catch (err) {
-    next(err);
-  }
+  const urunId = Number(req.body.urunId);
+  if (urunId) bakanlar[req.sessionID] = { urunId, zaman: Date.now() };
+  else delete bakanlar[req.sessionID];
+  res.json({ online: onlineSayisi(), bakan: urunId ? bakanSayisi(urunId) : 0 });
 };

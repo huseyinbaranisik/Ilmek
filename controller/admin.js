@@ -2,62 +2,125 @@
 //  controller/admin.js - Admin paneli
 //  Bu fonksiyonlara sadece adminler ulaşabilir (routes/admin.js -> isAdmin)
 // ============================================================
-const Sarki = require("../models/sarki");
+const { fn, col } = require("sequelize");
+const Urun = require("../models/urun");
+const Kategori = require("../models/kategori");
 const Kullanici = require("../models/kullanici");
 const Rol = require("../models/rol");
-const Inceleme = require("../models/inceleme");
+const Siparis = require("../models/siparis");
+const Yorum = require("../models/yorum");
 const Duyuru = require("../models/duyuru");
 const Soru = require("../models/soru");
 const Galeri = require("../models/galeri");
-const { benzersizSlug } = require("../helpers/slugfield");
+const { slugField, benzersizSlug } = require("../helpers/slugfield");
 const db = require("../data/db");
 
 // ---------- Özet ----------
 exports.panel = async (req, res, next) => {
   try {
     const sayilar = {
-      sarki: await Sarki.count({ where: { onayli: true } }),
-      bekleyen: await Sarki.count({ where: { onayli: false } }),
+      urun: await Urun.count({ where: { onayli: true } }),
+      bekleyen: await Urun.count({ where: { onayli: false } }),
       kullanici: await Kullanici.count(),
-      inceleme: await Inceleme.count(),
+      siparis: await Siparis.count(),
+      teslim: await Siparis.count({ where: { durum: "teslim" } }),
+      // Teslim edilen siparişlerin toplam tutarı (SUM)
+      ciro: (await Siparis.sum("toplam", { where: { durum: "teslim" } })) || 0,
+      yorum: await Yorum.count(),
       cevapsiz: await Soru.count({ where: { cevap: null } }),
-      // Ara tablolar (begeni, takip) Sequelize tarafından oluşturuldu, db.models içinden sayılır
-      begeni: await db.models.begeni.count(),
-      takip: await db.models.takip.count(),
+      // Ara tablo (favori) Sequelize tarafından oluşturuldu, db.models içinden sayılır
+      favori: await db.models.favori.count(),
     };
-    const populer = await Sarki.findAll({ where: { onayli: true }, order: [["dinlenme", "DESC"]], limit: 5 });
-    res.render("admin/panel", { sayilar, populer });
+    // Durumlara göre sipariş sayıları: GROUP BY durum
+    const durumlar = await Siparis.findAll({ attributes: ["durum", [fn("COUNT", col("id")), "sayi"]], group: ["durum"], raw: true });
+    const populer = await Urun.findAll({ where: { onayli: true }, include: Kullanici, order: [["goruntulenme", "DESC"]], limit: 5 });
+    res.render("admin/panel", { sayilar, durumlar, populer });
   } catch (err) {
     next(err);
   }
 };
 
-// ---------- Şarkılar: onay bekleyenler + yayındakiler ----------
-exports.sarkilar = async (req, res, next) => {
+// ---------- Ürünler: onay bekleyenler + yayındakiler ----------
+exports.urunler = async (req, res, next) => {
   try {
-    const bekleyenler = await Sarki.findAll({ where: { onayli: false }, include: Kullanici, order: [["id", "ASC"]] });
-    const sarkilar = await Sarki.findAll({ where: { onayli: true }, include: Kullanici, order: [["id", "DESC"]] });
-    res.render("admin/sarkilar", { bekleyenler, sarkilar });
+    const bekleyenler = await Urun.findAll({ where: { onayli: false }, include: [Kullanici, Kategori], order: [["id", "ASC"]] });
+    const urunler = await Urun.findAll({ where: { onayli: true }, include: [Kullanici, Kategori], order: [["id", "DESC"]] });
+    res.render("admin/urunler", { bekleyenler, urunler });
   } catch (err) {
     next(err);
   }
 };
 
-exports.sarkiOnayla = async (req, res, next) => {
+exports.urunOnayla = async (req, res, next) => {
   try {
-    await Sarki.update({ onayli: true }, { where: { id: req.params.id } });
-    req.session.mesaj = { tur: "basari", metin: "Şarkı onaylandı ve yayınlandı." };
-    res.redirect("/admin/sarkilar");
+    await Urun.update({ onayli: true }, { where: { id: req.params.id } });
+    req.session.mesaj = { tur: "basari", metin: "Ürün onaylandı ve yayınlandı." };
+    res.redirect("/admin/urunler");
   } catch (err) {
     next(err);
   }
 };
 
-exports.sarkiSil = async (req, res, next) => {
+exports.urunSil = async (req, res, next) => {
   try {
-    await Sarki.destroy({ where: { id: req.params.id } }); // incelemeleri de silinir (CASCADE)
-    req.session.mesaj = { tur: "basari", metin: "Şarkı silindi." };
-    res.redirect("/admin/sarkilar");
+    await Urun.destroy({ where: { id: req.params.id } }); // yorumları ve siparişleri de silinir (CASCADE)
+    req.session.mesaj = { tur: "basari", metin: "Ürün silindi." };
+    res.redirect("/admin/urunler");
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ---------- Kategoriler ----------
+exports.kategoriler = async (req, res, next) => {
+  try {
+    const kategoriler = await Kategori.findAll({ order: [["id", "ASC"]] });
+    for (const k of kategoriler) k.urunSayisi = await Urun.count({ where: { kategoriId: k.id } });
+    res.render("admin/kategoriler", { kategoriler });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.kategoriEkle = async (req, res, next) => {
+  try {
+    const ad = (req.body.ad || "").trim();
+    const ikon = /^[a-z0-9-]{1,40}$/.test(req.body.ikon || "") ? req.body.ikon : "bag-heart"; // Bootstrap Icons adı
+    if (!ad) {
+      req.session.mesaj = { tur: "hata", metin: "Kategori adı boş olamaz." };
+    } else {
+      await Kategori.create({ ad: ad.slice(0, 50), ikon, slug: await benzersizSlug(Kategori, ad) });
+      req.session.mesaj = { tur: "basari", metin: '"' + ad + '" kategorisi eklendi: /kategori/' + slugField(ad) };
+    }
+    res.redirect("/admin/kategoriler");
+  } catch (err) {
+    next(err);
+  }
+};
+
+// İçinde ürün olan kategori silinemez (ürünler kategorisiz kalmasın)
+exports.kategoriSil = async (req, res, next) => {
+  try {
+    if (await Urun.count({ where: { kategoriId: req.params.id } })) {
+      req.session.mesaj = { tur: "hata", metin: "Bu kategoride ürün var, önce ürünleri başka kategoriye taşıyın." };
+    } else {
+      await Kategori.destroy({ where: { id: req.params.id } });
+      req.session.mesaj = { tur: "basari", metin: "Kategori silindi." };
+    }
+    res.redirect("/admin/kategoriler");
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ---------- Siparişler: bütün siparişlere genel bakış ----------
+exports.siparisler = async (req, res, next) => {
+  try {
+    const siparisler = await Siparis.findAll({
+      include: [Urun, { model: Kullanici, as: "alici" }, { model: Kullanici, as: "satici" }],
+      order: [["createdAt", "DESC"]],
+    });
+    res.render("admin/siparisler", { siparisler });
   } catch (err) {
     next(err);
   }
@@ -163,7 +226,11 @@ exports.galeriSil = async (req, res, next) => {
 // ---------- Kullanıcılar ----------
 exports.kullanicilar = async (req, res, next) => {
   try {
-    const kullanicilar = await Kullanici.findAll({ include: [Rol, Inceleme], order: [["id", "ASC"]] });
+    const kullanicilar = await Kullanici.findAll({ include: Rol, order: [["id", "ASC"]] });
+    for (const k of kullanicilar) {
+      k.urunSayisi = await Urun.count({ where: { kullaniciId: k.id } });
+      k.siparisSayisi = await Siparis.count({ where: { aliciId: k.id } });
+    }
     res.render("admin/kullanicilar", { kullanicilar });
   } catch (err) {
     next(err);

@@ -5,9 +5,10 @@
   <% kullanicilar.forEach(k => { %>
     <div class="satir">
       <div class="avatar kucuk-avatar"><%= k.kullaniciAdi[0].toUpperCase() %></div>
-      <div class="flex-grow-1 text-truncate">
-        <a href="/uye/<%= k.kullaniciAdi %>" class="satir-baslik"><%= k.kullaniciAdi %></a>
-        <div class="soluk kucuk"><%= tarihYaz(k.createdAt) %> · <%= k.incelemeler.length %> inceleme</div>
+      <div class="flex-grow-1 min-w-0">
+        <a href="/magaza/<%= k.kullaniciAdi %>" class="satir-baslik"><%= k.kullaniciAdi %></a>
+        <% if (k.magazaAdi) { %><span class="soluk kucuk">· <%= k.magazaAdi %></span><% } %>
+        <div class="soluk kucuk">üyelik: <%= tarihYaz(k.createdAt) %> · <%= k.urunSayisi %> ürün · <%= k.siparisSayisi %> sipariş verdi</div>
       </div>
       <span class="rozet <%= k.rol.ad === 'Admin' ? 'sari-rozet' : 'yesil-rozet' %>"><%= k.rol.ad %></span>
     </div>

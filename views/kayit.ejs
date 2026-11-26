@@ -1,6 +1,8 @@
 <%- include('partials/ust', { sayfaBaslik: 'Kayıt ol' }) %>
 <div class="kutu form-kutu">
-  <h1 class="fs-4 text-center mb-3">Gramofy'a katıl</h1>
+  <img src="/img/logo.svg" alt="" class="form-logo">
+  <h1 class="fs-4 text-center mb-1">İlmek'e katıl</h1>
+  <p class="soluk kucuk text-center">Alışveriş yap, favorile, kendi mağazanı aç.</p>
   <% if (hata) { %><div class="bilgi hata"><%= hata %></div><% } %>
   <form action="/auth/kayit" method="post" class="d-grid gap-2">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">

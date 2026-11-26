@@ -6,43 +6,49 @@ Her cevabın yanında kodun bulunduğu dosya ve fonksiyon yazıyor. Sunumdan ön
 
 ## Genel
 
+**Proje ne?**
+**İlmek**: el yapımı ürünlerin pazar yeri. Örgü, takı, seramik, ahşap gibi ürünleri yapan üyeler mağaza açıp ürün ekliyor, diğer üyeler sipariş talebi gönderiyor. Gerçek ödeme yok: satıcı talebi onaylıyor, sonra durumu "hazırlanıyor → kargoda → teslim edildi" diye ilerletiyor. Ürünü teslim alan alıcı yorum ve puan yazabiliyor.
+
 **Projenin yapısı nasıl?**
 Derste kullandığımız **MVC** yapısı:
 - `index.js`: uygulamanın girişi. Middleware'leri, route'ları ve tablo ilişkilerini tanımlıyor, sunucuyu başlatıyor.
 - `models/`: tablolar (Sequelize modelleri).
-- `routes/`: hangi adres hangi fonksiyona gidecek. Örnek: `router.get("/sarki/:slug", controllerUser.sarki)`.
+- `routes/`: hangi adres hangi fonksiyona gidecek. Örnek: `router.get("/urun/:slug", controllerUser.urun)`.
 - `controller/`: o adreste ne yapılacak (veritabanından oku, sayfayı göster).
 - `views/`: EJS sayfaları.
 - `middleware/` ve `helpers/`: araya giren fonksiyonlar ve yardımcılar.
 
 **Route dosyaları nasıl bağlanıyor?**
-`index.js` içinde `app.use("/admin", adminRouter)` gibi. `routes/admin.js` içindeki `router.get("/sarkilar")` böylece `/admin/sarkilar` adresine karşılık geliyor. Dört router var: `user` (herkes), `auth` (giriş/kayıt), `hesap` (üyeler), `admin`.
+`index.js` içinde `app.use("/admin", adminRouter)` gibi. `routes/admin.js` içindeki `router.get("/urunler")` böylece `/admin/urunler` adresine karşılık geliyor. Dört router var: `user` (herkes), `auth` (giriş/kayıt), `hesap` (üyeler), `admin`.
 
 **Neden EJS?**
-HTML'in içine `<%= %>` ile veri yazabiliyoruz. Ortak parçalar (üst menü, alt oynatıcı, inceleme kartı) `views/partials/` içinde, her sayfa onları `include` ile çağırıyor.
+HTML'in içine `<%= %>` ile veri yazabiliyoruz. Ortak parçalar `views/partials/` içinde (üst menü, alt bilgi, ürün kartı, yorum, sipariş durumu rozeti), her sayfa onları `include` ile çağırıyor. Örneğin ürün kartı (`urun-kart.ejs`) ana sayfada, kategori sayfasında, mağazada ve favorilerde aynı dosyadan geliyor.
 
 **Veritabanı nedir?**
-**Sequelize** ile **SQLite**. Derste Sequelize'ı MySQL ile kullandık. Burada `data/db.js` içinde sadece `dialect: "sqlite"` farklı, modeller, `findAll`, `create`, `hasMany` gibi bütün kod dersteki gibi. SQLite ayrı bir sunucu gerektirmiyor, veritabanı tek bir dosya (`plak.db`). İstenirse `db.js`'i dersteki MySQL ayarıyla değiştirmek yeterli.
+**Sequelize** ile **SQLite**. Derste Sequelize'ı MySQL ile kullandık. Burada `data/db.js` içinde sadece `dialect: "sqlite"` farklı; modeller, `findAll`, `create`, `hasMany` gibi bütün kod dersteki gibi. SQLite ayrı bir sunucu gerektirmiyor, veritabanı tek bir dosya (`ilmek.db`).
 
 **Tablolar neler, ilişkiler nasıl?**
 Modeller `models/` içinde, ilişkiler `index.js`'in "İlişkiler" bölümünde:
 - `rol` 1 → çok `kullanici` (dersteki `usercategory` → `users` gibi). Roller: 1 = Admin, 2 = Üye.
-- `kullanici` 1 → çok `sarki` (yükleyen), `inceleme`, `liste`.
-- `sarki` 1 → çok `inceleme`.
-- `liste` çok ↔ çok `sarki`: `belongsToMany` ile. Sequelize bunun için `listeSarki` ara tablosunu kendisi oluşturuyor.
-- Diğerleri: `duyuru`, `soru`, `galeri`, `sayac`, ve oturumlar için `Sessions`.
+- `kategori` 1 → çok `urun`.
+- `kullanici` 1 → çok `urun` (satıcı). `urun.kullanici` ürünün satıcısı.
+- `urun` 1 → çok `yorum`, `kullanici` 1 → çok `yorum`.
+- `siparis`: bir ürüne, bir alıcıya ve bir satıcıya bağlı. Alıcı da satıcı da `kullanici` tablosunda olduğu için `as: "alici"` ve `as: "satici"` ile iki ayrı isimle bağlandı (`foreignKey: "aliciId"` / `"saticiId"`).
+- **Favori**: `kullanici` çok ↔ çok `urun` (`belongsToMany`, ara tablo `favori`).
+- **Mağaza takibi**: `kullanici` çok ↔ çok `kullanici` (ara tablo `takip`: `takipciId`, `takipEdilenId`).
+- Diğerleri: `duyuru`, `soru`, `galeri`, `sayac` ve oturumlar için `Sessions`.
 
 **`db.sync()` ne yapıyor?**
 Modellere bakıp tablolar yoksa oluşturuyor (`index.js` en alt). Ardından `dummydata()` tablo boşsa örnek verileri ekliyor (`models/dummy-data.js`). Derste `db.sync({ alter: true })` kullandık, o değişen sütunları da günceller.
 
 **`include` ne işe yarıyor?**
-SQL'deki JOIN. Örnek: `Inceleme.findAll({ include: [Kullanici, Sarki] })` incelemeyle birlikte yazan kişiyi ve şarkıyı da getiriyor. EJS'te `i.kullanici.kullaniciAdi` diye kullanılıyor.
+SQL'deki JOIN. Örnek: `Urun.findAll({ include: Kullanici })` ürünle birlikte satıcısını da getiriyor, EJS'te `u.kullanici.magazaAdi` diye kullanılıyor. `required: true` verilirse INNER JOIN oluyor: mağazalar sayfasında sadece en az bir onaylı ürünü olan üyeler geliyor (`controller/user.js` → `magazalar`).
 
 **SQL injection'a karşı ne yaptın?**
-Sequelize kullanıyoruz: `Sarki.findOne({ where: { slug: req.params.slug } })`. Sequelize değerleri SQL metnine eklemiyor, parametre olarak ayrı gönderiyor. Kullanıcının yazdığı şey SQL komutu olarak çalışamıyor.
+Sequelize kullanıyoruz: `Urun.findOne({ where: { slug: req.params.slug } })`. Sequelize değerleri SQL metnine eklemiyor, parametre olarak ayrı gönderiyor. Kullanıcının yazdığı şey SQL komutu olarak çalışamıyor.
 
 **XSS'e karşı ne yaptın?**
-EJS'te `<%= %>` `<`, `>`, `"` gibi karakterleri otomatik kaçırıyor. Bir üye incelemesine `<script>` yazarsa sayfada düz yazı olarak görünür, çalışmaz. `<%- %>` sadece kendi `include` dosyalarımız için kullanıldı.
+EJS'te `<%= %>` `<`, `>`, `"` gibi karakterleri otomatik kaçırıyor. Bir üye ürün adına ya da yoruma `<script>` yazarsa sayfada düz yazı olarak görünür, çalışmaz. `<%- %>` sadece kendi `include` dosyalarımız için kullanıldı. JavaScript'le eklenen bildirimlerde de `innerHTML` değil `textContent` kullanıldı.
 
 **Hatalar nasıl yakalanıyor?**
 Derste olduğu gibi: her controller `try { ... } catch (err) { next(err) }` yapıyor, hata `index.js` en alttaki hata middleware'ine düşüyor ve "Bir hata oluştu" sayfası gösteriliyor. Bulunamayan sayfalar için `next()` çağrılıyor, 404 middleware'i "Sayfa bulunamadı" gösteriyor.
@@ -53,20 +59,20 @@ Derste olduğu gibi: her controller `try { ... } catch (err) { next(err) }` yap�
 
 **Site haritasını nasıl yaptın?**
 İki tane var, ikisi de `controller/user.js` içinde:
-- `siteHaritasi`: `/site-haritasi`, ziyaretçiler için HTML sayfası. Bütün sayfaları, albümleri, şarkıları, listeleri ve duyuruları listeliyor.
+- `siteHaritasi`: `/site-haritasi`, ziyaretçiler için HTML sayfası. Sayfaları, mağazaları, kategorileri ve içlerindeki ürünleri, duyuruları listeliyor.
 - `sitemapXml`: `/sitemap.xml`, arama motorları (Google) için XML dosyası.
 
-İkisi de veritabanından **otomatik** üretiliyor. Yeni şarkı, liste ya da duyuru eklenince haritaya kendiliğinden giriyor. Onay bekleyen şarkılar haritada görünmüyor.
+İkisi de veritabanından **otomatik** üretiliyor. Yeni ürün, kategori ya da duyuru eklenince haritaya kendiliğinden giriyor. Onay bekleyen ürünler haritada görünmüyor.
 
 **sitemap.xml ne işe yarar?**
-Arama motorlarına sitedeki bütün adresleri bildirir, böylece sayfaların taranması kolaylaşır. Standart biçim `<urlset><url><loc>adres</loc></url></urlset>`.
+Arama motorlarına sitedeki bütün adresleri bildirir. Standart biçim `<urlset><url><loc>adres</loc></url></urlset>`.
 
 ---
 
 ## 2. Ziyaretçi Sayacı
 
 **Ziyaretçi sayacı nasıl çalışıyor?**
-`middleware/locals.js`. Her ziyaretçiye `express-session` ile bir oturum (çerez) veriliyor. Oturumda `sayildi` bilgisi yoksa `Sayac.increment("deger", ...)` ile veritabanındaki sayaç 1 artırılıyor ve `sayildi = true` yapılıyor. Aynı kişi sayfalar arasında gezdikçe tekrar sayılmıyor.
+`middleware/locals.js`. Her ziyaretçiye `express-session` ile bir oturum (çerez) veriliyor. Oturumda `sayildi` bilgisi yoksa `Sayac.increment("deger", ...)` ile veritabanındaki sayaç 1 artırılıyor ve `sayildi = true` yapılıyor. Aynı kişi sayfalar arasında gezdikçe tekrar sayılmıyor. Sayı sayfanın en altında (footer) ve admin panelinde görünüyor.
 
 **Sayfayı yenileyince artıyor mu?**
 Hayır, aynı oturum devam ediyor. Çerez silinirse ya da başka bir tarayıcıdan girilirse yeni ziyaretçi sayılır.
@@ -82,10 +88,10 @@ Sunucu kapanıp açılınca sıfırlanmasın diye. `sayac` tablosunda `ziyaretci
 `helpers/canli.js`. Hafızada bir nesne var: `sonGorulme = { oturumId: zaman }`. Her istekte `middleware/locals.js` o ziyaretçinin zamanını güncelliyor. **Son 60 saniyede** görülenler çevrimiçi sayılıyor, eskiler siliniyor.
 
 **Kullanıcı sayfada hiçbir şeye tıklamadan duruyorsa?**
-`public/js/oynatici.js` 15 saniyede bir `/api/nabiz` adresine istek atıyor ("nabız"). Sayfa açık kaldığı sürece kişi çevrimiçi görünür, sekme kapanınca 60 saniye sonra düşer.
+`public/js/site.js` 15 saniyede bir `/api/nabiz` adresine istek atıyor ("nabız"). Sayfa açık kaldığı sürece kişi çevrimiçi görünür, sekme kapanınca 60 saniye sonra düşer. Cevapta gelen sayıyla footer'daki rakam güncelleniyor.
 
-**"Şu an 3 kişi dinliyor" nasıl çalışıyor?**
-Aynı mantık. Şarkı çalarken nabız isteğinde `sarkiId` de gönderiliyor (`controller/user.js` → `nabiz`). Sunucu `dinleyenler = { oturumId: { sarkiId, zaman } }` nesnesinde tutuyor. Son 40 saniyede haber verenler şarkı bazında sayılıyor, cevapta dönen sayılarla JavaScript sayfadaki rakamları güncelliyor.
+**Ürün sayfasındaki "Şu an 2 kişi bu ürüne bakıyor" nasıl çalışıyor?**
+Aynı mantık. Ürün sayfasında nabız isteğiyle `urunId` de gönderiliyor (`controller/user.js` → `nabiz`). Sunucu `bakanlar = { oturumId: { urunId, zaman } }` nesnesinde tutuyor, `bakanSayisi(urunId)` son 40 saniyede o ürün sayfasında olanları sayıyor.
 
 **Neden veritabanında değil de hafızada?**
 Bunlar saniyeler içinde değişen anlık bilgiler, kalıcı olmaları gerekmiyor.
@@ -98,7 +104,7 @@ Projeyi basit tutmak için. 15 saniyede bir istek atmak (polling) bu iş için y
 ## 4. Duyuru-Haber Modülü
 
 **Duyurular nasıl ekleniyor?**
-Admin panelinde `/admin/duyurular` sayfasındaki formdan (`controller/admin.js` → `duyuruEkle`). Başlıktan otomatik slug üretiliyor, `Duyuru.create()` ile kaydediliyor. Ana sayfanın üstündeki şeritte en son duyuru görünüyor.
+Admin panelinde `/admin/duyurular` sayfasındaki formdan (`controller/admin.js` → `duyuruEkle`). Başlıktan otomatik slug üretiliyor, `Duyuru.create()` ile kaydediliyor. Ana sayfada vitrinin altındaki şeritte en son duyuru görünüyor, `/duyurular` hepsini listeliyor.
 
 **Silme neden GET değil POST?**
 GET ile silme yapılırsa bir link ya da resim etiketi bile silmeyi tetikleyebilir, ayrıca CSRF koruması GET isteklerinde çalışmıyor. Veriyi değiştiren her işlem POST ile yapılıyor. (Derste ilk yöntem GET ile silmeydi, ikinci ve daha güvenli yöntem form + POST'tu, biz ikincisini kullandık.)
@@ -108,17 +114,20 @@ GET ile silme yapılırsa bir link ya da resim etiketi bile silmeyi tetikleyebil
 ## 5. Resim Galerisi
 
 **Galeri nasıl çalışıyor?**
-`/galeri` sayfası `galeri` tablosundaki resimleri ızgara (CSS grid) şeklinde gösteriyor. Admin `/admin/galeri`'den resim yüklüyor (`controller/admin.js` → `galeriEkle`).
+`/galeri` sayfası `galeri` tablosundaki resimleri polaroid fotoğraflar gibi (CSS grid, hafif eğik beyaz çerçeveler) gösteriyor: "atölyelerden kareler". Admin `/admin/galeri`'den resim yüklüyor (`controller/admin.js` → `galeriEkle`).
 
 **Resme tıklayınca büyümesi nasıl oluyor?**
 JavaScript kullanmadan, CSS `:target` seçicisiyle. Resim linki `#resim-3` adresine gidiyor, CSS'teki `.buyut:target` kuralı o elemanı tam ekran gösteriyor.
 
+**Resimleri nerede tutuyorsun?**
+Veritabanında değil, klasörde. Örnek ürün resimleri `public/img/urunler/`, yüklenen resimler `public/img/yuklenen/`. Veritabanına sadece adres (URL) yazılıyor: `urun.resim = "/img/urunler/bere.svg"`. EJS bunu `<img src="<%= u.resim %>">` içine koyuyor, `express.static("public")` dosyayı o adresten sunuyor.
+
 **Dosya yükleme nasıl ve güvenli mi?**
 `multer` paketiyle (`helpers/yukle.js`):
-- Sadece izin verilen uzantılar kabul ediliyor: resim için jpg, png, webp, gif. Ses için mp3, wav, ogg.
-- En fazla 20 MB.
+- Sadece resim uzantıları kabul ediliyor: jpg, png, webp, gif.
+- En fazla 5 MB.
 - Dosya adı `zaman-rastgeleSayı.uzantı` olarak değiştiriliyor, çakışma olmuyor.
-- SVG kabul edilmiyor, çünkü SVG içine JavaScript yazılabilir.
+- Kullanıcıdan SVG kabul edilmiyor, çünkü SVG içine JavaScript yazılabilir. (Örnek resimler SVG ama onları biz çizdik.)
 
 **Form neden `enctype="multipart/form-data"`?**
 Normal formlar sadece metin gönderir. Dosya göndermek için bu biçim gerekiyor, multer da bu biçimi okuyor.
@@ -129,9 +138,9 @@ Normal formlar sadece metin gönderir. Dosya göndermek için bu biçim gerekiyo
 
 **Kaç tür kullanıcı var?**
 Üç seviye:
-- **Misafir**: giriş yapmamış. Dinler, gezer, S.S.S.'e soru gönderir.
-- **Üye**: puan verir, inceleme yazar, liste oluşturur, şarkı beğenir, üye takip eder, şarkı yükler.
-- **Admin**: şarkıları onaylar, duyuru, galeri, S.S.S. ve incelemeleri yönetir.
+- **Misafir**: giriş yapmamış. Ürünlere, mağazalara, yorumlara, galeriye ve duyurulara bakar, S.S.S.'e soru gönderir.
+- **Üye**: hem alıcı hem satıcı. Sipariş talebi gönderir, favoriler, mağaza takip eder, teslim aldığı ürüne yorum yazar; kendi mağazasına ürün ekler, gelen siparişleri yönetir.
+- **Admin**: ürünleri onaylar ya da reddeder; kategorileri, duyuruları, galeriyi, S.S.S.'i yönetir; bütün siparişleri ve kullanıcıları görür.
 
 Rol bilgisi `rol` tablosunda (dersteki `usercategory` gibi), her kullanıcının `rolId`'si var.
 
@@ -140,24 +149,27 @@ Rol bilgisi `rol` tablosunda (dersteki `usercategory` gibi), her kullanıcının
 
 **Sayfaları nasıl koruyorsun?**
 İki middleware var:
-- `middleware/isAuth.js` (dersteki gibi): giriş yapılmamışsa `/auth/giris?url=...` adresine yönlendiriyor. Giriş yapınca kullanıcı geldiği sayfaya dönüyor. `routes/hesap.js` içindeki her route'ta var.
-- `middleware/isAdmin.js`: giriş yoksa girişe yönlendiriyor, üyeyse 403 "Yetkiniz yok" gösteriyor. `routes/admin.js` içinde `router.use(isAdmin)` ile o dosyadaki **bütün** adreslere uygulanıyor.
+- `middleware/isAuth.js` (dersteki gibi): giriş yapılmamışsa `/auth/giris?url=...` adresine yönlendiriyor, giriş yapınca kullanıcı geldiği sayfaya dönüyor. `routes/hesap.js` içinde `router.use(isAuth)` ile o dosyadaki bütün adreslere uygulanıyor.
+- `middleware/isAdmin.js`: giriş yoksa girişe yönlendiriyor, üyeyse 403 "Yetkiniz yok" gösteriyor. `routes/admin.js` içinde `router.use(isAdmin)`.
 
-**Bir üye başkasının listesini ya da incelemesini silebilir mi?**
-Hayır. `controller/hesap.js` içinde `benimListem()` fonksiyonu listenin `kullaniciId`'si oturumdaki kullanıcıyla aynı mı diye bakıyor. İnceleme silmede de aynı kontrol var, ek olarak admin her incelemeyi silebiliyor.
+**Bir üye başkasının ürününü ya da siparişini değiştirebilir mi?**
+Hayır. `controller/hesap.js` içinde her işlemde sahiplik kontrolü var: ürün düzenleme/silmede `urun.kullaniciId === benimId(req)`, sipariş durumunu değiştirmede `siparis.saticiId === benimId(req)`, iptalde `siparis.aliciId === benimId(req)`. Değilse 404. Kendi ürününe sipariş veremez, kendini takip edemez.
 
 **Şifreler nasıl saklanıyor?**
-`bcrypt.hash(sifre, 10)` ile hash'lenerek (derste kullandığımız gibi). Veritabanında düz şifre yok. `10` hash'leme turu sayısı, ne kadar büyükse kırmak o kadar zor. bcrypt her şifreye otomatik olarak rastgele bir **tuz (salt)** ekliyor, böylece aynı şifreyi kullanan iki kişinin hash'i farklı oluyor.
+`bcrypt.hash(sifre, 10)` ile hash'lenerek (derste kullandığımız gibi). Veritabanında düz şifre yok. bcrypt her şifreye otomatik olarak rastgele bir **tuz (salt)** ekliyor, böylece aynı şifreyi kullanan iki kişinin hash'i farklı oluyor.
 
 **Oturumlar nerede tutuluyor?**
 `middleware/config_Session.js`. Dersteki gibi `connect-session-sequelize` ile veritabanındaki `Sessions` tablosunda. Sunucu yeniden başlasa da kullanıcıların girişi düşmüyor.
+
+**Admin panelindeki istatistikler nasıl hesaplanıyor?**
+`controller/admin.js` → `panel`: `Urun.count(...)`, teslim edilen siparişlerin toplam tutarı için `Siparis.sum("toplam", ...)`, durumlara göre sipariş sayısı için `GROUP BY`: `Siparis.findAll({ attributes: ["durum", [fn("COUNT", col("id")), "sayi"]], group: ["durum"] })`. Favori ara tablosu için ayrı model yazmadık, Sequelize'ın oluşturduğu modele `db.models.favori.count()` ile ulaşılıyor.
 
 ---
 
 ## 7. CSRF
 
 **CSRF nedir?**
-Cross-Site Request Forgery (siteler arası istek sahteciliği). Admin sitemizde giriş yapmışken kötü niyetli başka bir siteye girerse, o site gizli bir formla bizim sitemize "şu şarkıyı sil" isteği gönderebilir. Tarayıcı çerezi otomatik eklediği için istek admin'den gelmiş gibi görünür.
+Cross-Site Request Forgery (siteler arası istek sahteciliği). Bir satıcı sitemizde giriş yapmışken kötü niyetli başka bir siteye girerse, o site gizli bir formla bizim sitemize "şu ürünü sil" isteği gönderebilir. Tarayıcı çerezi otomatik eklediği için istek satıcıdan gelmiş gibi görünür.
 
 **Nasıl korudun?**
 Derste kullandığımız `csurf` paketiyle:
@@ -166,40 +178,35 @@ Derste kullandığımız `csurf` paketiyle:
 3. Her formda gizli alan var: `<input type="hidden" name="_csrf" value="<%= csrfToken %>">`.
 4. Anahtar yoksa ya da yanlışsa csurf `EBADCSRFTOKEN` hatası veriyor, hata middleware'i 403 "Güvenlik hatası" sayfası gösteriyor.
 
-Kötü niyetli site bu anahtarı bilemez, bu yüzden sahte istek reddediliyor.
-
-**Derste csrf middleware'ini sadece formlu sayfalara eklemiştik, sen neden hepsine ekledin?**
-Bu sitede neredeyse her sayfada form var (üst menüdeki çıkış butonu, oynatıcının fetch istekleri). Her route'a tek tek eklemek yerine `app.use(csrfToken)` ile bir kere ekledik.
-
-**fetch isteklerinde nasıl?**
-Anahtar sayfanın `<meta name="csrf-token">` etiketinde. `oynatici.js` bunu okuyup isteğin `x-csrf-token` başlığına ekliyor, csurf başlığa da bakıyor.
+**fetch isteklerinde (favori kalbi) nasıl?**
+Anahtar sayfanın `<meta name="csrf-token">` etiketinde. `site.js` bunu okuyup isteğin `x-csrf-token` başlığına ekliyor, csurf başlığa da bakıyor.
 
 **Dosya yükleme formlarında anahtar neden adreste (`?_csrf=...`)?**
 Bu formlar `multipart/form-data` biçiminde. csurf, multer'dan önce çalıştığı için o anda `req.body` boş. csurf adresteki `_csrf` değerine de baktığı için anahtarı oraya koyduk.
 
 **Nasıl test edersin?**
-Tarayıcının geliştirici araçlarında gizli `_csrf` alanının değerini değiştirip formu gönderirsen "Güvenlik hatası" sayfası çıkar.
+Tarayıcının geliştirici araçlarında gizli `_csrf` alanının değerini değiştirip formu gönderirsen "Güvenlik hatası" sayfası çıkar. `test/test.mjs` de bunu deniyor.
 
 ---
 
 ## 8. Slugify
 
 **Slug nedir, ne işe yarar?**
-Başlığın URL'de kullanılabilen hali: "Sessiz Sokaklar" → `sessiz-sokaklar`. `/sarki/5` yerine `/sarki/sessiz-sokaklar` hem okunaklı hem de arama motorları (SEO) için daha iyi.
+Başlığın URL'de kullanılabilen hali: "El Örgüsü Bere" → `el-orgusu-bere`. `/urun/5` yerine `/urun/el-orgusu-bere` hem okunaklı hem de arama motorları (SEO) için daha iyi.
 
 **Nasıl yaptın?**
 Derste kullandığımız `slugify` paketiyle, `helpers/slugfield.js` dosyasında (dersteki dosyanın aynısı). Seçenekler: `lower: true` (küçük harf), `strict: true` (özel karakterleri sil), `locale: "tr"` (Türkçe harfleri doğru çevir).
 
-Örnek: "Çılgın Şubat Konseri İçin Ön Satış!" → `cilgin-subat-konseri-icin-on-satis`
+Örnek: "Çılgın Şubat İndirimleri Başladı!" → `cilgin-subat-indirimleri-basladi`
 
 **Hangi sayfalarda var?**
-Şarkı (`/sarki/kor`), albüm (`/album/gece-yarisi`), liste (`/liste/sabah-enerjisi`), duyuru (`/duyuru/plak-yayinda`). Profillerde kullanıcı adı kullanılıyor (`/uye/deniz`).
+Ürün (`/urun/sirli-seramik-kupa`), kategori (`/kategori/mum-sabun`), duyuru (`/duyuru/ilmek-acildi`). Mağazalarda kullanıcı adı kullanılıyor (`/magaza/ayse`).
 
 **Aynı başlıktan iki tane olursa?**
 `benzersizSlug()` fonksiyonu veritabanına bakıyor. Slug alınmışsa sonuna `-2`, `-3` ekliyor.
 
 **Slug'la sayfayı nasıl buluyorsun?**
-`router.get("/sarki/:slug", ...)` içinde `req.params.slug` ile adresteki değer okunuyor, `Sarki.findOne({ where: { slug } })` ile aranıyor. Bulunamazsa `next()` çağrılıyor ve 404 sayfası gösteriliyor (dersteki `viewAnc` fonksiyonu gibi).
+`router.get("/urun/:slug", ...)` içinde `req.params.slug` ile adresteki değer okunuyor, `Urun.findOne({ where: { slug } })` ile aranıyor. Bulunamazsa `next()` çağrılıyor ve 404 sayfası gösteriliyor (dersteki `viewAnc` fonksiyonu gibi).
 
 ---
 
@@ -215,184 +222,69 @@ Spam ya da uygunsuz içerik doğrudan sitede görünmesin diye (moderasyon).
 
 ---
 
-## Letterboxd kısmı: puan, inceleme, liste
+## Pazar yeri özellikleri
 
-**Puan nasıl veriliyor?**
-Şarkı sayfasındaki formda 5 tane radio butonu var, CSS ile yıldız gibi görünüyor. Form `/hesap/inceleme/:sarkiId` adresine gidiyor (`controller/hesap.js` → `incelemeKaydet`).
+**Ürün ekleme ve onay nasıl?**
+`/hesap/urun/yeni` (`controller/hesap.js` → `urunFormu`, `urunKaydet`). Hem "yeni" hem "düzenle" aynı formu kullanıyor: adreste `:id` varsa düzenleme. Üyenin eklediği ürün `onayli: false` kaydediliyor, admin `/admin/urunler`'den onaylayınca yayına giriyor. Admin eklerse hemen yayınlanıyor. Düzenlenen ürün tekrar onaya düşüyor. Onaysız ürünü sadece sahibi ve admin görebiliyor, misafir 404 alıyor.
 
-**Aynı şarkıya iki kere puan verilebilir mi?**
-Hayır. Önce `Inceleme.findOne({ where: { kullaniciId, sarkiId } })` ile eski inceleme aranıyor. Varsa güncelleniyor, yoksa yenisi oluşturuluyor.
+**Sipariş akışı nasıl?**
+`models/siparis.js` içinde durumlar ve izin verilen geçişler tanımlı:
+```js
+Siparis.SONRAKI = {
+  beklemede:    ["hazirlaniyor", "reddedildi"],
+  hazirlaniyor: ["kargoda"],
+  kargoda:      ["teslim"],
+};
+```
+1. Alıcı ürün sayfasındaki formdan adet, adres ve not yazıp gönderiyor (`siparisVer`). Adet stoktan fazla olamaz, kendi ürününe sipariş veremez. Toplam tutar sipariş anındaki fiyatla kaydediliyor, fiyat sonra değişse de sipariş etkilenmiyor.
+2. Satıcı "Gelen siparişler"de düğmelerle durumu ilerletiyor (`siparisDurum`). Sadece `SONRAKI` listesindeki geçişlere izin var: "beklemede"den doğrudan "teslim"e geçilemez.
+3. Satıcı onaylayınca (`hazirlaniyor`) ürünün stoğu `decrement("stok", { by: adet })` ile düşüyor. Stok yetmezse onaylanamıyor.
+4. Alıcı, satıcı onaylamadan önce siparişi iptal edebiliyor (`siparisIptal`).
+5. "Siparişlerim" sayfasında siparişin hangi aşamada olduğu 4 adımlı bir çizgiyle gösteriliyor.
 
-**Ortalama puan nasıl hesaplanıyor?**
-`helpers/puan.js` → `puanGuncelle()`. İnceleme eklenince, güncellenince ya da silinince çağrılıyor. O şarkının bütün incelemelerini alıp puanları topluyor, sayıya bölüyor ve şarkının `ortPuan` ve `incelemeSayisi` sütunlarına yazıyor. Ortalamayı her sayfa açılışında hesaplamak yerine bir kere hesaplayıp saklıyoruz, böylece "En yüksek puanlılar" listesi basit bir `order: [["ortPuan", "DESC"]]` sorgusu oluyor.
+**Yorumu herkes yazabilir mi?**
+Hayır, sadece ürünü satın alıp **teslim almış** üye (`controller/hesap.js` → `yorumKaydet`): `Siparis.findOne({ where: { urunId, aliciId, durum: "teslim" } })` yoksa yorum reddediliyor. Böylece yorumlar gerçek alıcılardan geliyor. Aynı ürüne ikinci kez yazarsa eski yorumu güncelleniyor. Her yorumdan sonra `helpers/puan.js` ürünün ortalama puanını ve yorum sayısını yeniden hesaplıyor (ürün kartlarında ve sıralamada kullanılıyor).
 
-**Yıldızlar nasıl gösteriliyor?**
-`middleware/locals.js` içindeki `yildiz()` fonksiyonu: `"★".repeat(4) + "☆".repeat(1)` → ★★★★☆.
+**Favori (kalp) nasıl çalışıyor?**
+Çoka çok ilişki: `Kullanici.belongsToMany(Urun, { through: "favori", as: { singular: "favori", plural: "favoriler" } })`. `as` sayesinde `ben.addFavori(urun)`, `ben.removeFavori(urun)`, `ben.hasFavori(urun)`, `ben.getFavoriler()` fonksiyonları kendiliğinden oluşuyor. Kalbe basınca `site.js` `fetch` ile `/hesap/favori/5` adresine POST atıyor, sunucu varsa siliyor yoksa ekliyor ve `{ favori: true }` gibi JSON döndürüyor. Sayfa yenilenmiyor, kalp dolup boşalıyor ve altta bildirim çıkıyor.
 
-**Listeler nasıl çalışıyor?**
-Liste ile şarkı arasında çoka çok ilişki var (`belongsToMany`). Sequelize bize `liste.addSarki(sarki)` ve `liste.removeSarki(id)` fonksiyonlarını hazır veriyor, bunlar `listeSarki` ara tablosuna satır ekliyor ya da siliyor.
+**Mağaza takibi?**
+Kullanıcının kendisiyle çoka çok ilişkisi (`takip` tablosu: `takipciId`, `takipEdilenId`). Takip ettiğin mağazaların yeni ürünleri ana sayfada "Takip ettiğin mağazalardan" bölümünde çıkıyor: `Urun.findAll({ where: { kullaniciId: [2, 4] } })`. Sequelize `where`'e dizi verilince SQL'de `IN (2, 4)` yazıyor.
 
-**Profil sayfasında neler var?**
-`/uye/:kullaniciAdi` (`controller/user.js` → `profil`). Üyenin incelemeleri (dinleme günlüğü), listeleri ve yüklediği şarkılar. Onay bekleyen şarkıları sadece kendisi görüyor.
+**Sıralama ve fiyat filtresi?**
+`/urunler?sirala=ucuz&min=100&max=500` (`controller/user.js` → `urunler`). Sıralama seçenekleri `SIRALAMALAR` nesnesinde, her birinin `order` dizisi var. Fiyat aralığı `Op.gte` (büyük eşit) ve `Op.lte` (küçük eşit) ile. Form `method="get"` olduğu için seçimler adreste görünüyor, sayfa paylaşılabiliyor. Kategori sayfası da aynı fonksiyonu kullanıyor (`/kategori/:slug`).
 
----
-
-## Spotify kısmı: şarkı yükleme ve oynatıcı
-
-**Üye şarkı yükleyince ne oluyor?**
-`controller/hesap.js` → `postYukle`. Dosyalar multer ile kaydediliyor: resim `public/img/yuklenen/`, müzik `public/muzik/yuklenen/` (`helpers/yukle.js`, formdaki alanın adına göre klasör seçiyor). Veritabanına dosyanın kendisi değil adresi yazılıyor, şarkı `onayli: false` olarak veritabanına ekleniyor. Admin `/admin/sarkilar` sayfasında şarkıyı dinleyip "Onayla" derse `onayli: true` oluyor ve sitede görünmeye başlıyor. Admin yüklerse şarkı hemen yayınlanıyor.
-
-**Onaylanmamış şarkı nasıl gizleniyor?**
-Ziyaretçi sayfalarındaki bütün sorgularda `where: { onayli: true }` var. Adresi bilen biri bile `/sarki/...` sayfasını açamaz, 404 alır.
-
-**Kapak yüklemezse ne oluyor?**
-Aynı albümden şarkı varsa o albümün kapağı kullanılıyor. Yeni albümse kapak zorunlu.
-
-**Kitaplık sayfasındaki plak kılıfları nasıl çalışıyor?**
-`/kitaplik` (`views/kitaplik.ejs`, `public/js/kitaplik.js`, `stil.css` → "Kitaplık" bölümü). Bütün hareket CSS'te, JavaScript sadece sınıf ekleyip çıkarıyor:
-- Kılıflar yan yana dizili ve negatif `margin-left` ile üst üste biniyor, her birinin sadece renkli sırtı görünüyor.
-- Üzerine gelince (`:hover`) kılıf `translateY(-14px) scale(1.04)` ile yükselip öne geliyor ve kılıfın arkasında saklı duran plak `translateX(-62%)` ile sola kayarak çıkıyor.
-- `.kilif:hover ~ .kilif` seçicisi sağdaki kılıfları sağa, `.kilif:has(~ .kilif:hover)` seçicisi soldaki kılıfları sola kaydırıyor, böylece kapağa ve plağa yer açılıyor. Bunların hepsi CSS, JavaScript yok.
-- Tıklayınca `kitaplik.js`, `oynatici.js`'teki `sarkiyiCal()` fonksiyonunu çağırıyor ve şarkı başlıyor. Tekrar tıklayınca duruyor. Plağın `data-plak` özelliği olduğu için oynatıcı ona `doner` sınıfını ekliyor ve plak dönmeye başlıyor.
-- Yumuşaklık `transition: transform .5s cubic-bezier(...)` ile sağlanıyor. Sadece `transform` değiştiği için tarayıcı bunu ekran kartıyla akıcı çiziyor.
-- `isolation: isolate`: her kılıfı ayrı bir katman yapıyor, böylece kayan kılıflar birbirinin önüne yanlış sırada geçmiyor.
-
-**Plak nasıl dönüyor?**
-CSS animasyonuyla (`stil.css`): `@keyframes don { to { transform: rotate(360deg); } }`. Animasyon varsayılan olarak durdurulmuş (`paused`). Şarkı çalınca JavaScript plağa `doner` sınıfı ekliyor ve animasyon çalışmaya başlıyor.
-
-**Arka plan rengi kapaktan nasıl geliyor?**
-Her şarkının bir `renk` değeri var. EJS bunu `style="--renk: #185FA5"` olarak yazıyor, CSS'te `color-mix()` ile koyulaştırılıp arka plan yapılıyor.
-
-**Başka sayfaya geçince müzik neden kaldığı yerden devam ediyor?**
-`oynatici.js` çalan şarkıyı, listeyi ve saniyeyi tarayıcının `localStorage`'ına kaydediyor. Yeni sayfa açılınca aynı saniyeden devam ediyor.
-
-**Dinlenme sayısı nasıl artıyor?**
-Şarkı çalmaya başlayınca `oynatici.js` `/api/dinlendi/:id` adresine POST atıyor, sunucu `Sarki.increment("dinlenme", ...)` yapıyor.
+**Arama?**
+Üst menüdeki kutu `/?q=kupa` adresine gidiyor. `Op.like` ile ürün adında/açıklamasında ve mağaza adında/kullanıcı adında arıyor: `{ [Op.like]: "%kupa%" }`.
 
 ---
 
-## Üyeler, beğeniler, takip (Spotify özellikleri)
+## Tasarım ve telefon
 
-**Başkalarının hesaplarına nasıl bakılıyor?**
-Sol menüdeki **Üyeler** (`/uyeler`, `controller/user.js` → `uyeler`) bütün üyeleri kart olarak gösteriyor. Her kartta takipçi, liste, inceleme ve beğeni sayısı var. Sayılar Sequelize'in ilişki fonksiyonlarıyla geliyor: `u.countIncelemeler()`, `u.countListeler()`, `u.countBegenilenler()`, `u.countTakipciler()`. Karta tıklayınca profil (`/uye/ece`) açılıyor. Profilde üyenin incelemeleri, listeleri, beğendiği şarkılar, yüklediği şarkılar, takip ettikleri ve takipçileri var. Bunlar misafirlere de açık, sadece onaylanmamış şarkıları yalnızca sahibi görüyor.
+**Tasarımı nasıl yaptın?**
+Bootstrap 5 + kendi `public/css/stil.css` dosyam. Bootstrap'ten navbar (telefonda hamburger menü: `navbar-toggler` + `collapse`), açılır menü (`dropdown`), ızgara (`row`, `col-md-6`) ve yardımcı sınıfları (`d-flex`, `gap-2`) kullandım. Görünüm el işine uygun "sıcak" bir tema: krem kâğıt zemin, kiremit ve zeytin yeşili renkler, dikiş çizgisi gibi kesikli kenarlar (`outline: dashed`), el yazısı notlar, galeride polaroid fotoğraflar.
 
-**Beğenilen Şarkılar (kalp) nasıl çalışıyor?**
-Çoka çok ilişki: bir üye çok şarkı beğenir, bir şarkıyı çok üye beğenir. `index.js`'te:
-`Kullanici.belongsToMany(Sarki, { through: "begeni", as: { singular: "begenilen", plural: "begenilenler" } })`.
-Sequelize `begeni` adında ara tablo oluşturuyor (kullaniciId, sarkiId). `as` ile isim verdik çünkü kullanıcı ile şarkı arasında "yüklediği şarkılar" ilişkisi (`hasMany`) zaten var, iki ilişki karışmasın. Bu isim sayesinde `ben.addBegenilen(sarki)`, `ben.removeBegenilen(sarki)`, `ben.hasBegenilen(sarki)` ve `uye.getBegenilenler()` fonksiyonları kendiliğinden oluşuyor.
+**Renkler nasıl yönetiliyor?**
+`stil.css`'in başındaki `:root` içinde CSS değişkenleri: `--zemin`, `--turuncu` (kiremit), `--yesil` (zeytin) ... Bütün site bu değişkenleri kullandığı için bir rengi değiştirmek tek satır.
 
-**Kalbe basınca sayfa neden yenilenmiyor?**
-Kalp düğmesi (`data-begen="5"`) `oynatici.js`'te `fetch` ile `/hesap/begen/5` adresine POST atıyor (CSRF anahtarı `x-csrf-token` başlığında). Sunucu (`controller/hesap.js` → `begen`) beğenmişse siliyor, beğenmemişse ekliyor ve `{ begendi: true }` gibi JSON döndürüyor. JavaScript sayfadaki aynı şarkının bütün kalplerini dolduruyor ya da boşaltıyor. Sayfa açılırken hangi şarkıların beğenildiği `middleware/locals.js`'ten `begenilenIdler` olarak geliyor. Route `isAuth` arkasında olduğu için misafir beğenemez.
+**Yazı tipleri?**
+Üç tane, hepsi `@fontsource` paketlerinden ve `node_modules`'tan sunuluyor (internete gerek yok): **Fraunces** (başlıklar, fiyatlar), **Caveat** (el yazısı notlar: "el yapımı" etiketi, logo altı yazısı), **Inter** (gövde yazısı). `index.js`'te `/vendor/fraunces` gibi statik yollar var.
 
-**Takip nasıl çalışıyor?**
-Kullanıcının kendisiyle çoka çok ilişkisi. `takip` tablosunda iki sütun var: `takipciId` (takip eden) ve `takipEdilenId` (takip edilen). Aynı tablo iki yönden tanımlanıyor:
-- `Kullanici.belongsToMany(Kullanici, { through: "takip", as: "takipEdilenler", foreignKey: "takipciId", otherKey: "takipEdilenId" })` → benim takip ettiklerim
-- tersi `as: "takipciler"` → beni takip edenler
-Profildeki "Takip et" formu `/hesap/takip/ece` adresine POST atıyor. `controller/hesap.js` → `takip` fonksiyonu `hasTakipEdilen` ile bakıyor, takip ediyorsa `removeTakipEdilen`, etmiyorsa `addTakipEdilen` yapıyor. Kişi kendini takip edemiyor.
+**Telefonda nasıl görünüyor?**
+- Navbar 992px altında hamburger menüye dönüşüyor (Bootstrap `navbar-expand-lg`).
+- Kategori şeridi telefonda yana kaydırılıyor (`overflow-x: auto`).
+- Ürün ızgarası `grid-template-columns: repeat(auto-fill, minmax(210px, 1fr))` ile ekran genişliğine göre sütun sayısını kendisi ayarlıyor, 576px altında 2 sütun.
+- Ürün sayfası `col-md-6` ile bilgisayarda yan yana, telefonda alt alta.
 
-**Profildeki "Şu an dinliyor" nereden geliyor?**
-Oynatıcı zaten 15 saniyede bir `/api/nabiz`'e hangi şarkıyı çaldığını bildiriyordu. Buna giriş yapmış kişinin kullanıcı adını da ekledik (`helpers/canli.js` → `dinleyenler`). `neDinliyor("ece")` fonksiyonu ece'nin son 40 saniyede çaldığı şarkıyı buluyor. Spotify'daki "arkadaş etkinliği" gibi. Veritabanına yazılmıyor, sunucu hafızasında.
-
-**Karıştır ve tekrarla nasıl çalışıyor?**
-Tamamen tarayıcıda (`oynatici.js`), sunucuya bir şey gitmiyor. `karisik` açıksa sıradaki şarkı `Math.random()` ile seçiliyor. `tekrar` üç durum arasında dönüyor: kapalı → listeyi tekrarla (liste bitince başa döner) → şarkıyı tekrarla (şarkı bitince `currentTime = 0`). Seçim `localStorage`'a kaydediliyor, sayfa değişince kaybolmuyor.
-
-**Ana sayfadaki "Takip ettiklerin" nasıl hazırlanıyor?**
-`controller/user.js` → `anaSayfa`. Giriş yapan üyenin takip ettikleri `ben.getTakipEdilenler()` ile alınıyor. Sonra `Inceleme.findAll({ where: { kullaniciId: [2, 3] } })` ile o kişilerin son incelemeleri çekiliyor. Sequelize `where`'e dizi verilince SQL'de `kullaniciId IN (2, 3)` yazıyor. Ayrıca her biri için `neDinliyor()` ile şu an dinledikleri şarkıya bakılıyor.
-
-**"Son dinlediklerin" nerede tutuluyor?**
-Sunucuda değil, tarayıcının `localStorage`'ında (`sonDinlenenler` anahtarı), en fazla 6 şarkı. Bu yüzden misafirlerde de çalışıyor ama başka bilgisayarda görünmüyor. Ana sayfadaki kutucukları `oynatici.js` oluşturuyor. Şarkı adını `innerHTML` ile değil `textContent` ile yazıyoruz. Böylece adında HTML kodu olsa bile çalıştırılmıyor, düz yazı olarak görünüyor (XSS koruması).
-
-**Klavye kısayolları ve kilit ekranı?**
-`oynatici.js`'te `keydown` olayı: Boşluk çal / durdur, ← → 5 saniye geri / ileri, Shift + ← → önceki / sonraki şarkı. Bir yazı kutusuna yazı yazılırken kısayollar çalışmıyor. Telefonun kilit ekranında ve klavyenin medya tuşlarında şarkı adı ve düğmeler tarayıcının Media Session API'si ile gösteriliyor (`navigator.mediaSession`). Desteklemeyen tarayıcıda bu kısım atlanıyor.
-
-**Sağdaki "Şimdi çalan" paneli nasıl çalışıyor?**
-Oynatıcıdaki panel düğmesi `body`'ye `calan-acik` sınıfını ekliyor. CSS'te bu sınıf varken `#wrapper` ızgarası iki yerine üç sütun oluyor (`menü | içerik | 320px panel`). Paneldeki büyük kapak, şarkı adı ve "Sıradakiler" listesini `oynatici.js`'teki `paneliGuncelle()` dolduruyor. Sıradakiler, çalma listesinde (`sira` dizisi) çalan şarkıdan sonraki en fazla 10 şarkı. Birine tıklayınca `cal(sira, o şarkının numarası)` çağrılıyor. Panelin açık olup olmadığı `localStorage`'da saklanıyor. 1100px'ten dar ekranlarda içerik sıkışmasın diye panel gösterilmiyor.
-
-**Kalbe basınca çıkan "Beğenilen Şarkılar'a eklendi" yazısı?**
-`oynatici.js`'teki `bildirim()` fonksiyonu sayfaya `bilgi basari` sınıflı bir `div` ekliyor. CSS'teki `.icerik > .bilgi` kuralı onu altta beliren ve 5 saniyede kaybolan bir bildirime dönüştürüyor. Sunucudan gelen "kaydedildi" mesajlarıyla aynı görünüm.
-
-**Admin panelindeki beğeni ve takip sayıları?**
-`begeni` ve `takip` tabloları için ayrı model dosyası yazmadık, Sequelize onları `belongsToMany`'den kendisi oluşturdu. Bu modellere `db.models.begeni` ve `db.models.takip` ile ulaşılıyor, `.count()` ile sayılıyor.
-
-**Şarkı sayfasındaki "Beğenenler" ve Paylaş düğmesi?**
-Beğenenler: `sarki.getBegenenler({ limit: 8 })`, yani beğeni ilişkisinin şarkı tarafındaki fonksiyonu, ilk 8 üyeyi getiriyor. Daha fazlası varsa "+3" gibi yazılıyor. Paylaş: `navigator.clipboard.writeText(location.href)` sayfanın adresini panoya kopyalıyor. Tarayıcı izin vermezse adres bildirimde gösteriliyor.
-
-**Kitaplıktaki sanatçı çipleri nasıl süzüyor?**
-Çipler EJS'te şarkılardan tekrarsız sanatçı listesiyle (`new Set(...)`) oluşturuluyor. Her kılıfta `data-sanatci` var. `kitaplik.js` bir çipe basılınca o sanatçıya ait olmayan kılıflara `gizli` sınıfı ekliyor (CSS'te `display: none`). Kılıflar normalde negatif `margin-left` ile üst üste biniyor. Süzme varken ilk görünen kılıf sola kaymasın diye CSS'te `.raf:has(.gizli)` ile bu boşluk sadece görünen bir kılıftan sonra gelenlere veriliyor. Çalma sırası da sadece görünen kılıflardan oluşuyor.
-
-**Klavyeyle gezince çıkan turuncu çerçeve?**
-`:focus-visible` seçicisi. Tab tuşuyla bir düğmeye ya da bağlantıya gelince turuncu çerçeve çıkıyor, fareyle tıklayınca çıkmıyor. Erişilebilirlik için.
-
-**Arama üyeleri de buluyor mu?**
-Evet. `anaSayfa`'da `?q=` varsa şarkılarla birlikte `Kullanici.findAll({ where: { kullaniciAdi: { [Op.like]: "%den%" } } })` ile üyeler de aranıyor.
+**Sipariş adımları çizgisi nasıl yapıldı?**
+`<ol class="adimlar">` listesi. CSS sayacı (`counter-increment`) her adıma numara veriyor, `::before` yuvarlak numarayı, `::after` aradaki çizgiyi çiziyor. Tamamlanan adımlar `tamam` sınıfıyla kiremit rengine dönüyor.
 
 ---
 
 ## Test
 
 **Projeyi nasıl test ettin?**
-`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla sitenin üzerinde gerçek bir kullanıcı gibi geziniyor: misafir, üye ve admin olarak giriş yapıyor, form gönderiyor, şarkı yüklüyor, beğeniyor, takip ediyor ve sonuçları kontrol ediyor (34 kontrol). Örneğin CSRF anahtarı olmadan gönderilen formun 403 aldığını, incelemedeki `<script>` kodunun sayfada çalışmadan düz yazı olarak göründüğünü, onaylanmamış şarkının 404 verdiğini kontrol ediyor. Çalıştırmak için: `plak.db`'yi sil, `npm start`, başka terminalde `npm test`.
-
----
-
-## Resimler ve dosyalar
-
-**Resimleri nerede tutuyorsun?**
-Veritabanında değil, klasörde. Bütün resimler `public/img/` altında: örnek albüm kapakları `public/img/kapaklar/`, yüklenen kapaklar ve galeri resimleri `public/img/yuklenen/`. Veritabanına sadece resmin adresi (URL) yazılıyor: `sarki.kapak = "/img/kapaklar/gece-yarisi.svg"`. EJS bu adresi `<img src="<%= s.kapak %>">` içine koyuyor, `index.js`'teki `express.static("public")` da dosyayı o adresten sunuyor. Müzikler de aynı şekilde `public/muzik/`'te.
-
-**Yüklenen resim nereye gidiyor?**
-`helpers/yukle.js`'teki multer ayarı formdaki alanın adına bakıyor: `ses` alanıysa `public/muzik/yuklenen/`, değilse (kapak, galeri resmi) `public/img/yuklenen/`. Dosya adı çakışmasın diye `zaman-rastgeleSayı.uzantı` yapılıyor. Controller veritabanına `"/img/yuklenen/" + req.file.filename` adresini yazıyor.
-
----
-
-## Telefon ve tablet
-
-**Site telefonda nasıl görünüyor?**
-`stil.css`'in sonundaki `@media` kurallarıyla:
-- 768px altı (telefon, dikey tablet): sol menü gizleniyor, menü düğmesiyle soldan kayarak açılıyor. Renkli üst bölümler alt alta diziliyor.
-- 576px altı (telefon): kartlar 2 sütun, oynatıcıda sadece şarkı + kalp + çal + ileri kalıyor (Spotify'ın telefon uygulaması gibi), yazılar biraz küçülüyor.
-- 1200px altı: Bootstrap'in `col-lg` sütunları ekranın genişliğine bakıyor ama içerik sol menü kadar daha dar. Bu yüzden iki sütunlu bölümler (incelemeler + liste) bu genişlikte alt alta diziliyor.
-- `@media (hover: none)`: dokunmatik ekranda "üzerine gelme" olmadığı için kartlardaki çal düğmeleri hep görünüyor.
-`<meta name="viewport" content="width=device-width, initial-scale=1">` etiketi de telefonun sayfayı küçültmeden göstermesini sağlıyor.
-
----
-
-## Tasarım
-
-**Tasarımı nasıl yaptın, hazır şablon var mı?**
-Sayfa iskeleti derste verilen **Start Bootstrap "Simple Sidebar"** şablonundan geliyor. Aynı id'ler kullanılıyor: `#wrapper`, solda `#sidebar-wrapper`, sağda `#page-content-wrapper`, menüyü açıp kapatan `#sidebarToggle` düğmesi. Şablonun `scripts.js` kodu da `views/partials/alt.ejs`'in sonunda neredeyse aynen var: düğmeye basınca `body`'ye `sb-sidenav-toggled` sınıfı ekleniyor ve durum `localStorage`'a yazılıyor (`sb|sidebar-toggle`). Yerleşim Spotify'ın web uygulamasındaki gibi (solda menü ve "Listelerin", ortada içerik, altta oynatıcı), ama sitenin konusu plaklar olduğu için görünüm eski bir plakçı dükkânına benzetildi (aşağıdaki "Eski plakçı teması" sorusu).
-
-**Hangi dosyalarda?**
-`views/partials/ust.ejs` (sol menü + üst çubuk), `views/partials/alt.ejs` (oynatıcı + menü ve kaydırma scripti), `public/css/stil.css` (bütün görünüm). Bootstrap'in ızgarası (`row`, `col-lg-7`), yardımcı sınıfları (`d-flex`, `gap-2`) ve açılır menüsü (`dropdown`) de kullanılıyor.
-
-**Sayfa nasıl tek ekran gibi duruyor, oynatıcı neden hiç kaybolmuyor?**
-`body` bir CSS grid: üst satır menü + içerik, alt satır oynatıcı (`grid-template-rows: minmax(0, 1fr) auto`). Sayfanın kendisi kaymıyor (`overflow: hidden`), sadece sağdaki içerik paneli kayıyor (`#page-content-wrapper { overflow-y: auto }`). Bu yüzden menü ve oynatıcı hep yerinde.
-
-**Menü küçülünce ne oluyor?**
-Masaüstünde `sb-sidenav-toggled` sınıfı varken menünün genişliği 300px'ten 72px'e iniyor ve `.gizlenir` sınıflı yazılar saklanıyor, sadece ikonlar kalıyor. Telefonda (768px altı, `@media`) menü normalde ekranın solunda gizli (`transform: translateX(-100%)`), aynı sınıf gelince kayarak açılıyor. İçeriğe dokununca kapanıyor.
-
-**Sol menüdeki "Listelerin" nereden geliyor?**
-`middleware/locals.js` her istekte giriş yapan üyenin listelerini çekip `res.locals.menuListeler`'e koyuyor. `ust.ejs` bunları sıralıyor. Misafire bunun yerine "Üye ol" kutusu çıkıyor.
-
-**Üstteki renkli bölümler nasıl yapılıyor?**
-Albüm, şarkı, liste ve profil sayfalarının başındaki bölüm sayfanın `--renk` değerinden bir `linear-gradient` ile boyanıyor ve aşağıda panelin rengine kayboluyor. `margin-top: -64px` ile üst çubuğun arkasına kadar uzanıyor, üst çubuk şeffaf olduğu için renk en üstten başlıyor gibi görünüyor. Sayfa aşağı kayınca `alt.ejs`'teki küçük script üst çubuğa `dolu` sınıfı ekliyor ve çubuk aynı renkle doluyor.
-
-**Kartlardaki çal düğmesi nasıl çıkıyor?**
-`.kart-cal` normalde `opacity: 0` ve biraz aşağıda (`translateY(8px)`). `.kart:hover .kart-cal` olunca görünür olup yerine kayıyor. `transition` ile yumuşak geçiyor.
-
-**Yazı tipi?**
-Üç yazı tipi var, hepsi `@fontsource` paketlerinden: **Fraunces** (başlıklar; eski plak kılıflarındaki gibi tırnaklı, italik), **Courier Prime** (tarih, sayı, etiket gibi küçük yazılar; daktilo), **Inter** (gövde yazısı, okunaklı olsun diye). İnternetten değil, `index.js`'teki `/vendor/fraunces`, `/vendor/courier`, `/vendor/inter` statik yollarından, yani `node_modules`'tan geliyor, Bootstrap gibi.
-
-**Eski plakçı teması nasıl yapıldı?**
-`stil.css`'in en altındaki "ESKİ PLAKÇI TEMASI" bölümünde. Resim kullanılmadan, çoğu CSS ile:
-- **Renkler**: `:root`'taki değişkenler değiştirildi: ceviz kahvesi zemin, krem (eski kâğıt) yazı, hardal ve yanık turuncu vurgu, bordo. Bütün site bu değişkenleri kullandığı için hepsi birden değişti.
-- **Kâğıt greni**: `body::after` bütün sayfanın üstüne `public/img/doku.svg` resmini çok soluk seriyor. `pointer-events: none` sayesinde tıklamalara engel olmuyor. Doku SVG'nin içindeki `feTurbulence` filtresiyle (rastgele gürültü) çiziliyor.
-- **Ahşap zemin ve raf**: `repeating-linear-gradient` ile ince çizgiler (ağaç damarı). Kitaplıktaki raf tahtası, `.raf`'ın arka planına kılıfların hemen altına çizilen kahverengi bir şerit. `background-attachment: local` raf yana kayınca tahtanın da kaymasını sağlıyor.
-- **Kılıf baskısı (raster)**: Renkli üst bölümlerdeki noktalar `radial-gradient(...) 0 0 / 7px 7px`, yani 7 pikselde bir tekrarlanan küçük nokta.
-- **Sararmış kapaklar**: `filter: sepia(.28)`. Üzerine gelince `filter: none` ile canlanıyor.
-- **Kartlardaki plak**: `.kart-kapak::before` kapağın arkasına CSS ile bir plak çiziyor (`repeating-radial-gradient` oluklar). Üzerine gelince `translateX(24%)` ile biraz dışarı kayıyor, kitaplıktaki gibi.
-- **Pirinç düğmeler**: `radial-gradient(circle at 35% 30%, açık, koyu)` ışık soldan üstten vuruyormuş gibi parlak bir düğme.
-- **Logo**: `public/img/gramofon.svg`, sekme ikonu da aynı dosya.
+`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla siteyi gerçek bir kullanıcı gibi geziyor: misafir, alıcı, satıcı ve admin olarak giriş yapıyor, ürün ekliyor, sipariş veriyor, durumu ilerletiyor, yorum yazıyor ve sonuçları kontrol ediyor (43 kontrol). Örnekler: CSRF anahtarı olmadan gönderilen form 403 alıyor; ürün adındaki `<script>` sayfada çalışmadan düz yazı görünüyor; onaysız ürün 404 veriyor; teslim almadan yorum yazılamıyor; satıcı onaylayınca stok düşüyor; "beklemede"den doğrudan "teslim"e geçilemiyor; başkası siparişin durumunu değiştiremiyor. Çalıştırmak için: `ilmek.db`'yi sil, `npm start`, başka terminalde `npm test`.
 
 ---
 
@@ -401,14 +293,17 @@ Albüm, şarkı, liste ve profil sayfalarının başındaki bölüm sayfanın `-
 **Derste MySQL kullandık, sen neden SQLite?**
 Kurulum gerektirmediği için, proje her bilgisayarda `npm install` ve `npm start` ile çalışıyor. Sequelize kullandığımız için kodun geri kalanı veritabanından bağımsız. MySQL'e geçmek için `data/db.js`'te dersteki satırı yazmak ve `mysql2` paketini kurmak yeterli.
 
+**Neden gerçek ödeme yok?**
+Ders projesi olduğu için ve gerçek ödeme almak güvenlik, sözleşme ve banka entegrasyonu gerektirdiği için. Bunun yerine sipariş talebi + durum takibi yaptık; el yapımı ürünlerde zaten çoğu zaman satıcıyla konuşup kişiye özel ayarlama yapılıyor.
+
+**Aynı anda iki kişi son ürünü alırsa?**
+Sipariş talebi stoğu düşürmüyor, satıcı onaylarken düşüyor. Satıcı onaylamaya çalıştığında stok yetmiyorsa "Stok yetersiz" uyarısı alıyor, o siparişi reddedebiliyor.
+
 **`saveUninitialized: false` ne demek?**
 Oturuma bir şey yazılmadıkça veritabanına kaydetme demek. Biz ziyaretçi sayacı için ilk istekte `sayildi` yazdığımız için her ziyaretçinin oturumu yine de oluşuyor.
 
 **Sunucu yeniden başlarsa ne olur?**
-Oturumlar veritabanında olduğu için kimsenin girişi düşmez. Sadece online sayısı ve dinleyici sayıları sıfırlanır, çünkü onlar hafızada.
-
-**Müzikler telifli mi?**
-Hayır. Örnek müzikler bu proje için bilgisayarda matematiksel olarak sentezlendi, kapaklar da basit SVG çizimleri.
+Oturumlar veritabanında olduğu için kimsenin girişi düşmez. Sadece online sayısı ve "şu an bakan" sayıları sıfırlanır, çünkü onlar hafızada.
 
 **Projeyi geliştirmek isteseydin ne eklerdin?**
-Kullanıcıları takip etme ve takip ettiklerinin incelemelerini görme, incelemeleri beğenme, şarkı düzenleme, şifremi unuttum, Socket.io ile anlık sayılar.
+Alıcı ile satıcı arasında mesajlaşma, bir ürüne birden fazla resim, kargo takip numarası, e-posta bildirimleri, şifremi unuttum, Socket.io ile anlık bildirimler.

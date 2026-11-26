@@ -1,0 +1,29 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Kategoriler · Admin' }) %>
+<%- include('../partials/admin-menu') %>
+
+<div class="kutu mb-4">
+  <div class="fw-semibold mb-2"><i class="bi bi-plus-circle turuncu"></i> Yeni kategori</div>
+  <form action="/admin/kategoriler" method="post" class="d-flex gap-2 flex-wrap">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="ad" class="giris-kutu flex-grow-1" placeholder="Kategori adı (adresi otomatik oluşur: /kategori/kategori-adi)" required maxlength="50">
+    <input name="ikon" class="giris-kutu" placeholder="Bootstrap ikon adı (örn: flower1)" maxlength="40">
+    <button class="btn-turuncu">Ekle</button>
+  </form>
+</div>
+
+<div class="liste">
+  <% kategoriler.forEach(k => { %>
+    <div class="satir">
+      <i class="bi bi-<%= k.ikon %> fs-4 turuncu"></i>
+      <div class="flex-grow-1 min-w-0">
+        <a href="/kategori/<%= k.slug %>" class="satir-baslik"><%= k.ad %></a>
+        <div class="soluk kucuk">/kategori/<%= k.slug %> · <%= k.urunSayisi %> ürün</div>
+      </div>
+      <form action="/admin/kategoriler/<%= k.id %>/sil" method="post" onsubmit="return confirm('Kategori silinsin mi?')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-sil" <%= k.urunSayisi ? 'disabled title="İçinde ürün var"' : '' %>>Sil</button>
+      </form>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/alt') %>

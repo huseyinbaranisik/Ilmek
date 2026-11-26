@@ -1,98 +1,77 @@
 <%- include('partials/ust') %>
 
-<% if (haftaninAlbumu) { %>
-<section class="vitrin" style="--renk: <%= haftaninAlbumu.renk %>">
-  <div class="flex-grow-1">
-    <span class="etiket">Haftanın albümü</span>
-    <h1><%= haftaninAlbumu.album %></h1>
-    <p><%= haftaninAlbumu.sanatci %> · <%= haftaninAlbumu.sarkiSayisi %> şarkı</p>
-    <a href="/album/<%= haftaninAlbumu.albumSlug %>" class="btn-turuncu buyuk"><i class="bi bi-play-fill"></i> Dinle</a>
+<!-- Vitrin -->
+<section class="vitrin">
+  <div class="vitrin-yazi">
+    <span class="el-yazisi">elden, gönülden...</span>
+    <h1>Her ürünün arkasında bir <em>emek</em> var.</h1>
+    <p>Örgüden seramiğe, ahşaptan takıya; el yapımı ürünleri doğrudan üreticisinden al. Ya da sen de mağazanı aç, ürettiklerini sat.</p>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="/urunler" class="btn-turuncu buyuk">Ürünlere göz at</a>
+      <a href="<%= kullanici ? '/hesap/urun/yeni' : '/auth/kayit' %>" class="btn-cizgi buyuk">Mağazanı aç</a>
+    </div>
   </div>
-  <img src="<%= haftaninAlbumu.kapak %>" alt="<%= haftaninAlbumu.album %> kapağı" class="vitrin-kapak">
+  <div class="vitrin-resimler" aria-hidden="true">
+    <% yeniUrunler.slice(0, 3).forEach((u, i) => { %><img src="<%= u.resim %>" alt="" class="polaroid p<%= i %>"><% }) %>
+  </div>
 </section>
-<% } %>
 
 <% if (sonDuyuru) { %>
   <a href="/duyuru/<%= sonDuyuru.slug %>" class="duyuru-serit"><i class="bi bi-megaphone"></i> <%= sonDuyuru.baslik %> <i class="bi bi-arrow-right ms-auto"></i></a>
 <% } %>
 
-<% if (!kullanici) { %>
-  <!-- Misafirlere üye olmanın ne kazandıracağını anlatan şerit -->
-  <div class="kutu misafir-serit">
-    <i class="bi bi-stars turuncu fs-4"></i>
-    <div class="flex-grow-1">
-      <div class="fw-medium">Dinlediklerini puanla, listeler oluştur, kendi şarkını yükle</div>
-      <div class="soluk kucuk">Misafir olarak her şeyi dinleyebilirsin. Puan vermek ve inceleme yazmak için üye ol.</div>
-    </div>
-    <a href="/auth/kayit" class="btn-turuncu">Üye ol</a>
-  </div>
-<% } %>
-
-<!-- Son dinlenenler: tarayıcıda (localStorage) tutulur, oynatici.js doldurur. Hiç dinlenmediyse gizli kalır. -->
-<section id="son-dinlenenler" hidden>
-  <h2 class="bolum-baslik">Son dinlediklerin</h2>
-  <div class="hizli-izgara" id="son-dinlenenler-liste"></div>
-</section>
-
-<% if (kullanici) { %>
-  <!-- Takip ettiklerinin etkinliği -->
-  <h2 class="bolum-baslik">Takip ettiklerin</h2>
-  <% if (!takipVar) { %>
-    <div class="kutu d-flex align-items-center gap-3 flex-wrap">
-      <i class="bi bi-people fs-4 turuncu"></i>
-      <div class="flex-grow-1">Henüz kimseyi takip etmiyorsun. Takip ettiklerinin incelemeleri ve ne dinledikleri burada görünür.</div>
-      <a href="/uyeler" class="btn-beyaz">Üyelere göz at</a>
-    </div>
-  <% } else { %>
-    <% if (dinleyenArkadaslar.length) { %>
-      <div class="d-flex flex-wrap gap-2 mb-3">
-        <% dinleyenArkadaslar.forEach(d => { %>
-          <a href="/sarki/<%= d.sarki.slug %>" class="simdi-dinliyor">
-            <span class="esitleyici"><i></i><i></i><i></i></span>
-            <%= d.kullaniciAdi %> şu an <b><%= d.sarki.baslik %></b> dinliyor
-          </a>
-        <% }) %>
-      </div>
-    <% } %>
-    <div class="d-grid gap-2">
-      <% takipIncelemeleri.forEach(i => { %><%- include('partials/inceleme', { i, sarkiGoster: true }) %><% }) %>
-      <% if (takipIncelemeleri.length === 0) { %><p class="soluk">Takip ettiklerin henüz inceleme yazmamış.</p><% } %>
-    </div>
-  <% } %>
-<% } %>
-
-<h2 class="bolum-baslik">En çok dinlenenler</h2>
-<div class="izgara">
-  <% enCokDinlenen.forEach(s => { %>
-    <%- include('partials/kart', { s }) %>
+<!-- Kategoriler -->
+<h2 class="bolum-baslik">Kategoriler</h2>
+<div class="kategori-izgara">
+  <% kategoriler.forEach(k => { %>
+    <a href="/kategori/<%= k.slug %>" class="kategori-kart">
+      <i class="bi bi-<%= k.ikon %>"></i>
+      <span class="fw-semibold"><%= k.ad %></span>
+      <span class="soluk kucuk"><%= k.urunSayisi %> ürün</span>
+    </a>
   <% }) %>
 </div>
 
-<div class="row g-4 mt-1">
+<% if (takipUrunleri.length) { %>
+  <h2 class="bolum-baslik">Takip ettiğin mağazalardan</h2>
+  <div class="urun-izgara">
+    <% takipUrunleri.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
+  </div>
+<% } %>
+
+<div class="d-flex align-items-baseline justify-content-between">
+  <h2 class="bolum-baslik">Yeni gelenler</h2>
+  <a href="/urunler" class="kucuk fw-semibold turuncu">Hepsini gör <i class="bi bi-arrow-right"></i></a>
+</div>
+<div class="urun-izgara">
+  <% yeniUrunler.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
+</div>
+
+<div class="row g-4 mt-2">
   <div class="col-lg-7">
-    <h2 class="bolum-baslik">Son incelemeler</h2>
-    <div class="d-grid gap-2">
-      <% sonIncelemeler.forEach(i => { %><%- include('partials/inceleme', { i, sarkiGoster: true }) %><% }) %>
-      <% if (sonIncelemeler.length === 0) { %><p class="soluk">Henüz inceleme yok.</p><% } %>
+    <h2 class="bolum-baslik">En çok sevilenler</h2>
+    <div class="urun-izgara iki">
+      <% sevilenler.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
     </div>
   </div>
   <div class="col-lg-5">
-    <h2 class="bolum-baslik">En yüksek puanlılar</h2>
-    <div class="liste">
-      <% enYuksekPuan.forEach((s, i) => { %>
-        <a href="/sarki/<%= s.slug %>" class="satir">
-          <span class="sira soluk"><%= i + 1 %></span>
-          <img src="<%= s.kapak %>" alt="" class="mini-kapak">
-          <div class="flex-grow-1 text-truncate">
-            <div class="satir-baslik"><%= s.baslik %></div>
-            <div class="soluk kucuk"><%= s.sanatci %></div>
-          </div>
-          <span class="yildiz-kucuk">★ <%= s.ortPuan.toFixed(1) %></span>
-          <span class="soluk kucuk"><%= s.incelemeSayisi %> inceleme</span>
-        </a>
-      <% }) %>
+    <h2 class="bolum-baslik">Alıcılar ne diyor?</h2>
+    <div class="d-grid gap-2">
+      <% sonYorumlar.forEach(y => { %><%- include('partials/yorum', { y, urunGoster: true }) %><% }) %>
+      <% if (sonYorumlar.length === 0) { %><p class="soluk">Henüz yorum yok.</p><% } %>
     </div>
   </div>
 </div>
+
+<% if (!kullanici) { %>
+  <!-- Misafirlere üye olmanın ne kazandıracağını anlatan şerit -->
+  <div class="davet-serit mt-5">
+    <div>
+      <div class="el-yazisi">Sen de üret, sen de sat!</div>
+      <p class="mb-0">Üye ol, ürettiklerini birkaç dakikada mağazana ekle. Beğendiğin ürünleri favorile, siparişlerini takip et.</p>
+    </div>
+    <a href="/auth/kayit" class="btn-turuncu buyuk">Ücretsiz üye ol</a>
+  </div>
+<% } %>
 
 <%- include('partials/alt') %>

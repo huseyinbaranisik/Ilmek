@@ -1,0 +1,53 @@
+<%- include('partials/ust', { sayfaBaslik: satici.magazaAdi || satici.kullaniciAdi }) %>
+
+<section class="magaza-ust">
+  <span class="avatar buyuk-avatar"><%= satici.kullaniciAdi[0].toUpperCase() %></span>
+  <div class="flex-grow-1 min-w-0">
+    <span class="el-yazisi">mağaza</span>
+    <h1><%= satici.magazaAdi || satici.kullaniciAdi %></h1>
+    <div class="soluk kucuk mb-2">
+      @<%= satici.kullaniciAdi %>
+      <% if (satici.sehir) { %> · <i class="bi bi-geo-alt"></i> <%= satici.sehir %><% } %>
+      · üyelik: <%= tarihYaz(satici.createdAt) %>
+    </div>
+    <% if (satici.hakkinda) { %><p class="mb-2"><%= satici.hakkinda %></p><% } %>
+    <div class="magaza-sayilar">
+      <span><b><%= urunler.filter(u => u.onayli).length %></b> ürün</span>
+      <span><b><%= satisSayisi %></b> satış</span>
+      <span><b><%= takipciSayisi %></b> takipçi</span>
+      <% if (yorumlar.length) { %><span><span class="yildiz">★</span> <b><%= ortalama.toFixed(1) %></b> (<%= yorumlar.length %> yorum)</span><% } %>
+    </div>
+  </div>
+  <div class="d-flex flex-column gap-2">
+    <% if (kendisiMi) { %>
+      <a href="/hesap/magaza" class="btn-cizgi"><i class="bi bi-gear"></i> Mağaza ayarları</a>
+      <a href="/hesap/urun/yeni" class="btn-turuncu"><i class="bi bi-plus-lg"></i> Ürün ekle</a>
+    <% } else if (kullanici) { %>
+      <!-- Takip et / takibi bırak -->
+      <form action="/hesap/takip/<%= satici.kullaniciAdi %>" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="<%= takipEdiyorum ? 'btn-cizgi' : 'btn-turuncu' %>"><i class="bi <%= takipEdiyorum ? 'bi-check2' : 'bi-plus-lg' %>"></i> <%= takipEdiyorum ? 'Takip ediliyor' : 'Takip et' %></button>
+      </form>
+    <% } else { %>
+      <a href="/auth/giris?url=/magaza/<%= satici.kullaniciAdi %>" class="btn-turuncu"><i class="bi bi-plus-lg"></i> Takip et</a>
+    <% } %>
+  </div>
+</section>
+
+<h2 class="bolum-baslik">Ürünler</h2>
+<div class="urun-izgara">
+  <% urunler.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
+</div>
+<% if (urunler.length === 0) { %>
+  <div class="bos-durum"><i class="bi bi-shop-window"></i><p>Bu mağazada henüz ürün yok.</p>
+    <% if (kendisiMi) { %><a href="/hesap/urun/yeni" class="btn-turuncu">İlk ürününü ekle</a><% } %>
+  </div>
+<% } %>
+
+<% if (yorumlar.length) { %>
+  <h2 class="bolum-baslik">Alıcı yorumları</h2>
+  <div class="row g-2">
+    <% yorumlar.forEach(y => { %><div class="col-lg-6"><%- include('partials/yorum', { y, urunGoster: true }) %></div><% }) %>
+  </div>
+<% } %>
+<%- include('partials/alt') %>

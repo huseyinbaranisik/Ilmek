@@ -1,0 +1,21 @@
+<%# Ürün kartı. u = ürün (u.kullanici = satıcı). Ana sayfa, kategori, mağaza, favoriler sayfalarında kullanılır. %>
+<div class="urun-kart">
+  <div class="urun-resim">
+    <a href="/urun/<%= u.slug %>"><img src="<%= u.resim %>" alt="<%= u.baslik %>" loading="lazy"></a>
+    <% if (kullanici && kullanici.id !== u.kullaniciId) { %>
+      <!-- Kalp: site.js tıklanınca favoriye ekler ya da çıkarır -->
+      <button class="kalp" data-favori="<%= u.id %>" aria-label="Favorilere ekle"><i class="bi bi-heart"></i></button>
+    <% } %>
+    <% if (!u.onayli) { %><span class="etiket-kose onay">Onay bekliyor</span>
+    <% } else if (u.stok === 0) { %><span class="etiket-kose tukendi">Tükendi</span>
+    <% } else if (u.stok <= 3) { %><span class="etiket-kose">Son <%= u.stok %> adet</span><% } %>
+  </div>
+  <div class="urun-bilgi">
+    <a href="/urun/<%= u.slug %>" class="urun-ad"><%= u.baslik %></a>
+    <% if (u.kullanici) { %><a href="/magaza/<%= u.kullanici.kullaniciAdi %>" class="urun-magaza"><%= u.kullanici.magazaAdi || u.kullanici.kullaniciAdi %></a><% } %>
+    <div class="d-flex align-items-center justify-content-between mt-1">
+      <span class="fiyat"><%= tl(u.fiyat) %></span>
+      <% if (u.yorumSayisi > 0) { %><span class="yildiz-kucuk">★ <%= u.ortPuan.toFixed(1) %> <span class="soluk">(<%= u.yorumSayisi %>)</span></span><% } %>
+    </div>
+  </div>
+</div>

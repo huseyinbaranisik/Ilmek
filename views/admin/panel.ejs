@@ -2,18 +2,51 @@
 <%- include('../partials/admin-menu') %>
 
 <div class="row g-2 mb-4">
-  <div class="col-6 col-md-4 col-lg-2"><div class="kutu sayi-kutu"><span class="soluk kucuk">Toplam ziyaretçi</span><b><%= ziyaretci.toLocaleString('tr-TR') %></b></div></div>
-  <div class="col-6 col-md-4 col-lg-2"><div class="kutu sayi-kutu"><span class="soluk kucuk">Şu an çevrimiçi</span><b class="yesil"><%= online %></b></div></div>
-  <div class="col-6 col-md-4 col-lg-2"><div class="kutu sayi-kutu"><span class="soluk kucuk">Şarkı / üye</span><b><%= sayilar.sarki %> / <%= sayilar.kullanici %></b></div></div>
-  <div class="col-6 col-md-4 col-lg-2"><div class="kutu sayi-kutu"><span class="soluk kucuk">İnceleme</span><b><%= sayilar.inceleme %></b></div></div>
-  <div class="col-6 col-md-4 col-lg-2"><a href="/admin/sarkilar" class="kutu sayi-kutu d-block"><span class="soluk kucuk">Onay bekleyen</span><b class="sari"><%= sayilar.bekleyen %></b></a></div>
-  <div class="col-6 col-md-4 col-lg-2"><a href="/admin/sss" class="kutu sayi-kutu d-block"><span class="soluk kucuk">Cevapsız soru</span><b class="sari"><%= sayilar.cevapsiz %></b></a></div>
-  <div class="col-6 col-md-4 col-lg-2"><div class="kutu sayi-kutu"><span class="soluk kucuk">Beğeni</span><b><%= sayilar.begeni %></b></div></div>
-  <div class="col-6 col-md-4 col-lg-2"><div class="kutu sayi-kutu"><span class="soluk kucuk">Takip</span><b><%= sayilar.takip %></b></div></div>
+  <% [
+       ['Toplam ziyaretçi', ziyaretci.toLocaleString('tr-TR'), 'bi-eye', null],
+       ['Şu an çevrimiçi', online, 'bi-broadcast', null],
+       ['Yayındaki ürün', sayilar.urun, 'bi-grid', null],
+       ['Onay bekleyen ürün', sayilar.bekleyen, 'bi-hourglass-split', '/admin/urunler'],
+       ['Üye', sayilar.kullanici, 'bi-people', '/admin/kullanicilar'],
+       ['Sipariş (teslim)', sayilar.siparis + ' (' + sayilar.teslim + ')', 'bi-box-seam', '/admin/siparisler'],
+       ['Teslim edilen tutar', tl(sayilar.ciro), 'bi-cash-coin', null],
+       ['Yorum / favori', sayilar.yorum + ' / ' + sayilar.favori, 'bi-heart', null],
+       ['Cevapsız soru', sayilar.cevapsiz, 'bi-question-circle', '/admin/sss'],
+     ].forEach(([ad, deger, ikon, adres]) => { %>
+    <div class="col-6 col-md-4 col-lg-3">
+      <div class="kutu sayi-kutu">
+        <i class="bi <%= ikon %>"></i>
+        <span class="soluk kucuk"><%= ad %></span>
+        <b><%= deger %></b>
+        <% if (adres) { %><a href="<%= adres %>" class="kucuk turuncu">Görüntüle <i class="bi bi-arrow-right"></i></a><% } %>
+      </div>
+    </div>
+  <% }) %>
 </div>
 
-<h2 class="bolum-baslik">En çok dinlenen 5 şarkı</h2>
-<div class="liste">
-  <% populer.forEach((s, i) => { %><%- include('../partials/satir', { s, sira: i + 1 }) %><% }) %>
+<div class="row g-4">
+  <div class="col-lg-5">
+    <h2 class="bolum-baslik">Siparişlerin durumu</h2>
+    <!-- GROUP BY durum ile sayıldı -->
+    <div class="kutu d-grid gap-2">
+      <% durumlar.forEach(d => { %>
+        <div class="d-flex align-items-center gap-2"><%- include('../partials/durum', { d: d.durum }) %><b class="ms-auto"><%= d.sayi %></b></div>
+      <% }) %>
+      <% if (durumlar.length === 0) { %><span class="soluk">Henüz sipariş yok.</span><% } %>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <h2 class="bolum-baslik">En çok görüntülenen 5 ürün</h2>
+    <div class="liste">
+      <% populer.forEach((u, i) => { %>
+        <a href="/urun/<%= u.slug %>" class="satir">
+          <span class="soluk"><%= i + 1 %></span>
+          <img src="<%= u.resim %>" alt="" class="mini-resim">
+          <span class="flex-grow-1 min-w-0"><span class="satir-baslik d-block text-truncate"><%= u.baslik %></span><span class="soluk kucuk"><%= u.kullanici.magazaAdi || u.kullanici.kullaniciAdi %></span></span>
+          <span class="kucuk"><i class="bi bi-eye"></i> <%= u.goruntulenme %></span>
+        </a>
+      <% }) %>
+    </div>
+  </div>
 </div>
 <%- include('../partials/alt') %>

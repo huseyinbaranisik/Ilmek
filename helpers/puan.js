@@ -1,14 +1,14 @@
-// Bir şarkının ortalama puanını ve inceleme sayısını yeniden hesaplar.
-// İnceleme eklenince, güncellenince ya da silinince çağrılır.
-const Sarki = require("../models/sarki");
-const Inceleme = require("../models/inceleme");
+// Bir ürünün ortalama puanını ve yorum sayısını yeniden hesaplar.
+// Yorum eklenince, güncellenince ya da silinince çağrılır.
+const Urun = require("../models/urun");
+const Yorum = require("../models/yorum");
 
-async function puanGuncelle(sarkiId) {
-  const incelemeler = await Inceleme.findAll({ where: { sarkiId }, raw: true });
-  const toplam = incelemeler.reduce((t, i) => t + i.puan, 0);
-  await Sarki.update(
-    { ortPuan: incelemeler.length ? toplam / incelemeler.length : 0, incelemeSayisi: incelemeler.length },
-    { where: { id: sarkiId } }
+async function puanGuncelle(urunId) {
+  const yorumlar = await Yorum.findAll({ where: { urunId }, raw: true });
+  const toplam = yorumlar.reduce((t, y) => t + y.puan, 0);
+  await Urun.update(
+    { ortPuan: yorumlar.length ? toplam / yorumlar.length : 0, yorumSayisi: yorumlar.length },
+    { where: { id: urunId } }
   );
 }
 

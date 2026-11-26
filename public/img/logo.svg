@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- İlmek logosu: yün yumağı + iki örgü şişi + sarkan ip -->
+  <path d="M8 56 L50 14" stroke="#8a6a45" stroke-width="3" stroke-linecap="round"/>
+  <path d="M14 58 L56 22" stroke="#8a6a45" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="51" cy="13" r="3" fill="#6b7a3a"/>
+  <circle cx="57" cy="21" r="3" fill="#6b7a3a"/>
+  <circle cx="28" cy="34" r="18" fill="#c4623a"/>
+  <path d="M13 28 C22 22 36 24 44 32 M12 36 C22 30 36 32 45 40 M16 45 C24 39 34 40 40 47" stroke="#f3e2cf" stroke-width="2" fill="none" stroke-linecap="round" opacity=".85"/>
+  <path d="M20 18 C26 24 26 40 20 50 M30 16 C36 24 36 42 30 52" stroke="#a24d2b" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M12 44 C4 48 4 56 12 58 C18 60 22 56 26 60" stroke="#c4623a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</svg>

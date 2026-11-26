@@ -1,7 +1,5 @@
 node_modules/
-plak.db
+ilmek.db
 # Yüklenen dosyalar GitHub'a gönderilmez
 public/img/yuklenen/*
 !public/img/yuklenen/.gitkeep
-public/muzik/yuklenen/*
-!public/muzik/yuklenen/.gitkeep

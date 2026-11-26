@@ -1,163 +1,275 @@
 // ============================================================
 //  controller/hesap.js - Üyelerin işlemleri
-//  (inceleme yazma, liste oluşturma, şarkı yükleme)
+//  (ürün ekleme, sipariş, yorum, favori, mağaza takibi, mağaza ayarları)
 //  Bu fonksiyonlara sadece giriş yapmış kullanıcılar ulaşabilir (routes/hesap.js -> isAuth)
 // ============================================================
-const Sarki = require("../models/sarki");
-const Inceleme = require("../models/inceleme");
-const Liste = require("../models/liste");
+const Urun = require("../models/urun");
+const Kategori = require("../models/kategori");
 const Kullanici = require("../models/kullanici");
-const { slugField, benzersizSlug } = require("../helpers/slugfield");
+const Siparis = require("../models/siparis");
+const Yorum = require("../models/yorum");
+const { benzersizSlug } = require("../helpers/slugfield");
 const puanGuncelle = require("../helpers/puan");
 
 // İşlem bitince kullanıcıyı geldiği sayfaya geri gönderir
 function geriDon(req, res) {
   res.redirect(req.get("Referer") || "/");
 }
+const benimId = req => req.session.kullanici.id;
+const mesaj = (req, tur, metin) => { req.session.mesaj = { tur, metin }; };
 
-// ---------- İnceleme ----------
-// Üyenin bu şarkı için incelemesi varsa güncellenir, yoksa yenisi oluşturulur.
-exports.incelemeKaydet = async (req, res, next) => {
+// ================= SATICI: ÜRÜNLER =================
+exports.urunlerim = async (req, res, next) => {
   try {
-    const sarki = await Sarki.findOne({ where: { id: req.params.sarkiId, onayli: true } });
-    const puan = Number(req.body.puan);
-    if (!sarki || !(puan >= 1 && puan <= 5)) {
-      req.session.mesaj = { tur: "hata", metin: "Lütfen 1 ile 5 arasında bir puan seçin." };
-      return geriDon(req, res);
-    }
-    const yorum = (req.body.yorum || "").trim().slice(0, 2000) || null;
-    const kullaniciId = req.session.kullanici.id;
+    const urunler = await Urun.findAll({ where: { kullaniciId: benimId(req) }, include: Kategori, order: [["createdAt", "DESC"]] });
+    res.render("hesap/urunlerim", { urunler });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    const eski = await Inceleme.findOne({ where: { kullaniciId, sarkiId: sarki.id } });
-    if (eski) {
-      eski.puan = puan;
-      eski.yorum = yorum;
-      await eski.save();
+// Hem "yeni ürün" hem "düzenle" aynı formu kullanır. Adreste :id varsa düzenleme.
+exports.urunFormu = async (req, res, next) => {
+  try {
+    let urun = null;
+    if (req.params.id) {
+      urun = await Urun.findByPk(req.params.id);
+      if (!urun || urun.kullaniciId !== benimId(req)) return next(); // başkasının ürünü -> 404
+    }
+    const kategoriler = await Kategori.findAll({ order: [["ad", "ASC"]] });
+    res.render("hesap/urun-formu", { urun, kategoriler });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Not: Dosya yüklenen formlarda (multipart) CSRF anahtarı adreste gelir: action="...?_csrf=..."
+// Çünkü csurf, multer formu okumadan önce çalışır ve req.body henüz boştur.
+exports.urunKaydet = async (req, res, next) => {
+  try {
+    const { baslik, aciklama, kategoriId } = req.body;
+    const fiyat = parseInt(req.body.fiyat), stok = parseInt(req.body.stok);
+    let urun = null;
+    if (req.params.id) {
+      urun = await Urun.findByPk(req.params.id);
+      if (!urun || urun.kullaniciId !== benimId(req)) return next();
+    }
+    const formAdresi = urun ? "/hesap/urun/" + urun.id + "/duzenle" : "/hesap/urun/yeni";
+
+    // Kontroller
+    if (!baslik || !baslik.trim() || !(fiyat > 0) || !(stok >= 0) || !(await Kategori.findByPk(kategoriId))) {
+      mesaj(req, "hata", "Ürün adı, kategori, 0'dan büyük fiyat ve stok zorunlu.");
+      return res.redirect(formAdresi);
+    }
+    if (!urun && !req.file) {
+      mesaj(req, "hata", "Yeni ürün için bir resim seçmelisiniz (jpg, png, webp, gif, en fazla 5 MB).");
+      return res.redirect(formAdresi);
+    }
+
+    const veri = { baslik: baslik.trim().slice(0, 100), aciklama: (aciklama || "").slice(0, 3000), fiyat, stok, kategoriId };
+    if (req.file) veri.resim = "/img/yuklenen/" + req.file.filename; // resim dosyası klasörde, veritabanında adresi
+
+    const admin = req.session.kullanici.admin;
+    if (urun) {
+      // Düzenlenen ürün admin değilse tekrar onaya düşer
+      await urun.update({ ...veri, onayli: admin ? urun.onayli : false });
+      mesaj(req, "basari", admin ? "Ürün güncellendi." : "Ürün güncellendi. Yönetici tekrar onaylayınca yayına girecek.");
     } else {
-      await Inceleme.create({ kullaniciId, sarkiId: sarki.id, puan, yorum });
+      urun = await Urun.create({ ...veri, slug: await benzersizSlug(Urun, baslik), onayli: admin, kullaniciId: benimId(req) });
+      mesaj(req, "basari", admin ? "Ürün yayınlandı." : "Ürün eklendi. Yönetici onaylayınca mağazanda görünecek.");
     }
-    await puanGuncelle(sarki.id); // ortalama puanı yeniden hesapla
-    req.session.mesaj = { tur: "basari", metin: "İncelemen kaydedildi." };
-    res.redirect("/sarki/" + sarki.slug);
+    res.redirect("/hesap/urunlerim");
   } catch (err) {
     next(err);
   }
 };
 
-// İncelemeyi sadece yazan kişi ya da admin silebilir
-exports.incelemeSil = async (req, res, next) => {
+exports.urunSil = async (req, res, next) => {
   try {
-    const inceleme = await Inceleme.findByPk(req.params.id);
-    const ben = req.session.kullanici;
-    if (inceleme && (inceleme.kullaniciId === ben.id || ben.admin)) {
-      await inceleme.destroy();
-      await puanGuncelle(inceleme.sarkiId);
-      req.session.mesaj = { tur: "basari", metin: "İnceleme silindi." };
+    const urun = await Urun.findByPk(req.params.id);
+    if (urun && urun.kullaniciId === benimId(req)) {
+      await urun.destroy();
+      mesaj(req, "basari", "Ürün silindi.");
     }
-    geriDon(req, res);
+    res.redirect("/hesap/urunlerim");
   } catch (err) {
     next(err);
   }
 };
 
-// ---------- Listeler ----------
-exports.listeOlustur = async (req, res, next) => {
+// ================= SİPARİŞ =================
+// Alıcı ürün sayfasındaki formdan sipariş talebi gönderir
+exports.siparisVer = async (req, res, next) => {
   try {
-    const baslik = (req.body.baslik || "").trim();
-    if (!baslik) {
-      req.session.mesaj = { tur: "hata", metin: "Liste adı boş olamaz." };
-      return geriDon(req, res);
-    }
-    const liste = await Liste.create({
-      baslik: baslik.slice(0, 100),
-      slug: await benzersizSlug(Liste, baslik),
-      aciklama: (req.body.aciklama || "").trim().slice(0, 500),
-      kullaniciId: req.session.kullanici.id,
+    const urun = await Urun.findOne({ where: { id: req.params.urunId, onayli: true } });
+    const adet = parseInt(req.body.adet);
+    const adres = (req.body.adres || "").trim();
+    if (!urun) return next();
+    const geri = "/urun/" + urun.slug;
+    if (urun.kullaniciId === benimId(req)) { mesaj(req, "hata", "Kendi ürününüze sipariş veremezsiniz."); return res.redirect(geri); }
+    if (!(adet >= 1 && adet <= urun.stok)) { mesaj(req, "hata", "Adet 1 ile " + urun.stok + " arasında olmalı."); return res.redirect(geri); }
+    if (adres.length < 10) { mesaj(req, "hata", "Lütfen teslimat adresini yazın."); return res.redirect(geri); }
+
+    await Siparis.create({
+      adet, adres: adres.slice(0, 500), toplam: adet * urun.fiyat, // fiyat sipariş anındaki fiyattır
+      aliciNotu: (req.body.aliciNotu || "").trim().slice(0, 500) || null,
+      urunId: urun.id, aliciId: benimId(req), saticiId: urun.kullaniciId,
     });
-    // Şarkı sayfasından oluşturulduysa o şarkıyı hemen listeye ekle
-    if (req.body.sarkiId) {
-      const sarki = await Sarki.findOne({ where: { id: req.body.sarkiId, onayli: true } });
-      if (sarki) await liste.addSarki(sarki);
+    mesaj(req, "basari", "Sipariş talebin satıcıya iletildi. Satıcı onaylayınca burada görebilirsin.");
+    res.redirect("/hesap/siparislerim");
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.siparislerim = async (req, res, next) => {
+  try {
+    const siparisler = await Siparis.findAll({
+      where: { aliciId: benimId(req) },
+      include: [Urun, { model: Kullanici, as: "satici" }],
+      order: [["createdAt", "DESC"]],
+    });
+    // Hangi ürünlere zaten yorum yazmış (teslim edilenlerde "Yorum yaz" düğmesi için)
+    const yorumlananlar = (await Yorum.findAll({ where: { kullaniciId: benimId(req) }, raw: true })).map(y => y.urunId);
+    res.render("hesap/siparislerim", { siparisler, yorumlananlar });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.gelenSiparisler = async (req, res, next) => {
+  try {
+    const siparisler = await Siparis.findAll({
+      where: { saticiId: benimId(req) },
+      include: [Urun, { model: Kullanici, as: "alici" }],
+      order: [["createdAt", "DESC"]],
+    });
+    res.render("hesap/gelen-siparisler", { siparisler, SONRAKI: Siparis.SONRAKI });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Satıcı sipariş durumunu ilerletir. Sadece izin verilen geçişler yapılabilir (Siparis.SONRAKI)
+exports.siparisDurum = async (req, res, next) => {
+  try {
+    const siparis = await Siparis.findByPk(req.params.id, { include: Urun });
+    const yeni = req.body.durum;
+    if (!siparis || siparis.saticiId !== benimId(req)) return next();
+    if (!(Siparis.SONRAKI[siparis.durum] || []).includes(yeni)) {
+      mesaj(req, "hata", "Bu sipariş bu duruma geçirilemez.");
+      return res.redirect("/hesap/gelen-siparisler");
     }
-    req.session.mesaj = { tur: "basari", metin: '"' + liste.baslik + '" listesi oluşturuldu.' };
+    // Kabul edilince (hazırlanıyor) stoktan düşülür
+    if (yeni === "hazirlaniyor") {
+      if (siparis.urun.stok < siparis.adet) {
+        mesaj(req, "hata", "Stok yetersiz. Önce ürünün stoğunu güncelleyin.");
+        return res.redirect("/hesap/gelen-siparisler");
+      }
+      await siparis.urun.decrement("stok", { by: siparis.adet });
+    }
+    await siparis.update({ durum: yeni });
+    mesaj(req, "basari", "Sipariş durumu: " + Siparis.DURUMLAR[yeni].ad);
+    res.redirect("/hesap/gelen-siparisler");
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Alıcı, satıcı onaylamadan önce siparişini iptal edebilir
+exports.siparisIptal = async (req, res, next) => {
+  try {
+    const siparis = await Siparis.findByPk(req.params.id);
+    if (siparis && siparis.aliciId === benimId(req) && siparis.durum === "beklemede") {
+      await siparis.update({ durum: "iptal" });
+      mesaj(req, "basari", "Sipariş iptal edildi.");
+    }
+    res.redirect("/hesap/siparislerim");
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ================= YORUM =================
+// Sadece ürünü teslim almış üye yorum yazabilir. Daha önce yazdıysa güncellenir.
+exports.yorumKaydet = async (req, res, next) => {
+  try {
+    const urun = await Urun.findByPk(req.params.urunId);
+    const puan = Number(req.body.puan);
+    if (!urun) return next();
+    const teslimAldi = await Siparis.findOne({ where: { urunId: urun.id, aliciId: benimId(req), durum: "teslim" } });
+    if (!teslimAldi) {
+      mesaj(req, "hata", "Sadece teslim aldığınız ürünlere yorum yazabilirsiniz.");
+      return res.redirect("/urun/" + urun.slug);
+    }
+    if (!(puan >= 1 && puan <= 5)) {
+      mesaj(req, "hata", "Lütfen 1 ile 5 arasında bir puan seçin.");
+      return res.redirect("/urun/" + urun.slug);
+    }
+    const metin = (req.body.metin || "").trim().slice(0, 2000) || null;
+    const eski = await Yorum.findOne({ where: { urunId: urun.id, kullaniciId: benimId(req) } });
+    if (eski) await eski.update({ puan, metin });
+    else await Yorum.create({ puan, metin, urunId: urun.id, kullaniciId: benimId(req) });
+    await puanGuncelle(urun.id); // ortalama puanı yeniden hesapla
+    mesaj(req, "basari", "Yorumun kaydedildi, teşekkürler!");
+    res.redirect("/urun/" + urun.slug + "#yorumlar");
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Yorumu sadece yazan kişi ya da admin silebilir
+exports.yorumSil = async (req, res, next) => {
+  try {
+    const yorum = await Yorum.findByPk(req.params.id);
+    if (yorum && (yorum.kullaniciId === benimId(req) || req.session.kullanici.admin)) {
+      await yorum.destroy();
+      await puanGuncelle(yorum.urunId);
+      mesaj(req, "basari", "Yorum silindi.");
+    }
     geriDon(req, res);
   } catch (err) {
     next(err);
   }
 };
 
-// Listeyi bulur, ama sadece sahibi değiştirebilir
-async function benimListem(req) {
-  const liste = await Liste.findByPk(req.params.id);
-  if (!liste || liste.kullaniciId !== req.session.kullanici.id) return null;
-  return liste;
-}
-
-exports.listeyeEkle = async (req, res, next) => {
+// ================= FAVORİ VE TAKİP =================
+// Kalp düğmesi fetch ile buraya POST atar (public/js/site.js), cevap JSON'dur.
+exports.favori = async (req, res, next) => {
   try {
-    const liste = await benimListem(req);
-    const sarki = await Sarki.findOne({ where: { id: req.body.sarkiId, onayli: true } });
-    if (liste && sarki) {
-      await liste.addSarki(sarki); // ara tabloya (listeSarki) satır ekler
-      req.session.mesaj = { tur: "basari", metin: '"' + sarki.baslik + '", "' + liste.baslik + '" listesine eklendi.' };
-    }
-    geriDon(req, res);
+    const urun = await Urun.findOne({ where: { id: req.params.urunId, onayli: true } });
+    if (!urun) return res.status(404).json({ hata: "Ürün bulunamadı" });
+    const ben = await Kullanici.findByPk(benimId(req));
+    const favorideMi = await ben.hasFavori(urun);   // ara tabloda (favori) satır var mı?
+    if (favorideMi) await ben.removeFavori(urun);   // varsa sil
+    else await ben.addFavori(urun);                 // yoksa ekle
+    res.json({ favori: !favorideMi });
   } catch (err) {
     next(err);
   }
 };
 
-exports.listedenCikar = async (req, res, next) => {
+exports.favorilerim = async (req, res, next) => {
   try {
-    const liste = await benimListem(req);
-    if (liste) await liste.removeSarki(req.params.sarkiId); // ara tablodan satırı siler
-    geriDon(req, res);
+    const ben = await Kullanici.findByPk(benimId(req));
+    const urunler = await ben.getFavoriler({ where: { onayli: true }, include: [Kullanici] }); // get... içinde include dizi olmalı
+    res.render("hesap/favorilerim", { urunler });
   } catch (err) {
     next(err);
   }
 };
 
-exports.listeSil = async (req, res, next) => {
-  try {
-    const liste = await benimListem(req);
-    if (liste) {
-      await liste.destroy();
-      req.session.mesaj = { tur: "basari", metin: "Liste silindi." };
-    }
-    res.redirect("/uye/" + req.session.kullanici.ad);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// ---------- Beğenilen şarkılar (kalp) ----------
-// Oynatıcı ve şarkı sayfasındaki kalp düğmesi fetch ile buraya POST atar, cevap JSON'dur.
-exports.begen = async (req, res, next) => {
-  try {
-    const sarki = await Sarki.findOne({ where: { id: req.params.sarkiId, onayli: true } });
-    if (!sarki) return res.status(404).json({ hata: "Şarkı bulunamadı" });
-    const ben = await Kullanici.findByPk(req.session.kullanici.id);
-    const begenmisim = await ben.hasBegenilen(sarki);     // ara tabloda (begeni) satır var mı?
-    if (begenmisim) await ben.removeBegenilen(sarki);    // varsa sil
-    else await ben.addBegenilen(sarki);                  // yoksa ekle
-    res.json({ begendi: !begenmisim });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// ---------- Takip et / takibi bırak ----------
 exports.takip = async (req, res, next) => {
   try {
-    const uye = await Kullanici.findOne({ where: { kullaniciAdi: req.params.kullaniciAdi } });
-    const ben = await Kullanici.findByPk(req.session.kullanici.id);
-    if (uye && uye.id !== ben.id) {                       // kendini takip edemezsin
-      if (await ben.hasTakipEdilen(uye)) {
-        await ben.removeTakipEdilen(uye);
-        req.session.mesaj = { tur: "basari", metin: uye.kullaniciAdi + " artık takip edilmiyor." };
+    const satici = await Kullanici.findOne({ where: { kullaniciAdi: req.params.kullaniciAdi } });
+    const ben = await Kullanici.findByPk(benimId(req));
+    if (satici && satici.id !== ben.id) {   // kendini takip edemezsin
+      if (await ben.hasTakipEdilen(satici)) {
+        await ben.removeTakipEdilen(satici);
+        mesaj(req, "basari", "Mağaza takipten çıkarıldı.");
       } else {
-        await ben.addTakipEdilen(uye);
-        req.session.mesaj = { tur: "basari", metin: uye.kullaniciAdi + " takip ediliyor." };
+        await ben.addTakipEdilen(satici);
+        mesaj(req, "basari", "Mağaza takip ediliyor. Yeni ürünleri ana sayfanda göreceksin.");
       }
     }
     geriDon(req, res);
@@ -166,50 +278,24 @@ exports.takip = async (req, res, next) => {
   }
 };
 
-// ---------- Şarkı yükleme ----------
-exports.getYukle = async (req, res) => {
-  // Kapak seçilmezse kullanılabilecek mevcut albümler
-  const albumler = await Sarki.findAll({ attributes: ["album"], where: { onayli: true }, group: ["albumSlug"], raw: true });
-  res.render("hesap/yukle", { albumler });
+// ================= MAĞAZA AYARLARI =================
+exports.magazaAyarlari = async (req, res, next) => {
+  try {
+    res.render("hesap/magaza", { ben: await Kullanici.findByPk(benimId(req)) });
+  } catch (err) {
+    next(err);
+  }
 };
 
-// Not: Dosya yüklenen formlarda (multipart) CSRF anahtarı adreste gelir: action="/hesap/yukle?_csrf=..."
-// Çünkü csurf, multer formu okumadan önce çalışır ve req.body henüz boştur.
-exports.postYukle = async (req, res, next) => {
+exports.magazaKaydet = async (req, res, next) => {
   try {
-    const { baslik, sanatci, album, renk } = req.body;
-    const kapakDosya = req.files && req.files.kapak && req.files.kapak[0];
-    const sesDosya = req.files && req.files.ses && req.files.ses[0];
-
-    if (!baslik || !sanatci || !album || !sesDosya) {
-      req.session.mesaj = { tur: "hata", metin: "Şarkı adı, sanatçı, albüm ve ses dosyası (mp3, wav, ogg) zorunlu." };
-      return res.redirect("/hesap/yukle");
-    }
-    const albumSlug = slugField(album);
-    // Kapak yüklenmediyse aynı albümün mevcut kapağını kullan
-    const mevcut = await Sarki.findOne({ where: { albumSlug } });
-    const kapak = kapakDosya ? "/img/yuklenen/" + kapakDosya.filename : mevcut && mevcut.kapak;
-    if (!kapak) {
-      req.session.mesaj = { tur: "hata", metin: "Yeni bir albüm için kapak resmi (jpg, png, webp, gif) yüklemelisiniz." };
-      return res.redirect("/hesap/yukle");
-    }
-
-    const admin = req.session.kullanici.admin;
-    const sarki = await Sarki.create({
-      baslik, sanatci, album, albumSlug, kapak,
-      slug: await benzersizSlug(Sarki, baslik),
-      dosya: "/muzik/yuklenen/" + sesDosya.filename,
-      renk: /^#[0-9a-fA-F]{6}$/.test(renk) ? renk : "#3C3489",
-      onayli: admin,                          // admin yüklerse hemen yayınlanır, üye yüklerse onay bekler
-      kullaniciId: req.session.kullanici.id,
-    });
-
-    if (admin) {
-      req.session.mesaj = { tur: "basari", metin: '"' + baslik + '" yayınlandı.' };
-      return res.redirect("/sarki/" + sarki.slug);
-    }
-    req.session.mesaj = { tur: "basari", metin: '"' + baslik + '" yüklendi. Yönetici onayladıktan sonra yayınlanacak.' };
-    res.redirect("/uye/" + req.session.kullanici.ad);
+    const temiz = (deger, uzunluk) => (deger || "").trim().slice(0, uzunluk) || null;
+    await Kullanici.update(
+      { magazaAdi: temiz(req.body.magazaAdi, 60), sehir: temiz(req.body.sehir, 40), hakkinda: temiz(req.body.hakkinda, 1000) },
+      { where: { id: benimId(req) } }
+    );
+    mesaj(req, "basari", "Mağaza bilgilerin kaydedildi.");
+    res.redirect("/magaza/" + req.session.kullanici.ad);
   } catch (err) {
     next(err);
   }

@@ -1,0 +1,24 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Siparişler · Admin' }) %>
+<%- include('../partials/admin-menu') %>
+
+<div class="tablo-kutu">
+  <table class="table align-middle mb-0">
+    <thead><tr><th>#</th><th>Ürün</th><th>Alıcı</th><th>Satıcı</th><th>Adet</th><th>Tutar</th><th>Durum</th><th>Tarih</th></tr></thead>
+    <tbody>
+      <% siparisler.forEach(s => { %>
+        <tr>
+          <td class="soluk"><%= s.id %></td>
+          <td><a href="/urun/<%= s.urun.slug %>"><%= s.urun.baslik %></a></td>
+          <td><%= s.alici.kullaniciAdi %></td>
+          <td><a href="/magaza/<%= s.satici.kullaniciAdi %>"><%= s.satici.kullaniciAdi %></a></td>
+          <td><%= s.adet %></td>
+          <td class="text-nowrap"><%= tl(s.toplam) %></td>
+          <td><%- include('../partials/durum', { d: s.durum }) %></td>
+          <td class="soluk kucuk text-nowrap"><%= tarihYaz(s.createdAt) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% if (siparisler.length === 0) { %><p class="soluk mt-3">Henüz sipariş yok.</p><% } %>
+<%- include('../partials/alt') %>

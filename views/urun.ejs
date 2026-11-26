@@ -1,0 +1,121 @@
+<%- include('partials/ust', { sayfaBaslik: urun.baslik }) %>
+<% const satici = urun.kullanici; const kendiUrunum = kullanici && kullanici.id === urun.kullaniciId; %>
+
+<!-- data-urun: site.js nabızla "bu ürüne bakıyorum" bilgisini gönderir -->
+<div data-urun="<%= urun.id %>">
+  <nav class="yol-izi kucuk">
+    <a href="/">Ana sayfa</a> <i class="bi bi-chevron-right"></i>
+    <a href="/kategori/<%= urun.kategori.slug %>"><%= urun.kategori.ad %></a> <i class="bi bi-chevron-right"></i>
+    <span><%= urun.baslik %></span>
+  </nav>
+
+  <% if (!urun.onayli) { %><div class="bilgi uyari"><i class="bi bi-hourglass-split"></i> Bu ürün yönetici onayı bekliyor, şu an sadece sen görüyorsun.</div><% } %>
+
+  <div class="row g-4 g-lg-5">
+    <!-- SOL: resim -->
+    <div class="col-md-6">
+      <div class="urun-buyuk-resim">
+        <img src="<%= urun.resim %>" alt="<%= urun.baslik %>">
+        <span class="el-yazisi etiket-el">el yapımı</span>
+      </div>
+    </div>
+
+    <!-- SAĞ: bilgiler ve sipariş -->
+    <div class="col-md-6">
+      <a href="/magaza/<%= satici.kullaniciAdi %>" class="urun-magaza-ust"><i class="bi bi-shop"></i> <%= satici.magazaAdi || satici.kullaniciAdi %></a>
+      <h1 class="urun-baslik"><%= urun.baslik %></h1>
+      <div class="d-flex align-items-center gap-3 flex-wrap mb-3">
+        <% if (urun.yorumSayisi > 0) { %><a href="#yorumlar" class="kucuk"><span class="yildiz"><%= yildiz(urun.ortPuan) %></span> <b><%= urun.ortPuan.toFixed(1) %></b> <span class="soluk">(<%= urun.yorumSayisi %> yorum)</span></a><% } %>
+        <span class="kucuk soluk"><i class="bi bi-heart"></i> <%= favoriSayisi %> kişi favoriledi</span>
+        <span class="kucuk soluk"><i class="bi bi-eye"></i> <%= urun.goruntulenme %> görüntülenme</span>
+      </div>
+      <div class="buyuk-fiyat"><%= tl(urun.fiyat) %></div>
+      <p class="canli-not kucuk"><span class="nokta"></span> Şu an <b id="bakan-sayi"><%= bakan %></b> kişi bu ürüne bakıyor</p>
+
+      <% if (urun.aciklama) { %><p class="urun-aciklama"><%= urun.aciklama %></p><% } %>
+
+      <!-- Sipariş -->
+      <div class="siparis-kutu">
+        <% if (kendiUrunum) { %>
+          <p class="mb-2">Bu senin ürünün. Stok: <b><%= urun.stok %></b></p>
+          <a href="/hesap/urun/<%= urun.id %>/duzenle" class="btn-cizgi"><i class="bi bi-pencil"></i> Düzenle</a>
+        <% } else if (urun.stok === 0) { %>
+          <p class="mb-0 fw-semibold"><i class="bi bi-x-circle"></i> Şu an tükendi. Mağazayı takip et, yenisi gelince haber al.</p>
+        <% } else if (!kullanici) { %>
+          <p class="mb-2">Sipariş vermek için giriş yapmalısın.</p>
+          <a href="/auth/giris?url=/urun/<%= urun.slug %>" class="btn-turuncu">Giriş yap ve sipariş ver</a>
+        <% } else { %>
+          <form action="/hesap/siparis/<%= urun.id %>" method="post" class="d-grid gap-2">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="d-flex align-items-center gap-2">
+              <label for="adet" class="kucuk fw-semibold">Adet</label>
+              <input type="number" name="adet" id="adet" class="giris-kutu adet-kutu" value="1" min="1" max="<%= urun.stok %>" data-fiyat="<%= urun.fiyat %>" required>
+              <span class="soluk kucuk">(stokta <%= urun.stok %>)</span>
+              <span class="ms-auto">Toplam: <b id="toplam"><%= tl(urun.fiyat) %></b></span>
+            </div>
+            <textarea name="adres" class="giris-kutu" rows="2" placeholder="Teslimat adresi" required minlength="10" maxlength="500"></textarea>
+            <textarea name="aliciNotu" class="giris-kutu" rows="2" placeholder="Satıcıya not (renk, isim yazısı, hediye paketi...) - isteğe bağlı" maxlength="500"></textarea>
+            <div class="d-flex gap-2">
+              <button class="btn-turuncu buyuk flex-grow-1"><i class="bi bi-bag-check"></i> Sipariş talebi gönder</button>
+              <button type="button" class="kalp buyuk-kalp" data-favori="<%= urun.id %>" aria-label="Favorilere ekle"><i class="bi bi-heart"></i></button>
+            </div>
+            <p class="soluk kucuk mb-0"><i class="bi bi-info-circle"></i> Online ödeme yok. Satıcı talebini onaylayınca ödeme ve kargoyu birlikte ayarlarsınız.</p>
+          </form>
+        <% } %>
+      </div>
+
+      <!-- Satıcı kartı -->
+      <a href="/magaza/<%= satici.kullaniciAdi %>" class="satici-kart">
+        <span class="avatar"><%= satici.kullaniciAdi[0].toUpperCase() %></span>
+        <span class="min-w-0">
+          <span class="fw-semibold d-block"><%= satici.magazaAdi || satici.kullaniciAdi %></span>
+          <span class="soluk kucuk"><% if (satici.sehir) { %><i class="bi bi-geo-alt"></i> <%= satici.sehir %> · <% } %>üyelik: <%= tarihYaz(satici.createdAt) %></span>
+        </span>
+        <i class="bi bi-chevron-right ms-auto"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Yorumlar -->
+  <h2 class="bolum-baslik" id="yorumlar">Yorumlar <span class="soluk fs-6">(<%= yorumlar.length %>)</span></h2>
+  <div class="row g-4">
+    <div class="col-lg-7 d-grid gap-2 align-content-start">
+      <% yorumlar.forEach(y => { %><%- include('partials/yorum', { y, urunGoster: false }) %><% }) %>
+      <% if (yorumlar.length === 0) { %><p class="soluk">Henüz yorum yok.</p><% } %>
+    </div>
+    <div class="col-lg-5">
+      <% if (yorumYazabilir) { %>
+        <!-- Sadece bu ürünü teslim almış üye yorum yazabilir -->
+        <form action="/hesap/yorum/<%= urun.id %>" method="post" class="kutu">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="fw-semibold mb-1"><%= benimYorum ? 'Yorumunu güncelle' : 'Bu ürünü değerlendir' %></div>
+          <!-- Yıldızlar: 5 tane radio butonu. CSS ile yıldız gibi görünüyor (sağdan sola dizili) -->
+          <div class="yildiz-sec">
+            <% for (let p = 5; p >= 1; p--) { %>
+              <input type="radio" name="puan" value="<%= p %>" id="puan-<%= p %>" <%= benimYorum && benimYorum.puan === p ? 'checked' : '' %> required>
+              <label for="puan-<%= p %>" title="<%= p %> yıldız">★</label>
+            <% } %>
+          </div>
+          <textarea name="metin" class="giris-kutu w-100 mt-2" rows="3" maxlength="2000" placeholder="Ürün nasıldı?"><%= benimYorum ? benimYorum.metin || '' : '' %></textarea>
+          <button class="btn-turuncu mt-2"><%= benimYorum ? 'Güncelle' : 'Yorumu gönder' %></button>
+        </form>
+      <% } else { %>
+        <div class="kutu soluk kucuk"><i class="bi bi-chat-heart"></i> Yorumlar sadece ürünü satın alıp teslim alan üyelerden gelir.</div>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (saticininDigerleri.length) { %>
+    <h2 class="bolum-baslik"><%= satici.magazaAdi || satici.kullaniciAdi %> mağazasından</h2>
+    <div class="urun-izgara">
+      <% saticininDigerleri.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
+    </div>
+  <% } %>
+  <% if (benzerler.length) { %>
+    <h2 class="bolum-baslik">Benzer ürünler</h2>
+    <div class="urun-izgara">
+      <% benzerler.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
+    </div>
+  <% } %>
+</div>
+<%- include('partials/alt') %>

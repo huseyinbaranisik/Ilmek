@@ -9,9 +9,15 @@ router.use(isAdmin);
 
 router.get("/", adminController.panel);
 
-router.get("/sarkilar", adminController.sarkilar);
-router.post("/sarkilar/:id/onayla", adminController.sarkiOnayla);
-router.post("/sarkilar/:id/sil", adminController.sarkiSil);
+router.get("/urunler", adminController.urunler);
+router.post("/urunler/:id/onayla", adminController.urunOnayla);
+router.post("/urunler/:id/sil", adminController.urunSil);
+
+router.get("/kategoriler", adminController.kategoriler);
+router.post("/kategoriler", adminController.kategoriEkle);
+router.post("/kategoriler/:id/sil", adminController.kategoriSil);
+
+router.get("/siparisler", adminController.siparisler);
 
 router.get("/duyurular", adminController.duyurular);
 router.post("/duyurular", adminController.duyuruEkle);

@@ -1,10 +1,10 @@
 <%- include('partials/ust', { sayfaBaslik: 'Galeri' }) %>
-<h2 class="bolum-baslik">Galeri</h2>
-<div class="izgara">
+<div class="sayfa-ust"><div><h1>Galeri</h1><p class="soluk mb-0">Atölyelerden kareler</p></div></div>
+<div class="galeri-izgara">
   <% resimler.forEach(r => { %>
-    <a href="#resim-<%= r.id %>" class="kart">
-      <div class="kart-kapak"><img src="<%= r.resim %>" alt="<%= r.aciklama %>"></div>
-      <span class="soluk kucuk text-truncate"><%= r.aciklama %></span>
+    <a href="#resim-<%= r.id %>" class="galeri-kart">
+      <img src="<%= r.resim %>" alt="<%= r.aciklama %>">
+      <span class="el-yazisi"><%= r.aciklama %></span>
     </a>
   <% }) %>
 </div>

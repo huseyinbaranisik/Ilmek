@@ -1,0 +1,30 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Ürünlerim' }) %>
+<div class="sayfa-ust">
+  <div>
+    <h1>Ürünlerim</h1>
+    <p class="soluk mb-0">Eklediğin ürünler yönetici onayından sonra mağazanda görünür.</p>
+  </div>
+  <a href="/hesap/urun/yeni" class="btn-turuncu"><i class="bi bi-plus-lg"></i> Yeni ürün</a>
+</div>
+
+<div class="liste">
+  <% urunler.forEach(u => { %>
+    <div class="satir">
+      <img src="<%= u.resim %>" alt="" class="mini-resim">
+      <div class="flex-grow-1 min-w-0">
+        <a href="/urun/<%= u.slug %>" class="satir-baslik text-truncate d-block"><%= u.baslik %></a>
+        <div class="soluk kucuk"><%= u.kategori ? u.kategori.ad : '' %> · <%= tl(u.fiyat) %> · stok <%= u.stok %> · <%= u.goruntulenme %> görüntülenme</div>
+      </div>
+      <% if (u.onayli) { %><span class="rozet yesil-rozet">Yayında</span><% } else { %><span class="rozet sari-rozet">Onay bekliyor</span><% } %>
+      <a href="/hesap/urun/<%= u.id %>/duzenle" class="btn-cizgi kucuk-btn"><i class="bi bi-pencil"></i> Düzenle</a>
+      <form action="/hesap/urun/<%= u.id %>/sil" method="post" onsubmit="return confirm('Bu ürün silinsin mi? Yorumları ve siparişleri de silinir.')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-sil"><i class="bi bi-trash"></i></button>
+      </form>
+    </div>
+  <% }) %>
+</div>
+<% if (urunler.length === 0) { %>
+  <div class="bos-durum"><i class="bi bi-grid"></i><p>Henüz ürün eklemedin.</p><a href="/hesap/urun/yeni" class="btn-turuncu">İlk ürününü ekle</a></div>
+<% } %>
+<%- include('../partials/alt') %>

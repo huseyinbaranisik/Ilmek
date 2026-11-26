@@ -1,5 +1,5 @@
 <%- include('partials/ust', { sayfaBaslik: 'Duyurular' }) %>
-<h2 class="bolum-baslik">Duyurular</h2>
+<div class="sayfa-ust"><h1>Duyurular</h1></div>
 <div class="d-grid gap-2">
   <% duyurular.forEach(d => { %>
     <a href="/duyuru/<%= d.slug %>" class="kutu duyuru-kutu">

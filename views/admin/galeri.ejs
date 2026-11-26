@@ -11,10 +11,10 @@
   </form>
 </div>
 
-<div class="izgara">
+<div class="galeri-izgara">
   <% resimler.forEach(r => { %>
-    <div class="kart">
-      <div class="kart-kapak"><img src="<%= r.resim %>" alt="<%= r.aciklama %>"></div>
+    <div class="galeri-kart">
+      <img src="<%= r.resim %>" alt="<%= r.aciklama %>">
       <div class="d-flex align-items-center gap-2">
         <span class="soluk kucuk text-truncate flex-grow-1"><%= r.aciklama %></span>
         <form action="/admin/galeri/<%= r.id %>/sil" method="post" onsubmit="return confirm('Bu resim silinsin mi?')">

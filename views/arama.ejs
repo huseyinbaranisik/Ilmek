@@ -1,22 +1,23 @@
 <%- include('partials/ust', { sayfaBaslik: 'Arama' }) %>
-<h2 class="bolum-baslik">"<%= q %>" için sonuçlar</h2>
-<% if (sonuclar.length === 0 && uyeSonuclar.length === 0) { %>
-  <p class="soluk">Sonuç bulunamadı. Başka bir şarkı, sanatçı, albüm ya da üye adı deneyin.</p>
+<div class="sayfa-ust"><h1>"<%= q %>" için sonuçlar</h1></div>
+
+<% if (urunler.length === 0 && magazalar.length === 0) { %>
+  <div class="bos-durum"><i class="bi bi-search"></i><p>Sonuç bulunamadı. Başka bir kelime deneyin.</p></div>
 <% } %>
 
-<% if (sonuclar.length) { %>
-  <h3 class="fs-5 fw-bold mt-3 mb-2">Şarkılar</h3>
-  <div class="liste">
-    <% sonuclar.forEach((s, i) => { %><%- include('partials/satir', { s, sira: i + 1 }) %><% }) %>
+<% if (magazalar.length) { %>
+  <h2 class="bolum-baslik">Mağazalar</h2>
+  <div class="d-flex flex-wrap gap-2 mb-2">
+    <% magazalar.forEach(k => { %>
+      <a href="/magaza/<%= k.kullaniciAdi %>" class="uye-cip"><span class="avatar kucuk-avatar"><%= k.kullaniciAdi[0].toUpperCase() %></span><%= k.magazaAdi || k.kullaniciAdi %></a>
+    <% }) %>
   </div>
 <% } %>
 
-<% if (uyeSonuclar.length) { %>
-  <h3 class="fs-5 fw-bold mt-4 mb-2">Üyeler</h3>
-  <div class="d-flex flex-wrap gap-2">
-    <% uyeSonuclar.forEach(k => { %>
-      <a href="/uye/<%= k.kullaniciAdi %>" class="uye-cip"><span class="avatar kucuk-avatar"><%= k.kullaniciAdi[0].toUpperCase() %></span><%= k.kullaniciAdi %></a>
-    <% }) %>
+<% if (urunler.length) { %>
+  <h2 class="bolum-baslik">Ürünler <span class="soluk fs-6">(<%= urunler.length %>)</span></h2>
+  <div class="urun-izgara">
+    <% urunler.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
   </div>
 <% } %>
 <%- include('partials/alt') %>

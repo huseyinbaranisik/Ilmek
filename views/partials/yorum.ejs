@@ -1,0 +1,18 @@
+<%# Yorum kartı. y = yorum. urunGoster: true ise ürünün resmi ve adı da gösterilir (ana sayfa, mağaza) %>
+<div class="yorum">
+  <% if (urunGoster && y.urun) { %>
+    <a href="/urun/<%= y.urun.slug %>"><img src="<%= y.urun.resim %>" alt="" class="mini-resim"></a>
+  <% } %>
+  <div class="flex-grow-1 min-w-0">
+    <% if (urunGoster && y.urun) { %><a href="/urun/<%= y.urun.slug %>" class="fw-semibold d-block text-truncate"><%= y.urun.baslik %></a><% } %>
+    <span class="yildiz"><%= yildiz(y.puan) %></span>
+    <span class="soluk kucuk">· <i class="bi bi-person-circle"></i> <%= y.kullanici ? y.kullanici.kullaniciAdi : 'silinmiş üye' %> · <%= tarihYaz(y.updatedAt) %></span>
+    <% if (y.metin) { %><p class="mb-0 mt-1 yorum-metin"><%= y.metin %></p><% } %>
+  </div>
+  <% if (kullanici && (kullanici.id === y.kullaniciId || kullanici.admin)) { %>
+    <form action="/hesap/yorum/<%= y.id %>/sil" method="post" onsubmit="return confirm('Bu yorum silinsin mi?')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn-sil" title="Sil"><i class="bi bi-trash"></i></button>
+    </form>
+  <% } %>
+</div>

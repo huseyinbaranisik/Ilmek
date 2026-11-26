@@ -1,0 +1,43 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Ürünler · Admin' }) %>
+<%- include('../partials/admin-menu') %>
+
+<h2 class="bolum-baslik">Onay bekleyenler <span class="rozet sari-rozet"><%= bekleyenler.length %></span></h2>
+<div class="liste mb-4">
+  <% bekleyenler.forEach(u => { %>
+    <div class="satir">
+      <img src="<%= u.resim %>" alt="" class="mini-resim buyuk">
+      <div class="flex-grow-1 min-w-0">
+        <a href="/urun/<%= u.slug %>" class="satir-baslik"><%= u.baslik %></a>
+        <div class="soluk kucuk"><%= u.kategori ? u.kategori.ad : '' %> · <%= tl(u.fiyat) %> · stok <%= u.stok %> · satıcı: <%= u.kullanici ? u.kullanici.kullaniciAdi : '-' %></div>
+        <% if (u.aciklama) { %><div class="kucuk text-truncate"><%= u.aciklama %></div><% } %>
+      </div>
+      <form action="/admin/urunler/<%= u.id %>/onayla" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-turuncu">Onayla</button>
+      </form>
+      <form action="/admin/urunler/<%= u.id %>/sil" method="post" onsubmit="return confirm('Bu ürün reddedilip silinsin mi?')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-sil">Reddet</button>
+      </form>
+    </div>
+  <% }) %>
+  <% if (bekleyenler.length === 0) { %><p class="soluk">Onay bekleyen ürün yok.</p><% } %>
+</div>
+
+<h2 class="bolum-baslik">Yayındaki ürünler</h2>
+<div class="liste">
+  <% urunler.forEach(u => { %>
+    <div class="satir">
+      <img src="<%= u.resim %>" alt="" class="mini-resim">
+      <div class="flex-grow-1 min-w-0">
+        <a href="/urun/<%= u.slug %>" class="satir-baslik"><%= u.baslik %></a>
+        <div class="soluk kucuk"><%= u.kategori ? u.kategori.ad : '' %> · <%= tl(u.fiyat) %> · /urun/<%= u.slug %> · satıcı: <%= u.kullanici ? u.kullanici.kullaniciAdi : '-' %></div>
+      </div>
+      <form action="/admin/urunler/<%= u.id %>/sil" method="post" onsubmit="return confirm('Bu ürün silinsin mi? Yorumları ve siparişleri de silinir.')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-sil">Sil</button>
+      </form>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/alt') %>

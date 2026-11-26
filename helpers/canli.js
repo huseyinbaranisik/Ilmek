@@ -1,13 +1,13 @@
 // ============================================================
-//  helpers/canli.js - Online kullanıcı ve şarkı başına dinleyici sayısı
+//  helpers/canli.js - Online kullanıcı sayısı ve "şu an bu ürüne bakanlar"
 //
 //  Veritabanına yazmıyoruz, sunucunun hafızasında (RAM) tutuyoruz:
-//  - sonGorulme:  her oturumun en son ne zaman istek attığı
-//  - dinleyenler: her oturumun şu an hangi şarkıyı çaldığı (giriş yaptıysa kullanıcı adıyla)
-//  Şarkı çalarken tarayıcı 15 saniyede bir /api/nabiz adresine haber verir.
+//  - sonGorulme: her oturumun en son ne zaman istek attığı
+//  - bakanlar:   her oturumun şu an hangi ürün sayfasında olduğu
+//  Sayfa açık kaldıkça tarayıcı 15 saniyede bir /api/nabiz adresine haber verir (public/js/site.js).
 // ============================================================
 const sonGorulme = {};   // { oturumId: zaman }
-const dinleyenler = {};  // { oturumId: { sarkiId, zaman, kullaniciAdi } }
+const bakanlar = {};     // { oturumId: { urunId, zaman } }
 
 // Son 60 saniyede görülenler "çevrimiçi" sayılır
 function onlineSayisi() {
@@ -16,26 +16,15 @@ function onlineSayisi() {
   return Object.keys(sonGorulme).length;
 }
 
-// Son 40 saniyede "bu şarkıyı dinliyorum" diyenler sayılır -> { sarkiId: kişi sayısı }
-function dinleyiciSayilari() {
+// Son 40 saniyede bu ürünün sayfasında olanların sayısı
+function bakanSayisi(urunId) {
   const sinir = Date.now() - 40 * 1000;
-  const sayilar = {};
-  for (const id in dinleyenler) {
-    const d = dinleyenler[id];
-    if (d.zaman < sinir) { delete dinleyenler[id]; continue; }
-    sayilar[d.sarkiId] = (sayilar[d.sarkiId] || 0) + 1;
+  let sayi = 0;
+  for (const id in bakanlar) {
+    if (bakanlar[id].zaman < sinir) { delete bakanlar[id]; continue; }
+    if (bakanlar[id].urunId === urunId) sayi++;
   }
-  return sayilar;
+  return sayi;
 }
 
-// Bir üye şu an bir şarkı dinliyorsa o şarkının id'sini döner, dinlemiyorsa null
-// (profildeki "Şu an dinliyor" için, Spotify'daki arkadaş etkinliği gibi)
-function neDinliyor(kullaniciAdi) {
-  dinleyiciSayilari(); // eskimiş kayıtları temizler
-  for (const id in dinleyenler) {
-    if (dinleyenler[id].kullaniciAdi === kullaniciAdi) return dinleyenler[id].sarkiId;
-  }
-  return null;
-}
-
-module.exports = { sonGorulme, dinleyenler, onlineSayisi, dinleyiciSayilari, neDinliyor };
+module.exports = { sonGorulme, bakanlar, onlineSayisi, bakanSayisi };
