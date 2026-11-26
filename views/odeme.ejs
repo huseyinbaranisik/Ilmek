@@ -1,0 +1,99 @@
+<%- include('partials/ust', { sayfaBaslik: 'Ödeme' }) %>
+<%
+  // Üyenin teslimat bilgileri kayıtlı mı? Kayıtlıysa formda tekrar sorulmaz.
+  const bilgilerTam = ben && ben.adSoyad && ben.telefon && ben.eposta && ben.adres;
+%>
+<div class="sayfa-ust">
+  <div>
+    <h1><i class="bi bi-credit-card"></i> Ödeme</h1>
+    <p class="soluk mb-0">Bu bir ders projesi: gerçek ödeme alınmaz, kart bilgileri kaydedilmez (sadece son 4 hane).</p>
+  </div>
+</div>
+
+<% if (hatalar.length > 0) { %>
+  <div class="bilgi hata d-block">
+    <b>Lütfen şunları düzeltin:</b>
+    <ul class="mb-0 mt-1"><% hatalar.forEach(h => { %><li><%= h %></li><% }) %></ul>
+  </div>
+<% } %>
+
+<!-- Sepet tarayıcıda. Form gönderilirken site.js sepeti JSON olarak gizli "sepet" alanına koyar. -->
+<form action="/odeme" method="post" id="odeme-formu" class="row g-4">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="sepet" id="sepet-alani">
+
+  <div class="col-lg-7 d-grid gap-4 align-content-start">
+    <!-- 1) Teslimat bilgileri -->
+    <div class="kutu">
+      <h2 class="fs-5 fw-semibold mb-3"><span class="adim-no">1</span> Teslimat bilgileri</h2>
+      <% if (bilgilerTam) { %>
+        <!-- Üye: bilgiler hesabından geliyor, tekrar yazmasına gerek yok -->
+        <div class="kayitli-adres">
+          <div class="fw-semibold"><%= ben.adSoyad %></div>
+          <div><%= ben.adres %></div>
+          <div class="soluk kucuk"><i class="bi bi-telephone"></i> <%= ben.telefon %> · <i class="bi bi-envelope"></i> <%= ben.eposta %></div>
+        </div>
+        <a href="/hesap/bilgilerim" class="kucuk turuncu">Adresimi değiştir</a>
+      <% } else { %>
+        <% if (ben) { %><p class="soluk kucuk">Bu bilgileri bir kere yazman yeterli, hesabına kaydedilecek ve bir dahaki alışverişte sorulmayacak.</p><% } %>
+        <% if (!ben) { %><p class="soluk kucuk">Misafir olarak alışveriş yapıyorsun. <a href="/auth/giris?url=/odeme" class="turuncu">Giriş yaparsan</a> adresin kayıtlı kalır.</p><% } %>
+        <div class="row g-2">
+          <div class="col-sm-6">
+            <label class="form-etiket" for="adSoyad">Ad soyad</label>
+            <input name="adSoyad" id="adSoyad" class="giris-kutu w-100" required value="<%= form.adSoyad || (ben && ben.adSoyad) || '' %>" autocomplete="name">
+          </div>
+          <div class="col-sm-6">
+            <label class="form-etiket" for="telefon">Telefon</label>
+            <input name="telefon" id="telefon" class="giris-kutu w-100" required placeholder="05xx xxx xx xx" value="<%= form.telefon || (ben && ben.telefon) || '' %>" autocomplete="tel">
+          </div>
+          <div class="col-12">
+            <label class="form-etiket" for="eposta">E-posta</label>
+            <input type="email" name="eposta" id="eposta" class="giris-kutu w-100" required value="<%= form.eposta || (ben && ben.eposta) || '' %>" autocomplete="email">
+          </div>
+          <div class="col-12">
+            <label class="form-etiket" for="adres">Teslimat adresi</label>
+            <textarea name="adres" id="adres" class="giris-kutu w-100" rows="3" required placeholder="Mahalle, sokak, no, ilçe / il"><%= form.adres || (ben && ben.adres) || '' %></textarea>
+          </div>
+        </div>
+      <% } %>
+      <label class="form-etiket mt-3" for="aliciNotu">Örgücüye not (isteğe bağlı)</label>
+      <input name="aliciNotu" id="aliciNotu" class="giris-kutu w-100" maxlength="500" placeholder="Beden, renk, hediye paketi..." value="<%= form.aliciNotu || '' %>">
+    </div>
+
+    <!-- 2) Kart bilgileri: her alışverişte girilir -->
+    <div class="kutu">
+      <h2 class="fs-5 fw-semibold mb-3"><span class="adim-no">2</span> Kart bilgileri</h2>
+      <div class="row g-2">
+        <div class="col-12">
+          <label class="form-etiket" for="kartSahibi">Kart üzerindeki isim</label>
+          <input name="kartSahibi" id="kartSahibi" class="giris-kutu w-100" required value="<%= form.kartSahibi || '' %>" autocomplete="cc-name">
+        </div>
+        <div class="col-12">
+          <label class="form-etiket" for="kartNo">Kart numarası</label>
+          <input name="kartNo" id="kartNo" class="giris-kutu w-100" required inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" autocomplete="cc-number">
+        </div>
+        <div class="col-6">
+          <label class="form-etiket" for="sonKullanma">Son kullanma (AA/YY)</label>
+          <input name="sonKullanma" id="sonKullanma" class="giris-kutu w-100" required maxlength="5" placeholder="08/28" value="<%= form.sonKullanma || '' %>" autocomplete="cc-exp">
+        </div>
+        <div class="col-6">
+          <label class="form-etiket" for="cvv">CVV</label>
+          <input name="cvv" id="cvv" class="giris-kutu w-100" required inputmode="numeric" maxlength="3" placeholder="123" autocomplete="cc-csc">
+        </div>
+      </div>
+      <p class="soluk kucuk mt-2 mb-0"><i class="bi bi-shield-lock"></i> Kart numarasının tamamı ve CVV hiçbir yere kaydedilmez.</p>
+    </div>
+  </div>
+
+  <!-- 3) Sipariş özeti: site.js sepetten doldurur -->
+  <div class="col-lg-5">
+    <div class="kutu sepet-ozet">
+      <h2 class="fs-5 fw-semibold mb-3"><span class="adim-no">3</span> Sipariş özeti</h2>
+      <div id="odeme-ozet" class="d-grid gap-2 mb-3"><span class="soluk">Yükleniyor...</span></div>
+      <hr>
+      <div class="d-flex justify-content-between mb-3 fs-5"><span>Toplam</span><b id="sepet-toplam" class="turuncu">0 ₺</b></div>
+      <button class="btn-turuncu buyuk w-100"><i class="bi bi-lock"></i> Ödemeyi tamamla</button>
+    </div>
+  </div>
+</form>
+<%- include('partials/alt') %>

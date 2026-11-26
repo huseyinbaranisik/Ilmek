@@ -1,6 +1,6 @@
 // ============================================================
 //  controller/hesap.js - Üyelerin işlemleri
-//  (ürün ekleme, sipariş, yorum, favori, mağaza takibi, mağaza ayarları)
+//  Ürünlerim, gelen siparişler, siparişlerim, yorum, favori, hesap bilgileri
 //  Bu fonksiyonlara sadece giriş yapmış kullanıcılar ulaşabilir (routes/hesap.js -> isAuth)
 // ============================================================
 const Urun = require("../models/urun");
@@ -11,20 +11,17 @@ const Yorum = require("../models/yorum");
 const { benzersizSlug } = require("../helpers/slugfield");
 const puanGuncelle = require("../helpers/puan");
 
-// İşlem bitince kullanıcıyı geldiği sayfaya geri gönderir
-function geriDon(req, res) {
-  res.redirect(req.get("Referer") || "/");
-}
-const benimId = req => req.session.kullanici.id;
-const mesaj = (req, tur, metin) => { req.session.mesaj = { tur, metin }; };
-
-// ================= SATICI: ÜRÜNLER =================
+// ================= ÜRÜNLERİM (satıcı) =================
 exports.urunlerim = async (req, res, next) => {
   try {
-    const urunler = await Urun.findAll({ where: { kullaniciId: benimId(req) }, include: Kategori, order: [["createdAt", "DESC"]] });
-    res.render("hesap/urunlerim", { urunler });
-  } catch (err) {
-    next(err);
+    const urunler = await Urun.findAll({
+      where: { kullaniciId: req.session.kullanici.id },
+      include: Kategori,
+      order: [["createdAt", "DESC"]],
+    });
+    res.render("hesap/urunlerim", { urunler: urunler });
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -34,12 +31,13 @@ exports.urunFormu = async (req, res, next) => {
     let urun = null;
     if (req.params.id) {
       urun = await Urun.findByPk(req.params.id);
-      if (!urun || urun.kullaniciId !== benimId(req)) return next(); // başkasının ürünü -> 404
+      // Başkasının ürünüyse 404
+      if (!urun || urun.kullaniciId != req.session.kullanici.id) return next();
     }
     const kategoriler = await Kategori.findAll({ order: [["ad", "ASC"]] });
-    res.render("hesap/urun-formu", { urun, kategoriler, IPLIKLER: Urun.IPLIKLER });
-  } catch (err) {
-    next(err);
+    res.render("hesap/urun-formu", { urun: urun, kategoriler: kategoriler, IPLIKLER: Urun.IPLIKLER });
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -47,149 +45,143 @@ exports.urunFormu = async (req, res, next) => {
 // Çünkü csurf, multer formu okumadan önce çalışır ve req.body henüz boştur.
 exports.urunKaydet = async (req, res, next) => {
   try {
-    const { baslik, aciklama, kategoriId } = req.body;
-    const fiyat = parseInt(req.body.fiyat), stok = parseInt(req.body.stok);
-    const hazirlikGunu = parseInt(req.body.hazirlikGunu) || 3;
-    const iplik = Urun.IPLIKLER.includes(req.body.iplik) ? req.body.iplik : "Yün"; // sadece listedeki iplikler
+    const baslik = (req.body.baslik || "").trim();
+    const aciklama = req.body.aciklama || "";
+    const kategoriId = req.body.kategoriId;
+    const fiyat = parseInt(req.body.fiyat);
+    const stok = parseInt(req.body.stok);
+
+    // İplik sadece listedekilerden biri olabilir
+    let iplik = req.body.iplik;
+    if (!Urun.IPLIKLER.includes(iplik)) iplik = "Yün";
+
+    // Hazırlanma süresi 1-60 gün arası
+    let hazirlikGunu = parseInt(req.body.hazirlikGunu);
+    if (!(hazirlikGunu >= 1)) hazirlikGunu = 3;
+    if (hazirlikGunu > 60) hazirlikGunu = 60;
+
+    // Düzenleme mi?
     let urun = null;
     if (req.params.id) {
       urun = await Urun.findByPk(req.params.id);
-      if (!urun || urun.kullaniciId !== benimId(req)) return next();
+      if (!urun || urun.kullaniciId != req.session.kullanici.id) return next();
     }
-    const formAdresi = urun ? "/hesap/urun/" + urun.id + "/duzenle" : "/hesap/urun/yeni";
+    let formAdresi = "/hesap/urun/yeni";
+    if (urun) formAdresi = "/hesap/urun/" + urun.id + "/duzenle";
 
     // Kontroller
-    if (!baslik || !baslik.trim() || !(fiyat > 0) || !(stok >= 0) || !(await Kategori.findByPk(kategoriId))) {
-      mesaj(req, "hata", "Ürün adı, kategori, 0'dan büyük fiyat ve stok zorunlu.");
+    const kategori = await Kategori.findByPk(kategoriId);
+    if (baslik == "" || !(fiyat > 0) || !(stok >= 0) || !kategori) {
+      req.session.mesaj = { tur: "hata", metin: "Ürün adı, kategori, 0'dan büyük fiyat ve stok zorunlu." };
       return res.redirect(formAdresi);
     }
     if (!urun && !req.file) {
-      mesaj(req, "hata", "Yeni ürün için bir resim seçmelisiniz (jpg, png, webp, gif, en fazla 5 MB).");
+      req.session.mesaj = { tur: "hata", metin: "Yeni ürün için bir resim seçmelisiniz (jpg, png, webp, gif, en fazla 5 MB)." };
       return res.redirect(formAdresi);
     }
 
-    const veri = { baslik: baslik.trim().slice(0, 100), aciklama: (aciklama || "").slice(0, 3000), fiyat, stok, kategoriId,
-      iplik, hazirlikGunu: Math.min(Math.max(hazirlikGunu, 1), 60) };   // 1-60 gün arası
-    if (req.file) veri.resim = "/img/yuklenen/" + req.file.filename; // resim dosyası klasörde, veritabanında adresi
+    const veri = {
+      baslik: baslik.slice(0, 100),
+      aciklama: aciklama.slice(0, 3000),
+      fiyat: fiyat,
+      stok: stok,
+      kategoriId: kategoriId,
+      iplik: iplik,
+      hazirlikGunu: hazirlikGunu,
+    };
+    // Resim dosyası klasöre kaydedildi (multer), veritabanına sadece adresini yazıyoruz
+    if (req.file) veri.resim = "/img/yuklenen/" + req.file.filename;
 
     const admin = req.session.kullanici.admin;
     if (urun) {
       // Düzenlenen ürün admin değilse tekrar onaya düşer
-      await urun.update({ ...veri, onayli: admin ? urun.onayli : false });
-      mesaj(req, "basari", admin ? "Ürün güncellendi." : "Ürün güncellendi. Yönetici tekrar onaylayınca yayına girecek.");
+      if (!admin) veri.onayli = false;
+      await urun.update(veri);
+      req.session.mesaj = { tur: "basari", metin: "Ürün güncellendi." };
     } else {
-      urun = await Urun.create({ ...veri, slug: await benzersizSlug(Urun, baslik), onayli: admin, kullaniciId: benimId(req) });
-      mesaj(req, "basari", admin ? "Ürün yayınlandı." : "Ürün eklendi. Yönetici onaylayınca mağazanda görünecek.");
+      veri.slug = await benzersizSlug(Urun, baslik);
+      veri.onayli = admin;   // admin eklerse hemen yayında, üye eklerse onay bekler
+      veri.kullaniciId = req.session.kullanici.id;
+      await Urun.create(veri);
+      if (admin) {
+        req.session.mesaj = { tur: "basari", metin: "Ürün yayınlandı." };
+      } else {
+        req.session.mesaj = { tur: "basari", metin: "Ürün eklendi. Yönetici onaylayınca mağazanda görünecek." };
+      }
     }
     res.redirect("/hesap/urunlerim");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
 exports.urunSil = async (req, res, next) => {
   try {
     const urun = await Urun.findByPk(req.params.id);
-    if (urun && urun.kullaniciId === benimId(req)) {
+    if (urun && urun.kullaniciId == req.session.kullanici.id) {
       await urun.destroy();
-      mesaj(req, "basari", "Ürün silindi.");
+      req.session.mesaj = { tur: "basari", metin: "Ürün silindi." };
     }
     res.redirect("/hesap/urunlerim");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
-// ================= SİPARİŞ =================
-// Alıcı ürün sayfasındaki formdan sipariş talebi gönderir
-exports.siparisVer = async (req, res, next) => {
-  try {
-    const urun = await Urun.findOne({ where: { id: req.params.urunId, onayli: true } });
-    const adet = parseInt(req.body.adet);
-    const adres = (req.body.adres || "").trim();
-    if (!urun) return next();
-    const geri = "/urun/" + urun.slug;
-    if (urun.kullaniciId === benimId(req)) { mesaj(req, "hata", "Kendi ürününüze sipariş veremezsiniz."); return res.redirect(geri); }
-    if (!(adet >= 1 && adet <= urun.stok)) { mesaj(req, "hata", "Adet 1 ile " + urun.stok + " arasında olmalı."); return res.redirect(geri); }
-    if (adres.length < 10) { mesaj(req, "hata", "Lütfen teslimat adresini yazın."); return res.redirect(geri); }
-
-    await Siparis.create({
-      adet, adres: adres.slice(0, 500), toplam: adet * urun.fiyat, // fiyat sipariş anındaki fiyattır
-      aliciNotu: (req.body.aliciNotu || "").trim().slice(0, 500) || null,
-      urunId: urun.id, aliciId: benimId(req), saticiId: urun.kullaniciId,
-    });
-    mesaj(req, "basari", "Sipariş talebin satıcıya iletildi. Satıcı onaylayınca burada görebilirsin.");
-    res.redirect("/hesap/siparislerim");
-  } catch (err) {
-    next(err);
-  }
-};
-
+// ================= SİPARİŞLER =================
+// Alıcı olarak verdiğim siparişler
 exports.siparislerim = async (req, res, next) => {
   try {
     const siparisler = await Siparis.findAll({
-      where: { aliciId: benimId(req) },
+      where: { aliciId: req.session.kullanici.id },
       include: [Urun, { model: Kullanici, as: "satici" }],
       order: [["createdAt", "DESC"]],
     });
-    // Hangi ürünlere zaten yorum yazmış (teslim edilenlerde "Yorum yaz" düğmesi için)
-    const yorumlananlar = (await Yorum.findAll({ where: { kullaniciId: benimId(req) }, raw: true })).map(y => y.urunId);
-    res.render("hesap/siparislerim", { siparisler, yorumlananlar });
-  } catch (err) {
-    next(err);
+    // Hangi ürünlere zaten yorum yazmış ("Yorum yaz" / "Yorumunu düzenle" düğmesi için)
+    const yorumlar = await Yorum.findAll({ where: { kullaniciId: req.session.kullanici.id } });
+    const yorumlananlar = [];
+    for (const y of yorumlar) yorumlananlar.push(y.urunId);
+    res.render("hesap/siparislerim", { siparisler: siparisler, yorumlananlar: yorumlananlar });
+  } catch (hata) {
+    next(hata);
   }
 };
 
+// Satıcı olarak bana gelen siparişler
 exports.gelenSiparisler = async (req, res, next) => {
   try {
     const siparisler = await Siparis.findAll({
-      where: { saticiId: benimId(req) },
-      include: [Urun, { model: Kullanici, as: "alici" }],
+      where: { saticiId: req.session.kullanici.id },
+      include: Urun,
       order: [["createdAt", "DESC"]],
     });
-    res.render("hesap/gelen-siparisler", { siparisler, SONRAKI: Siparis.SONRAKI });
-  } catch (err) {
-    next(err);
+    res.render("hesap/gelen-siparisler", { siparisler: siparisler });
+  } catch (hata) {
+    next(hata);
   }
 };
 
-// Satıcı sipariş durumunu ilerletir. Sadece izin verilen geçişler yapılabilir (Siparis.SONRAKI)
+// Satıcı sipariş durumunu ilerletir: hazırlanıyor -> kargoda -> teslim
 exports.siparisDurum = async (req, res, next) => {
   try {
-    const siparis = await Siparis.findByPk(req.params.id, { include: Urun });
-    const yeni = req.body.durum;
-    if (!siparis || siparis.saticiId !== benimId(req)) return next();
-    if (!(Siparis.SONRAKI[siparis.durum] || []).includes(yeni)) {
-      mesaj(req, "hata", "Bu sipariş bu duruma geçirilemez.");
-      return res.redirect("/hesap/gelen-siparisler");
-    }
-    // Kabul edilince (hazırlanıyor) stoktan düşülür
-    if (yeni === "hazirlaniyor") {
-      if (siparis.urun.stok < siparis.adet) {
-        mesaj(req, "hata", "Stok yetersiz. Önce ürünün stoğunu güncelleyin.");
-        return res.redirect("/hesap/gelen-siparisler");
-      }
-      await siparis.urun.decrement("stok", { by: siparis.adet });
-    }
-    await siparis.update({ durum: yeni });
-    mesaj(req, "basari", "Sipariş durumu: " + Siparis.DURUMLAR[yeni].ad);
-    res.redirect("/hesap/gelen-siparisler");
-  } catch (err) {
-    next(err);
-  }
-};
-
-// Alıcı, satıcı onaylamadan önce siparişini iptal edebilir
-exports.siparisIptal = async (req, res, next) => {
-  try {
     const siparis = await Siparis.findByPk(req.params.id);
-    if (siparis && siparis.aliciId === benimId(req) && siparis.durum === "beklemede") {
-      await siparis.update({ durum: "iptal" });
-      mesaj(req, "basari", "Sipariş iptal edildi.");
+    if (!siparis || siparis.saticiId != req.session.kullanici.id) return next();
+
+    const yeniDurum = req.body.durum;
+    // Sadece sıradaki duruma geçilebilir
+    let dogruMu = false;
+    if (siparis.durum == "hazirlaniyor" && yeniDurum == "kargoda") dogruMu = true;
+    if (siparis.durum == "kargoda" && yeniDurum == "teslim") dogruMu = true;
+
+    if (!dogruMu) {
+      req.session.mesaj = { tur: "hata", metin: "Bu sipariş bu duruma geçirilemez." };
+    } else {
+      await siparis.update({ durum: yeniDurum });
+      req.session.mesaj = { tur: "basari", metin: "Sipariş durumu: " + Siparis.DURUMLAR[yeniDurum].ad };
     }
-    res.redirect("/hesap/siparislerim");
-  } catch (err) {
-    next(err);
+    res.redirect("/hesap/gelen-siparisler");
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -198,108 +190,112 @@ exports.siparisIptal = async (req, res, next) => {
 exports.yorumKaydet = async (req, res, next) => {
   try {
     const urun = await Urun.findByPk(req.params.urunId);
-    const puan = Number(req.body.puan);
     if (!urun) return next();
-    const teslimAldi = await Siparis.findOne({ where: { urunId: urun.id, aliciId: benimId(req), durum: "teslim" } });
+    const benimId = req.session.kullanici.id;
+
+    const teslimAldi = await Siparis.findOne({ where: { urunId: urun.id, aliciId: benimId, durum: "teslim" } });
     if (!teslimAldi) {
-      mesaj(req, "hata", "Sadece teslim aldığınız ürünlere yorum yazabilirsiniz.");
+      req.session.mesaj = { tur: "hata", metin: "Sadece teslim aldığınız ürünlere yorum yazabilirsiniz." };
       return res.redirect("/urun/" + urun.slug);
     }
+    const puan = parseInt(req.body.puan);
     if (!(puan >= 1 && puan <= 5)) {
-      mesaj(req, "hata", "Lütfen 1 ile 5 arasında bir puan seçin.");
+      req.session.mesaj = { tur: "hata", metin: "Lütfen 1 ile 5 arasında bir puan seçin." };
       return res.redirect("/urun/" + urun.slug);
     }
-    const metin = (req.body.metin || "").trim().slice(0, 2000) || null;
-    const eski = await Yorum.findOne({ where: { urunId: urun.id, kullaniciId: benimId(req) } });
-    if (eski) await eski.update({ puan, metin });
-    else await Yorum.create({ puan, metin, urunId: urun.id, kullaniciId: benimId(req) });
+    const metin = (req.body.metin || "").trim().slice(0, 2000);
+
+    const eskiYorum = await Yorum.findOne({ where: { urunId: urun.id, kullaniciId: benimId } });
+    if (eskiYorum) {
+      await eskiYorum.update({ puan: puan, metin: metin });
+    } else {
+      await Yorum.create({ puan: puan, metin: metin, urunId: urun.id, kullaniciId: benimId });
+    }
     await puanGuncelle(urun.id); // ortalama puanı yeniden hesapla
-    mesaj(req, "basari", "Yorumun kaydedildi, teşekkürler!");
+    req.session.mesaj = { tur: "basari", metin: "Yorumun kaydedildi, teşekkürler!" };
     res.redirect("/urun/" + urun.slug + "#yorumlar");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
 // Yorumu sadece yazan kişi ya da admin silebilir
 exports.yorumSil = async (req, res, next) => {
   try {
-    const yorum = await Yorum.findByPk(req.params.id);
-    if (yorum && (yorum.kullaniciId === benimId(req) || req.session.kullanici.admin)) {
+    const yorum = await Yorum.findByPk(req.params.id, { include: Urun });
+    const ben = req.session.kullanici;
+    if (yorum && (yorum.kullaniciId == ben.id || ben.admin)) {
       await yorum.destroy();
       await puanGuncelle(yorum.urunId);
-      mesaj(req, "basari", "Yorum silindi.");
+      req.session.mesaj = { tur: "basari", metin: "Yorum silindi." };
+      return res.redirect("/urun/" + yorum.urun.slug);
     }
-    geriDon(req, res);
-  } catch (err) {
-    next(err);
+    res.redirect("/");
+  } catch (hata) {
+    next(hata);
   }
 };
 
-// ================= FAVORİ VE TAKİP =================
+// ================= FAVORİ =================
 // Kalp düğmesi fetch ile buraya POST atar (public/js/site.js), cevap JSON'dur.
 exports.favori = async (req, res, next) => {
   try {
     const urun = await Urun.findOne({ where: { id: req.params.urunId, onayli: true } });
     if (!urun) return res.status(404).json({ hata: "Ürün bulunamadı" });
-    const ben = await Kullanici.findByPk(benimId(req));
+    const ben = await Kullanici.findByPk(req.session.kullanici.id);
     const favorideMi = await ben.hasFavori(urun);   // ara tabloda (favori) satır var mı?
-    if (favorideMi) await ben.removeFavori(urun);   // varsa sil
-    else await ben.addFavori(urun);                 // yoksa ekle
+    if (favorideMi) {
+      await ben.removeFavori(urun);   // varsa sil
+    } else {
+      await ben.addFavori(urun);      // yoksa ekle
+    }
     res.json({ favori: !favorideMi });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
 exports.favorilerim = async (req, res, next) => {
   try {
-    const ben = await Kullanici.findByPk(benimId(req));
-    const urunler = await ben.getFavoriler({ where: { onayli: true }, include: [Kullanici] }); // get... içinde include dizi olmalı
-    res.render("hesap/favorilerim", { urunler });
-  } catch (err) {
-    next(err);
+    const ben = await Kullanici.findByPk(req.session.kullanici.id);
+    const urunler = await ben.getFavoriler({ where: { onayli: true }, include: [Kullanici] });
+    res.render("hesap/favorilerim", { urunler: urunler });
+  } catch (hata) {
+    next(hata);
   }
 };
 
-exports.takip = async (req, res, next) => {
+// ================= HESAP BİLGİLERİM =================
+// Teslimat bilgileri (alışverişte tekrar sorulmaz) ve mağaza bilgileri
+exports.bilgilerim = async (req, res, next) => {
   try {
-    const satici = await Kullanici.findOne({ where: { kullaniciAdi: req.params.kullaniciAdi } });
-    const ben = await Kullanici.findByPk(benimId(req));
-    if (satici && satici.id !== ben.id) {   // kendini takip edemezsin
-      if (await ben.hasTakipEdilen(satici)) {
-        await ben.removeTakipEdilen(satici);
-        mesaj(req, "basari", "Mağaza takipten çıkarıldı.");
-      } else {
-        await ben.addTakipEdilen(satici);
-        mesaj(req, "basari", "Mağaza takip ediliyor. Yeni ürünleri ana sayfanda göreceksin.");
-      }
+    const ben = await Kullanici.findByPk(req.session.kullanici.id);
+    res.render("hesap/bilgilerim", { ben: ben });
+  } catch (hata) {
+    next(hata);
+  }
+};
+
+exports.bilgilerimKaydet = async (req, res, next) => {
+  try {
+    const ben = await Kullanici.findByPk(req.session.kullanici.id);
+    const telefon = (req.body.telefon || "").replace(/\s/g, "");
+    if (telefon != "" && !/^0?5\d{9}$/.test(telefon)) {
+      req.session.mesaj = { tur: "hata", metin: "Telefon numarası 05xx xxx xx xx şeklinde olmalı." };
+      return res.redirect("/hesap/bilgilerim");
     }
-    geriDon(req, res);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// ================= MAĞAZA AYARLARI =================
-exports.magazaAyarlari = async (req, res, next) => {
-  try {
-    res.render("hesap/magaza", { ben: await Kullanici.findByPk(benimId(req)) });
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.magazaKaydet = async (req, res, next) => {
-  try {
-    const temiz = (deger, uzunluk) => (deger || "").trim().slice(0, uzunluk) || null;
-    await Kullanici.update(
-      { magazaAdi: temiz(req.body.magazaAdi, 60), sehir: temiz(req.body.sehir, 40), hakkinda: temiz(req.body.hakkinda, 1000) },
-      { where: { id: benimId(req) } }
-    );
-    mesaj(req, "basari", "Mağaza bilgilerin kaydedildi.");
-    res.redirect("/magaza/" + req.session.kullanici.ad);
-  } catch (err) {
-    next(err);
+    await ben.update({
+      adSoyad: (req.body.adSoyad || "").trim().slice(0, 80),
+      telefon: telefon,
+      eposta: (req.body.eposta || "").trim().slice(0, 100),
+      adres: (req.body.adres || "").trim().slice(0, 500),
+      magazaAdi: (req.body.magazaAdi || "").trim().slice(0, 60),
+      sehir: (req.body.sehir || "").trim().slice(0, 40),
+      hakkinda: (req.body.hakkinda || "").trim().slice(0, 1000),
+    });
+    req.session.mesaj = { tur: "basari", metin: "Bilgilerin kaydedildi." };
+    res.redirect("/hesap/bilgilerim");
+  } catch (hata) {
+    next(hata);
   }
 };

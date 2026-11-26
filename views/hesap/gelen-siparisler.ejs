@@ -1,18 +1,14 @@
 <%- include('../partials/ust', { sayfaBaslik: 'Gelen siparişler' }) %>
-<%
-  // Satıcının bir sonraki adım için göreceği düğme yazıları
-  const DUGME = { hazirlaniyor: 'Onayla, hazırlamaya başla', kargoda: 'Kargoya verdim', teslim: 'Teslim edildi', reddedildi: 'Reddet' };
-%>
 <div class="sayfa-ust">
   <div>
     <h1>Gelen siparişler</h1>
-    <p class="soluk mb-0">Mağazana gelen talepler. Onayladığında ürünün stoğundan düşülür.</p>
+    <p class="soluk mb-0">Ödemesi yapılmış siparişler. Örüp kargoya verince durumu güncelle.</p>
   </div>
 </div>
 
 <div class="d-grid gap-3">
   <% siparisler.forEach(s => { %>
-    <div class="siparis-kart <%= s.durum === 'beklemede' ? 'yeni' : '' %>">
+    <div class="siparis-kart <%= s.durum == 'hazirlaniyor' ? 'yeni' : '' %>">
       <a href="/urun/<%= s.urun.slug %>"><img src="<%= s.urun.resim %>" alt="" class="mini-resim buyuk"></a>
       <div class="flex-grow-1 min-w-0">
         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -20,25 +16,31 @@
           <%- include('../partials/durum', { d: s.durum }) %>
         </div>
         <div class="soluk kucuk">
-          <i class="bi bi-person"></i> <%= s.alici.kullaniciAdi %> · <%= s.adet %> adet · <b><%= tl(s.toplam) %></b> · <%= tarihYaz(s.createdAt) %>
+          <%= s.siparisNo %> · <%= s.adet %> adet · <b><%= tl(s.toplam) %></b> · <%= tarihYaz(s.createdAt) %>
+          · <%= s.aliciId ? 'üye' : 'misafir' %>
         </div>
-        <div class="kucuk mt-1"><i class="bi bi-geo-alt"></i> <%= s.adres %></div>
+        <!-- Kargo için alıcı bilgileri -->
+        <div class="kucuk mt-1"><i class="bi bi-person"></i> <%= s.adSoyad %> · <i class="bi bi-telephone"></i> <%= s.telefon %></div>
+        <div class="kucuk"><i class="bi bi-geo-alt"></i> <%= s.adres %></div>
         <% if (s.aliciNotu) { %><div class="kucuk mt-1 not-kutusu"><i class="bi bi-chat-left-text"></i> <%= s.aliciNotu %></div><% } %>
       </div>
-      <!-- Bu durumdan geçilebilecek durumlar için birer düğme (models/siparis.js -> SONRAKI) -->
-      <div class="d-flex flex-column gap-2 align-items-stretch">
-        <% (SONRAKI[s.durum] || []).forEach(yeni => { %>
-          <form action="/hesap/siparis/<%= s.id %>/durum" method="post" <%- yeni === 'reddedildi' ? 'onsubmit="return confirm(\'Sipariş reddedilsin mi?\')"' : '' %>>
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <input type="hidden" name="durum" value="<%= yeni %>">
-            <button class="<%= yeni === 'reddedildi' ? 'btn-sil w-100' : 'btn-turuncu w-100' %>"><%= DUGME[yeni] %></button>
-          </form>
-        <% }) %>
-      </div>
+      <!-- Sıradaki adım için tek düğme -->
+      <% if (s.durum == 'hazirlaniyor' || s.durum == 'kargoda') { %>
+        <form action="/hesap/siparis/<%= s.id %>/durum" method="post">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% if (s.durum == 'hazirlaniyor') { %>
+            <input type="hidden" name="durum" value="kargoda">
+            <button class="btn-turuncu"><i class="bi bi-truck"></i> Kargoya verdim</button>
+          <% } else { %>
+            <input type="hidden" name="durum" value="teslim">
+            <button class="btn-turuncu"><i class="bi bi-check2-circle"></i> Teslim edildi</button>
+          <% } %>
+        </form>
+      <% } %>
     </div>
   <% }) %>
 </div>
-<% if (siparisler.length === 0) { %>
+<% if (siparisler.length == 0) { %>
   <div class="bos-durum"><i class="bi bi-inbox"></i><p>Henüz sipariş gelmedi.</p></div>
 <% } %>
 <%- include('../partials/alt') %>

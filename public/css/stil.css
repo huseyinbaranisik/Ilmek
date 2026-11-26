@@ -236,6 +236,19 @@ details summary { cursor: pointer; font-weight: 600; }
   box-shadow: 0 0 0 0 var(--yesil); animation: nabiz 2s infinite; }
 @keyframes nabiz { 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 .urun-aciklama { white-space: pre-line; font-size: 16px; line-height: 1.6; }
+/* Sepet ve ödeme */
+.sepet-ozet { position: sticky; top: 140px; }
+.adet-kontrol { display: inline-flex; align-items: center; border: 1.5px solid var(--cizgi); border-radius: 999px; overflow: hidden; }
+.adet-kontrol button { border: 0; background: transparent; width: 32px; height: 32px; font-size: 18px; color: var(--yazi); }
+.adet-kontrol button:hover { background: var(--zemin); }
+.adet-kontrol span { min-width: 26px; text-align: center; font-weight: 600; }
+.satir-tutar { min-width: 80px; text-align: right; }
+.adim-no { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--turuncu); color: #fff; font-size: 14px; margin-right: 6px; }
+.kayitli-adres { background: var(--zemin); border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; border-left: 3px solid var(--yesil); }
+.tesekkur { text-align: center; background: var(--kraft); border-radius: 22px; padding: 36px 20px; margin-bottom: 28px; outline: 2px dashed rgba(255, 255, 255, .8); outline-offset: -12px; }
+.tesekkur i { font-size: 54px; color: var(--yesil); }
+.tesekkur h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 600; margin: 8px 0; }
+
 /* Örgü bilgileri: iplik, hazırlanma süresi */
 .orgu-bilgi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 16px; }
 .orgu-bilgi > * { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--kraft); font-weight: 600; font-size: 14px; }

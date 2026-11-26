@@ -14,24 +14,15 @@
     <div class="magaza-sayilar">
       <span><b><%= urunler.filter(u => u.onayli).length %></b> ürün</span>
       <span><b><%= satisSayisi %></b> satış</span>
-      <span><b><%= takipciSayisi %></b> takipçi</span>
       <% if (yorumlar.length) { %><span><span class="yildiz">★</span> <b><%= ortalama.toFixed(1) %></b> (<%= yorumlar.length %> yorum)</span><% } %>
     </div>
   </div>
-  <div class="d-flex flex-column gap-2">
-    <% if (kendisiMi) { %>
-      <a href="/hesap/magaza" class="btn-cizgi"><i class="bi bi-gear"></i> Mağaza ayarları</a>
+  <% if (kendisiMi) { %>
+    <div class="d-flex flex-column gap-2">
+      <a href="/hesap/bilgilerim" class="btn-cizgi"><i class="bi bi-gear"></i> Mağaza bilgileri</a>
       <a href="/hesap/urun/yeni" class="btn-turuncu"><i class="bi bi-plus-lg"></i> Ürün ekle</a>
-    <% } else if (kullanici) { %>
-      <!-- Takip et / takibi bırak -->
-      <form action="/hesap/takip/<%= satici.kullaniciAdi %>" method="post">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button class="<%= takipEdiyorum ? 'btn-cizgi' : 'btn-turuncu' %>"><i class="bi <%= takipEdiyorum ? 'bi-check2' : 'bi-plus-lg' %>"></i> <%= takipEdiyorum ? 'Takip ediliyor' : 'Takip et' %></button>
-      </form>
-    <% } else { %>
-      <a href="/auth/giris?url=/magaza/<%= satici.kullaniciAdi %>" class="btn-turuncu"><i class="bi bi-plus-lg"></i> Takip et</a>
-    <% } %>
-  </div>
+    </div>
+  <% } %>
 </section>
 
 <h2 class="bolum-baslik">Ürünler</h2>

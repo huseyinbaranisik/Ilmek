@@ -1,7 +1,6 @@
 <%- include('partials/ust', { sayfaBaslik: urun.baslik }) %>
 <% const satici = urun.kullanici; const kendiUrunum = kullanici && kullanici.id === urun.kullaniciId; %>
 
-<!-- data-urun: site.js nabızla "bu ürüne bakıyorum" bilgisini gönderir -->
 <div data-urun="<%= urun.id %>">
   <nav class="yol-izi kucuk">
     <a href="/">Ana sayfa</a> <i class="bi bi-chevron-right"></i>
@@ -29,8 +28,7 @@
         <span class="kucuk soluk"><i class="bi bi-heart"></i> <%= favoriSayisi %> kişi favoriledi</span>
         <span class="kucuk soluk"><i class="bi bi-eye"></i> <%= urun.goruntulenme %> görüntülenme</span>
       </div>
-      <div class="buyuk-fiyat"><%= tl(urun.fiyat) %></div>
-      <p class="canli-not kucuk"><span class="nokta"></span> Şu an <b id="bakan-sayi"><%= bakan %></b> kişi bu ürüne bakıyor</p>
+      <div class="buyuk-fiyat mb-3"><%= tl(urun.fiyat) %></div>
 
       <!-- Örgüye özel bilgiler -->
       <div class="orgu-bilgi">
@@ -41,33 +39,27 @@
 
       <% if (urun.aciklama) { %><p class="urun-aciklama"><%= urun.aciklama %></p><% } %>
 
-      <!-- Sipariş -->
+      <!-- Sepete ekle: misafir de ekleyebilir. Sepet tarayıcıda tutulur (public/js/site.js) -->
       <div class="siparis-kutu">
         <% if (kendiUrunum) { %>
           <p class="mb-2">Bu senin ürünün. Stok: <b><%= urun.stok %></b></p>
           <a href="/hesap/urun/<%= urun.id %>/duzenle" class="btn-cizgi"><i class="bi bi-pencil"></i> Düzenle</a>
-        <% } else if (urun.stok === 0) { %>
-          <p class="mb-0 fw-semibold"><i class="bi bi-x-circle"></i> Şu an tükendi. Mağazayı takip et, yenisi gelince haber al.</p>
-        <% } else if (!kullanici) { %>
-          <p class="mb-2">Sipariş vermek için giriş yapmalısın.</p>
-          <a href="/auth/giris?url=/urun/<%= urun.slug %>" class="btn-turuncu">Giriş yap ve sipariş ver</a>
+        <% } else if (urun.stok == 0) { %>
+          <p class="mb-0 fw-semibold"><i class="bi bi-x-circle"></i> Şu an tükendi.</p>
         <% } else { %>
-          <form action="/hesap/siparis/<%= urun.id %>" method="post" class="d-grid gap-2">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <div class="d-flex align-items-center gap-2">
-              <label for="adet" class="kucuk fw-semibold">Adet</label>
-              <input type="number" name="adet" id="adet" class="giris-kutu adet-kutu" value="1" min="1" max="<%= urun.stok %>" data-fiyat="<%= urun.fiyat %>" required>
-              <span class="soluk kucuk">(stokta <%= urun.stok %>)</span>
-              <span class="ms-auto">Toplam: <b id="toplam"><%= tl(urun.fiyat) %></b></span>
-            </div>
-            <textarea name="adres" class="giris-kutu" rows="2" placeholder="Teslimat adresi" required minlength="10" maxlength="500"></textarea>
-            <textarea name="aliciNotu" class="giris-kutu" rows="2" placeholder="Satıcıya not (renk, isim yazısı, hediye paketi...) - isteğe bağlı" maxlength="500"></textarea>
-            <div class="d-flex gap-2">
-              <button class="btn-turuncu buyuk flex-grow-1"><i class="bi bi-bag-check"></i> Sipariş talebi gönder</button>
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <label for="adet" class="kucuk fw-semibold">Adet</label>
+            <input type="number" id="adet" class="giris-kutu adet-kutu" value="1" min="1" max="<%= urun.stok %>" data-fiyat="<%= urun.fiyat %>">
+            <span class="soluk kucuk">(stokta <%= urun.stok %>)</span>
+            <span class="ms-auto">Toplam: <b id="toplam"><%= tl(urun.fiyat) %></b></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn-turuncu buyuk flex-grow-1" data-sepete-ekle="<%= urun.id %>" data-stok="<%= urun.stok %>"><i class="bi bi-bag-plus"></i> Sepete ekle</button>
+            <% if (kullanici) { %>
               <button type="button" class="kalp buyuk-kalp" data-favori="<%= urun.id %>" aria-label="Favorilere ekle"><i class="bi bi-heart"></i></button>
-            </div>
-            <p class="soluk kucuk mb-0"><i class="bi bi-info-circle"></i> Online ödeme yok. Satıcı talebini onaylayınca ödeme ve kargoyu birlikte ayarlarsınız.</p>
-          </form>
+            <% } %>
+          </div>
+          <p class="soluk kucuk mb-0 mt-2"><i class="bi bi-hourglass-split"></i> Ödemeden sonra <%= urun.hazirlikGunu %> gün içinde örülüp kargoya verilir. Üye olmadan da alışveriş yapabilirsin.</p>
         <% } %>
       </div>
 

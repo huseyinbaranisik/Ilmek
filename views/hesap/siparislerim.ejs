@@ -2,10 +2,11 @@
 <div class="sayfa-ust">
   <div>
     <h1>Siparişlerim</h1>
-    <p class="soluk mb-0">Gönderdiğin sipariş talepleri ve durumları.</p>
+    <p class="soluk mb-0">Satın aldığın örgüler ve kargo durumları.</p>
   </div>
 </div>
 
+<% const adimlar = ['hazirlaniyor', 'kargoda', 'teslim']; %>
 <div class="d-grid gap-3">
   <% siparisler.forEach(s => { %>
     <div class="siparis-kart">
@@ -18,30 +19,20 @@
         <div class="soluk kucuk">
           <a href="/magaza/<%= s.satici.kullaniciAdi %>"><%= s.satici.magazaAdi || s.satici.kullaniciAdi %></a>
           · <%= s.adet %> adet · <b><%= tl(s.toplam) %></b> · <%= tarihYaz(s.createdAt) %>
+          · <a href="/siparis/<%= s.siparisNo %>"><%= s.siparisNo %></a>
         </div>
         <!-- Sipariş adımları: hangi aşamada olduğunu gösteren çizgi -->
-        <% if (!['reddedildi', 'iptal'].includes(s.durum)) { const adimlar = ['beklemede', 'hazirlaniyor', 'kargoda', 'teslim'], simdi = adimlar.indexOf(s.durum); %>
-          <ol class="adimlar">
-            <% adimlar.forEach((a, i) => { %><li class="<%= i <= simdi ? 'tamam' : '' %>"><%= DURUMLAR[a].ad %></li><% }) %>
-          </ol>
-        <% } %>
-        <% if (s.aliciNotu) { %><div class="kucuk mt-1"><i class="bi bi-chat-left-text"></i> <%= s.aliciNotu %></div><% } %>
+        <ol class="adimlar">
+          <% adimlar.forEach((a, i) => { %><li class="<%= i <= adimlar.indexOf(s.durum) ? 'tamam' : '' %>"><%= DURUMLAR[a].ad %></li><% }) %>
+        </ol>
       </div>
-      <div class="d-flex flex-column gap-2 align-items-end">
-        <% if (s.durum === 'beklemede') { %>
-          <form action="/hesap/siparis/<%= s.id %>/iptal" method="post" onsubmit="return confirm('Sipariş iptal edilsin mi?')">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button class="btn-sil">İptal et</button>
-          </form>
-        <% } %>
-        <% if (s.durum === 'teslim') { %>
-          <a href="/urun/<%= s.urun.slug %>#yorumlar" class="btn-cizgi kucuk-btn"><i class="bi bi-star"></i> <%= yorumlananlar.includes(s.urunId) ? 'Yorumunu düzenle' : 'Yorum yaz' %></a>
-        <% } %>
-      </div>
+      <% if (s.durum == 'teslim') { %>
+        <a href="/urun/<%= s.urun.slug %>#yorumlar" class="btn-cizgi kucuk-btn"><i class="bi bi-star"></i> <%= yorumlananlar.includes(s.urunId) ? 'Yorumunu düzenle' : 'Yorum yaz' %></a>
+      <% } %>
     </div>
   <% }) %>
 </div>
-<% if (siparisler.length === 0) { %>
-  <div class="bos-durum"><i class="bi bi-box-seam"></i><p>Henüz sipariş vermedin.</p><a href="/urunler" class="btn-turuncu">Ürünlere göz at</a></div>
+<% if (siparisler.length == 0) { %>
+  <div class="bos-durum"><i class="bi bi-box-seam"></i><p>Henüz sipariş vermedin.</p><a href="/urunler" class="btn-turuncu">Örgülere göz at</a></div>
 <% } %>
 <%- include('../partials/alt') %>

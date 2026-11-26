@@ -2,7 +2,7 @@
 
 MYAZ470 İnternet ve Web Programlama dönem projesi.
 
-**İlmek**, el örgüsü ürünlerin pazar yeri. Şişle ve tığla ören üyeler kendi mağazalarını açıp kazak, hırka, bere, atkı, bebek patiği, amigurumi gibi örgülerini ekler. Her ürünün **iplik türü** (yün, merinos, alpaka, pamuk...) ve **hazırlanma süresi** (kaç günde örüleceği) vardır. Diğer üyeler ürünleri favorilerine ekler, örgücüleri takip eder ve sipariş talebi gönderir. Örgücü talebi onaylayıp durumu "hazırlanıyor → kargoda → teslim edildi" diye ilerletir. Ürünü teslim alan alıcı yorum ve puan yazabilir. Gerçek ödeme yoktur.
+**İlmek**, el örgüsü ürünlerin pazar yeri. Şişle ve tığla ören üyeler kendi mağazalarını açıp kazak, hırka, bere, atkı, bebek patiği, amigurumi gibi örgülerini ekler. Her ürünün **iplik türü** (yün, merinos, alpaka, pamuk...) ve **hazırlanma süresi** (kaç günde örüleceği) vardır. Ziyaretçiler **üye olmadan da** ürünleri sepete ekleyip ödeme yapabilir. Sepet tarayıcıda (localStorage) tutulur. Misafir ödemede adresini ve kart bilgilerini yazar; üyenin adresi ve telefonu hesabında kayıtlı olduğu için sadece kart bilgisini girer. Örgücü siparişi "hazırlanıyor → kargoda → teslim edildi" diye ilerletir. Ürünü teslim alan üye yorum ve puan yazabilir. Ödeme sahtedir (ders projesi): kart bilgileri kontrol edilir ama para çekilmez, kartın sadece son 4 hanesi kaydedilir.
 
 ## Kurulum ve çalıştırma
 
@@ -22,7 +22,9 @@ Tarayıcıda: http://localhost:3000
 | Örgücü (bebek örgüleri, battaniye) | `zeynep` | `123456` |
 | Örgücü (amigurumi, tığ işi çiçek) | `mehmet` | `123456` |
 | Örgücü (çorap, eldiven, şal, çanta) | `elif` | `123456` |
-| Alıcı | `can` | `123456` |
+| Alıcı (adresi kayıtlı) | `can` | `123456` |
+
+Ödeme sayfasında deneme için herhangi bir 16 haneli numara yazabilirsiniz, örneğin `4242 4242 4242 4242`, son kullanma `12/30`, CVV `123`.
 
 İlk çalıştırmada `ilmek.db` veritabanı dosyası otomatik oluşur ve örnek veriler eklenir. Sıfırlamak için sunucuyu durdurup `ilmek.db` dosyasını silmeniz ve tekrar başlatmanız yeterli.
 
@@ -30,8 +32,8 @@ Tarayıcıda: http://localhost:3000
 
 | Kim | Ne yapabilir |
 |---|---|
-| **Misafir** (giriş yapmamış) | Örgülere, kategorilere, örgücülere, yorumlara, galeriye ve duyurulara bakar. Arar, sıralar, fiyata ve iplik türüne göre süzer. S.S.S.'e soru gönderir. |
-| **Üye** | Hem alıcı hem örgücü. Sipariş talebi gönderir ve iptal eder, favoriler, örgücü takip eder, teslim aldığı ürüne yorum yazar. Kendi mağazasına ürün ekler (admin onayından sonra yayınlanır), gelen siparişleri onaylar ve durumunu ilerletir. |
+| **Misafir** (giriş yapmamış) | Örgülere, kategorilere, örgücülere, yorumlara, galeriye ve duyurulara bakar. Arar, sıralar, fiyata ve iplik türüne göre süzer. **Sepete ekler ve satın alır** (adres + kart bilgilerini her seferinde yazar), siparişini "Sipariş sorgula" sayfasından görür. S.S.S.'e soru gönderir. |
+| **Üye** | Hem alıcı hem örgücü. Satın alır (adresi ve telefonu kayıtlı, sadece kart bilgisi girer), favoriler, teslim aldığı ürüne yorum yazar. Kendi mağazasına ürün ekler (admin onayından sonra yayınlanır), gelen siparişleri kargoya verir. |
 | **Admin** | Ürünleri onaylar ya da reddeder. Kategorileri, duyuruları, galeriyi, S.S.S.'i yönetir. Bütün siparişleri, kullanıcıları ve istatistikleri görür. |
 
 ## Kategoriler
@@ -62,13 +64,13 @@ index.js              Uygulamanın girişi: middleware'ler, route'lar, ilişkile
 data/db.js            Sequelize bağlantısı
 models/               Tablolar: rol, kullanici, kategori, urun, siparis, yorum, duyuru, soru, galeri, sayac
 models/dummy-data.js  Örnek veriler (veritabanı boşsa eklenir)
-routes/               user.js (herkes), auth.js (giriş/kayıt), hesap.js (üyeler), admin.js
+routes/               user.js (herkes), sepet.js (sepet, ödeme, sipariş sorgulama), auth.js (giriş/kayıt), hesap.js (üyeler), admin.js
 controller/           Her route'un yaptığı iş
 middleware/           config_Session, isAuth, isAdmin, csrf, locals (sayaçlar, ortak değişkenler)
 helpers/              slugfield (slugify), yukle (multer), canli (online sayısı), puan (ortalama puan)
 views/                EJS sayfaları (partials/ ortak parçalar, admin/, hesap/)
 public/css/stil.css   Sıcak el işi teması
-public/js/site.js     Favori kalbi, nabız (online sayısı), adet x fiyat, resim önizleme
+public/js/site.js     Sepet (localStorage), favori kalbi, nabız (online sayısı), adet x fiyat, resim önizleme
 public/img            Bütün resimler: urunler/ (ürün ve galeri fotoğrafları), yuklenen/ (yüklenen resimler), logo.svg
 test/test.mjs         Uçtan uca test (npm test)
 ```
@@ -79,7 +81,7 @@ Resimler veritabanına konmaz. Dosyanın kendisi `public/img/` klasöründe duru
 
 ## Test
 
-`test/test.mjs` misafir, alıcı, örgücü ve admin akışlarını uçtan uca dener: CSRF, XSS, slug, sıralama, fiyat ve iplik filtresi, arama, ürün ekleme ve onay, sipariş durumları ve stok, "sadece teslim alan yorum yazabilir" kuralı, favori, takip, kategori yönetimi (46 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
+`test/test.mjs` misafir, alıcı, örgücü ve admin akışlarını uçtan uca dener: CSRF, XSS, slug, sıralama, fiyat ve iplik filtresi, arama, ürün ekleme ve onay, sepet ve ödeme (misafir ve üye, kart kontrolleri, fiyatın sunucudan alınması, sipariş sorgulama), stok, sipariş durumları, "sadece teslim alan yorum yazabilir" kuralı, favori, kategori yönetimi (57 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
 
 ```bash
 # ilmek.db dosyasını silin, sonra:
@@ -93,7 +95,7 @@ npm test       # başka bir terminalde
 |---|---|
 | Site Map | `/site-haritasi` (ziyaretçiler için) ve `/sitemap.xml` (arama motorları için) |
 | Ziyaretçi sayacı | Sayfanın altında (footer) ve admin panelinde. Her yeni oturum bir kez sayılır. |
-| Online kullanıcı sayısı | Sayfanın altında. Ayrıca ürün sayfasında "şu an kaç kişi bu ürüne bakıyor". |
+| Online kullanıcı sayısı | Sayfanın altında (footer) ve admin panelinde. |
 | Duyuru-Haber modülü | `/duyurular`, ana sayfadaki duyuru şeridi, admin panelinden ekleme ve silme |
 | Resim galerisi | `/galeri` (atölyelerden kareler, polaroid görünüm), tıklayınca büyür. Admin panelinden resim yüklenir. |
 | Admin paneli ve yetkilendirme | `/admin`. Misafir, üye ve admin olmak üzere 3 seviye (`isAuth`, `isAdmin`). |

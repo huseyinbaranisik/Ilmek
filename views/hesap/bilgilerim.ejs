@@ -1,0 +1,46 @@
+<%- include('../partials/ust', { sayfaBaslik: 'Hesap bilgilerim' }) %>
+<div class="kutu form-kutu genis">
+  <h1 class="fs-3 mb-1">Hesap bilgilerim</h1>
+  <p class="soluk kucuk">Teslimat bilgilerini bir kere kaydet, alışverişte tekrar sorulmasın.</p>
+  <form action="/hesap/bilgilerim" method="post" class="d-grid gap-3">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <h2 class="fs-5 fw-semibold mb-0"><i class="bi bi-truck"></i> Teslimat bilgileri</h2>
+    <div class="row g-2">
+      <div class="col-sm-6">
+        <label class="form-etiket" for="adSoyad">Ad soyad</label>
+        <input name="adSoyad" id="adSoyad" class="giris-kutu w-100" maxlength="80" value="<%= ben.adSoyad || '' %>">
+      </div>
+      <div class="col-sm-6">
+        <label class="form-etiket" for="telefon">Telefon</label>
+        <input name="telefon" id="telefon" class="giris-kutu w-100" placeholder="05xx xxx xx xx" value="<%= ben.telefon || '' %>">
+      </div>
+      <div class="col-12">
+        <label class="form-etiket" for="eposta">E-posta</label>
+        <input type="email" name="eposta" id="eposta" class="giris-kutu w-100" maxlength="100" value="<%= ben.eposta || '' %>">
+      </div>
+      <div class="col-12">
+        <label class="form-etiket" for="adres">Adres</label>
+        <textarea name="adres" id="adres" class="giris-kutu w-100" rows="3" maxlength="500"><%= ben.adres || '' %></textarea>
+      </div>
+    </div>
+
+    <h2 class="fs-5 fw-semibold mb-0 mt-2"><i class="bi bi-shop"></i> Mağaza bilgileri <span class="soluk kucuk fw-normal">(ürün satıyorsan)</span></h2>
+    <div class="row g-2">
+      <div class="col-sm-8">
+        <label class="form-etiket" for="magazaAdi">Mağaza adı</label>
+        <input name="magazaAdi" id="magazaAdi" class="giris-kutu w-100" maxlength="60" value="<%= ben.magazaAdi || '' %>" placeholder="Örn: Nine'nin Şişleri">
+      </div>
+      <div class="col-sm-4">
+        <label class="form-etiket" for="sehir">Şehir</label>
+        <input name="sehir" id="sehir" class="giris-kutu w-100" maxlength="40" value="<%= ben.sehir || '' %>">
+      </div>
+      <div class="col-12">
+        <label class="form-etiket" for="hakkinda">Hakkında</label>
+        <textarea name="hakkinda" id="hakkinda" class="giris-kutu w-100" rows="3" maxlength="1000" placeholder="Ne örüyorsun, nasıl başladın?"><%= ben.hakkinda || '' %></textarea>
+      </div>
+    </div>
+    <div><button class="btn-turuncu buyuk">Kaydet</button></div>
+  </form>
+</div>
+<%- include('../partials/alt') %>

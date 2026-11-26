@@ -60,9 +60,11 @@ const userRouter = require("./routes/user");
 const authRouter = require("./routes/auth");
 const hesapRouter = require("./routes/hesap");
 const adminRouter = require("./routes/admin");
+const sepetRouter = require("./routes/sepet");
 app.use("/auth", authRouter);    // giriş, kayıt, çıkış
-app.use("/hesap", hesapRouter);  // üyelerin işlemleri (ürün ekleme, sipariş, yorum, favori)
+app.use("/hesap", hesapRouter);  // üyelerin işlemleri (ürün ekleme, gelen siparişler, yorum, favori)
 app.use("/admin", adminRouter);  // admin paneli
+app.use("/", sepetRouter);       // sepet, ödeme, sipariş sorgulama (misafir de kullanır)
 app.use("/", userRouter);        // herkesin (misafirlerin de) görebildiği sayfalar
 
 // ---------- İlişkiler ----------
@@ -84,14 +86,13 @@ Yorum.belongsTo(Urun);
 Kullanici.hasMany(Yorum, { onDelete: "CASCADE" });
 Yorum.belongsTo(Kullanici);
 
-// Siparişler: bir siparişin bir ürünü, bir alıcısı ve bir satıcısı vardır.
+// Siparişler: bir siparişin bir ürünü ve bir satıcısı vardır.
+// Alıcı üye ise aliciId dolu olur, misafir ise boş (null) kalır.
 // Alıcı ve satıcı ikisi de Kullanici tablosunda olduğu için "as" ile isim veriyoruz.
 Urun.hasMany(Siparis, { onDelete: "CASCADE" });
 Siparis.belongsTo(Urun);
 Siparis.belongsTo(Kullanici, { as: "alici", foreignKey: "aliciId" });
 Siparis.belongsTo(Kullanici, { as: "satici", foreignKey: "saticiId" });
-Kullanici.hasMany(Siparis, { as: "verdigiSiparisler", foreignKey: "aliciId", onDelete: "CASCADE" });
-Kullanici.hasMany(Siparis, { as: "gelenSiparisler", foreignKey: "saticiId", onDelete: "CASCADE" });
 
 // Favoriler (çoka çok): bir üye çok ürünü favoriler, bir ürünü çok üye favoriler.
 // Sequelize "favori" adında ara tablo oluşturur. "as" sayesinde uye.addFavori(urun),
@@ -99,23 +100,18 @@ Kullanici.hasMany(Siparis, { as: "gelenSiparisler", foreignKey: "saticiId", onDe
 Kullanici.belongsToMany(Urun, { through: "favori", as: { singular: "favori", plural: "favoriler" } });
 Urun.belongsToMany(Kullanici, { through: "favori", as: { singular: "favorileyen", plural: "favorileyenler" } });
 
-// Mağaza takibi: bir üye başka üyelerin mağazalarını takip eder (kullanıcının kendisiyle çoka çok ilişkisi).
-// "takip" tablosunda takipciId (takip eden) ve takipEdilenId (takip edilen) sütunları olur.
-Kullanici.belongsToMany(Kullanici, { through: "takip", as: { singular: "takipEdilen", plural: "takipEdilenler" }, foreignKey: "takipciId", otherKey: "takipEdilenId" });
-Kullanici.belongsToMany(Kullanici, { through: "takip", as: { singular: "takipci", plural: "takipciler" }, foreignKey: "takipEdilenId", otherKey: "takipciId" });
-
 // ---------- Sayfa bulunamadı (404) ----------
 app.use((req, res) => {
   res.status(404).render("hata", { baslik: "Sayfa bulunamadı", aciklama: "Aradığınız sayfa yok ya da kaldırılmış." });
 });
 
 // ---------- Hata yakalama (dersteki gibi bütün hatalar buraya düşer) ----------
-app.use((err, req, res, next) => {
+app.use((hata, req, res, next) => {
   res.locals.csrfToken = req.csrfToken ? req.csrfToken() : ""; // hata sayfasındaki formlar için
-  if (err.code === "EBADCSRFTOKEN") { // csurf'ün hatası: form anahtarı yok ya da yanlış
+  if (hata.code === "EBADCSRFTOKEN") { // csurf'ün hatası: form anahtarı yok ya da yanlış
     return res.status(403).render("hata", { baslik: "Güvenlik hatası", aciklama: "Form doğrulanamadı (CSRF). Sayfayı yenileyip tekrar deneyin." });
   }
-  console.log("Hata:", err);
+  console.log("Hata:", hata);
   res.status(500).render("hata", { baslik: "Bir hata oluştu", aciklama: "İşlem sırasında beklenmeyen bir hata oldu." });
 });
 

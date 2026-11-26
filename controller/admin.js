@@ -24,8 +24,8 @@ exports.panel = async (req, res, next) => {
       kullanici: await Kullanici.count(),
       siparis: await Siparis.count(),
       teslim: await Siparis.count({ where: { durum: "teslim" } }),
-      // Teslim edilen siparişlerin toplam tutarı (SUM)
-      ciro: (await Siparis.sum("toplam", { where: { durum: "teslim" } })) || 0,
+      // Bütün satışların toplam tutarı (SUM). Ödeme alışverişte yapıldığı için hepsi satış sayılır.
+      ciro: (await Siparis.sum("toplam")) || 0,
       yorum: await Yorum.count(),
       cevapsiz: await Soru.count({ where: { cevap: null } }),
       // Ara tablo (favori) Sequelize tarafından oluşturuldu, db.models içinden sayılır
@@ -35,8 +35,8 @@ exports.panel = async (req, res, next) => {
     const durumlar = await Siparis.findAll({ attributes: ["durum", [fn("COUNT", col("id")), "sayi"]], group: ["durum"], raw: true });
     const populer = await Urun.findAll({ where: { onayli: true }, include: Kullanici, order: [["goruntulenme", "DESC"]], limit: 5 });
     res.render("admin/panel", { sayilar, durumlar, populer });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -46,8 +46,8 @@ exports.urunler = async (req, res, next) => {
     const bekleyenler = await Urun.findAll({ where: { onayli: false }, include: [Kullanici, Kategori], order: [["id", "ASC"]] });
     const urunler = await Urun.findAll({ where: { onayli: true }, include: [Kullanici, Kategori], order: [["id", "DESC"]] });
     res.render("admin/urunler", { bekleyenler, urunler });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -56,8 +56,8 @@ exports.urunOnayla = async (req, res, next) => {
     await Urun.update({ onayli: true }, { where: { id: req.params.id } });
     req.session.mesaj = { tur: "basari", metin: "Ürün onaylandı ve yayınlandı." };
     res.redirect("/admin/urunler");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -66,8 +66,8 @@ exports.urunSil = async (req, res, next) => {
     await Urun.destroy({ where: { id: req.params.id } }); // yorumları ve siparişleri de silinir (CASCADE)
     req.session.mesaj = { tur: "basari", metin: "Ürün silindi." };
     res.redirect("/admin/urunler");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -77,8 +77,8 @@ exports.kategoriler = async (req, res, next) => {
     const kategoriler = await Kategori.findAll({ order: [["id", "ASC"]] });
     for (const k of kategoriler) k.urunSayisi = await Urun.count({ where: { kategoriId: k.id } });
     res.render("admin/kategoriler", { kategoriler });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -93,8 +93,8 @@ exports.kategoriEkle = async (req, res, next) => {
       req.session.mesaj = { tur: "basari", metin: '"' + ad + '" kategorisi eklendi: /kategori/' + slugField(ad) };
     }
     res.redirect("/admin/kategoriler");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -108,8 +108,8 @@ exports.kategoriSil = async (req, res, next) => {
       req.session.mesaj = { tur: "basari", metin: "Kategori silindi." };
     }
     res.redirect("/admin/kategoriler");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -121,8 +121,8 @@ exports.siparisler = async (req, res, next) => {
       order: [["createdAt", "DESC"]],
     });
     res.render("admin/siparisler", { siparisler });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -131,8 +131,8 @@ exports.duyurular = async (req, res, next) => {
   try {
     const duyurular = await Duyuru.findAll({ order: [["tarih", "DESC"]] });
     res.render("admin/duyurular", { duyurular });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -146,8 +146,8 @@ exports.duyuruEkle = async (req, res, next) => {
       req.session.mesaj = { tur: "basari", metin: "Duyuru yayınlandı." };
     }
     res.redirect("/admin/duyurular");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -155,8 +155,8 @@ exports.duyuruSil = async (req, res, next) => {
   try {
     await Duyuru.destroy({ where: { id: req.params.id } });
     res.redirect("/admin/duyurular");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -166,8 +166,8 @@ exports.sss = async (req, res, next) => {
     // Önce cevapsızlar, sonra yenileri
     const sorular = await Soru.findAll({ order: [["yayinda", "ASC"], ["id", "DESC"]] });
     res.render("admin/sss", { sorular });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -176,8 +176,8 @@ exports.soruCevapla = async (req, res, next) => {
     const cevap = (req.body.cevap || "").trim();
     if (cevap) await Soru.update({ cevap, yayinda: true }, { where: { id: req.params.id } });
     res.redirect("/admin/sss");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -185,8 +185,8 @@ exports.soruSil = async (req, res, next) => {
   try {
     await Soru.destroy({ where: { id: req.params.id } });
     res.redirect("/admin/sss");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -195,8 +195,8 @@ exports.galeri = async (req, res, next) => {
   try {
     const resimler = await Galeri.findAll({ order: [["id", "DESC"]] });
     res.render("admin/galeri", { resimler });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -209,8 +209,8 @@ exports.galeriEkle = async (req, res, next) => {
       req.session.mesaj = { tur: "basari", metin: "Resim galeriye eklendi." };
     }
     res.redirect("/admin/galeri");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -218,8 +218,8 @@ exports.galeriSil = async (req, res, next) => {
   try {
     await Galeri.destroy({ where: { id: req.params.id } });
     res.redirect("/admin/galeri");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -232,7 +232,7 @@ exports.kullanicilar = async (req, res, next) => {
       k.siparisSayisi = await Siparis.count({ where: { aliciId: k.id } });
     }
     res.render("admin/kullanicilar", { kullanicilar });
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };

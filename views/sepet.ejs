@@ -1,0 +1,32 @@
+<%- include('partials/ust', { sayfaBaslik: 'Sepetim' }) %>
+<div class="sayfa-ust">
+  <div>
+    <h1><i class="bi bi-bag"></i> Sepetim</h1>
+    <p class="soluk mb-0">Sepetin bu tarayıcıda saklanır, üye olmadan da alışveriş yapabilirsin.</p>
+  </div>
+</div>
+
+<!-- Sepetin içi tarayıcıda (localStorage) olduğu için bu kısmı public/js/site.js dolduruyor -->
+<div class="row g-4" id="sepet-sayfasi">
+  <div class="col-lg-8">
+    <div class="liste" id="sepet-listesi">
+      <p class="soluk">Sepet yükleniyor...</p>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="kutu sepet-ozet">
+      <div class="d-flex justify-content-between mb-2"><span>Ürünler</span><b id="sepet-ara-toplam">0 ₺</b></div>
+      <div class="d-flex justify-content-between mb-2"><span>Kargo</span><b class="yesil">Ücretsiz</b></div>
+      <hr>
+      <div class="d-flex justify-content-between mb-3 fs-5"><span>Toplam</span><b id="sepet-toplam" class="turuncu">0 ₺</b></div>
+      <a href="/odeme" class="btn-turuncu buyuk w-100" id="odemeye-gec">Ödemeye geç <i class="bi bi-arrow-right"></i></a>
+    </div>
+  </div>
+</div>
+
+<div class="bos-durum" id="sepet-bos" hidden>
+  <i class="bi bi-bag"></i>
+  <p>Sepetin boş. Örgülere göz at, beğendiklerini sepete ekle.</p>
+  <a href="/urunler" class="btn-turuncu">Örgülere göz at</a>
+</div>
+<%- include('partials/alt') %>

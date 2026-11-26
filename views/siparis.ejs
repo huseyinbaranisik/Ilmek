@@ -1,0 +1,49 @@
+<%- include('partials/ust', { sayfaBaslik: 'Sipariş ' + satirlar[0].siparisNo }) %>
+<%
+  const ilk = satirlar[0];
+  let genelToplam = 0;
+  satirlar.forEach(s => { genelToplam = genelToplam + s.toplam; });
+%>
+
+<% if (yeni) { %>
+  <!-- Ödeme başarılı: tarayıcıdaki sepeti boşalt -->
+  <script>localStorage.removeItem('sepet');</script>
+  <div class="tesekkur">
+    <i class="bi bi-bag-check"></i>
+    <h1>Teşekkürler, siparişin alındı!</h1>
+    <p>Örgücüler siparişini hazırlamaya başladı. Sipariş numaranı not al: <b><%= ilk.siparisNo %></b></p>
+    <% if (!kullanici) { %><p class="soluk kucuk mb-0">Siparişini daha sonra <a href="/siparis-sorgula" class="turuncu">Sipariş sorgula</a> sayfasından numara ve e-posta adresinle görebilirsin.</p><% } %>
+  </div>
+<% } else { %>
+  <div class="sayfa-ust"><div><h1>Sipariş <%= ilk.siparisNo %></h1><p class="soluk mb-0"><%= tarihYaz(ilk.createdAt) %></p></div></div>
+<% } %>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="liste">
+      <% satirlar.forEach(s => { %>
+        <div class="satir">
+          <img src="<%= s.urun.resim %>" alt="" class="mini-resim">
+          <div class="flex-grow-1 min-w-0">
+            <a href="/urun/<%= s.urun.slug %>" class="satir-baslik"><%= s.urun.baslik %></a>
+            <div class="soluk kucuk"><%= s.satici.magazaAdi || s.satici.kullaniciAdi %> · <%= s.adet %> adet</div>
+          </div>
+          <%- include('partials/durum', { d: s.durum }) %>
+          <b><%= tl(s.toplam) %></b>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="kutu d-grid gap-1">
+      <div class="fw-semibold">Teslimat</div>
+      <div><%= ilk.adSoyad %></div>
+      <div class="kucuk"><%= ilk.adres %></div>
+      <div class="soluk kucuk"><%= ilk.telefon %> · <%= ilk.eposta %></div>
+      <hr class="my-2">
+      <div class="kucuk"><i class="bi bi-credit-card"></i> Kart: **** **** **** <%= ilk.kartSon4 %></div>
+      <div class="d-flex justify-content-between fs-5 mt-2"><span>Toplam</span><b class="turuncu"><%= tl(genelToplam) %></b></div>
+    </div>
+  </div>
+</div>
+<%- include('partials/alt') %>

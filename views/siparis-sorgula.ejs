@@ -1,0 +1,13 @@
+<%- include('partials/ust', { sayfaBaslik: 'Sipariş sorgula' }) %>
+<div class="kutu form-kutu">
+  <h1 class="fs-4 text-center mb-1">Sipariş sorgula</h1>
+  <p class="soluk kucuk text-center">Misafir olarak verdiğin siparişi, sipariş numarası ve e-posta adresinle görebilirsin.</p>
+  <% if (hata) { %><div class="bilgi hata"><%= hata %></div><% } %>
+  <!-- GET formu: bilgiler adreste gider (?no=...&eposta=...) -->
+  <form action="/siparis-sorgula" method="get" class="d-grid gap-2">
+    <input name="no" class="giris-kutu" placeholder="Sipariş numarası (IL-...)" required value="<%= no %>">
+    <input type="email" name="eposta" class="giris-kutu" placeholder="Siparişte yazdığın e-posta" required value="<%= eposta %>">
+    <button class="btn-turuncu buyuk mt-2">Sorgula</button>
+  </form>
+</div>
+<%- include('partials/alt') %>

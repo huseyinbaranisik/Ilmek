@@ -38,8 +38,8 @@ exports.postGiris = async (req, res, next) => {
     }
     oturumAc(req, kullanici);
     res.redirect(donusAdresi(req, kullanici.rol.ad === "Admin" ? "/admin" : "/"));
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 
@@ -65,8 +65,8 @@ exports.postKayit = async (req, res, next) => {
     oturumAc(req, await Kullanici.findByPk(yeni.id, { include: Rol }));
     req.session.mesaj = { tur: "basari", metin: "Hoş geldin " + kullaniciAdi + "! Artık sipariş verebilir, ürünleri favorilerine ekleyebilir ve kendi mağazanı açabilirsin." };
     res.redirect("/");
-  } catch (err) {
-    next(err);
+  } catch (hata) {
+    next(hata);
   }
 };
 

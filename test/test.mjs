@@ -1,5 +1,5 @@
 // ============================================================
-//  test/test.mjs - Uçtan uca test (misafir, alıcı, satıcı, admin akışları)
+//  test/test.mjs - Uçtan uca test (misafir, üye, satıcı, admin akışları; sepet ve ödeme dahil)
 //  Kullanım: 1) ilmek.db'yi silip sunucuyu başlat (npm start)  2) başka terminalde: npm test
 //  Test "testuye" adında yeni bir üye oluşturduğu için her seferinde boş veritabanında çalıştırılmalı.
 //  Node'un kendi fetch fonksiyonuyla siteyi gerçek bir kullanıcı gibi gezer, sonucu kontrol eder.
@@ -77,45 +77,81 @@ const yeniSlug = sayfa.match(/href="\/urun\/(test-bere[^"]*)"/)[1];
 sonuc('yüklenen resim /img/yuklenen/ adresinde', /\/img\/yuklenen\/\d+-\d+\.png/.test(sayfa));
 sonuc('onaysız ürün misafire görünmez', (await m.istek('/urun/' + yeniSlug)).durum === 404);
 
-// Sipariş
-const patikId = await urunId(u, 'bebek-patigi');
-tk = await u.token('/urun/bebek-patigi');
-r = await u.form('/hesap/siparis/' + patikId, { adet: 999, adres: 'Deneme Mah. Test Sok. No:5 Ankara' }, tk);
-sonuc('stoktan fazla adet reddedildi', (await u.istek(r.yer)).metin.includes('Adet 1 ile'));
-r = await u.form('/hesap/siparis/' + patikId, { adet: 2, adres: 'Deneme Mah. Test Sok. No:5 Ankara', aliciNotu: 'Mavi olsun' }, tk);
-sonuc('sipariş talebi -> siparişlerim', r.yer === '/hesap/siparislerim', r.yer);
+// ================= SEPET VE ÖDEME =================
+const patikId = Number(await urunId(m, 'bebek-patigi'));      // Minik İlmek (zeynep), 220 ₺, stok 8
+const corapId = Number(await urunId(m, 'cizgili-yun-corap')); // Elif Örgü Evi, 240 ₺
+const kart = { kartSahibi: 'TEST KART', kartNo: '4242 4242 4242 4242', sonKullanma: '12/30', cvv: '123' };
+const adresBilgisi = { adSoyad: 'Misafir Alıcı', telefon: '0555 111 22 33', eposta: 'misafir@test.com', adres: 'Deneme Mah. Test Sok. No:5 Ankara' };
+const sepetYaz = liste => JSON.stringify(liste);
+
+let j = JSON.parse((await m.istek('/api/sepet?idler=' + patikId + ',' + corapId)).metin);
+sonuc('sepet API ürün bilgilerini veriyor', j.length === 2 && j.some(x => x.fiyat === 220));
+
+// Misafir: hatalı bilgiler
+tk = await m.token('/odeme');
+r = await m.form('/odeme', { sepet: sepetYaz([{ id: patikId, adet: 1 }]), ...adresBilgisi, ...kart, kartNo: '1234' }, tk);
+sonuc('hatalı kart numarası reddedildi', r.durum === 200 && r.metin.includes('16 haneli'));
+r = await m.form('/odeme', { sepet: sepetYaz([{ id: patikId, adet: 1 }]), ...adresBilgisi, ...kart, sonKullanma: '01/20' }, tk);
+sonuc('süresi geçmiş kart reddedildi', r.metin.includes('son kullanma tarihi geçmiş'));
+r = await m.form('/odeme', { sepet: sepetYaz([{ id: patikId, adet: 999 }]), ...adresBilgisi, ...kart }, tk);
+sonuc('stoktan fazla adet reddedildi', r.metin.includes('stokta sadece'));
+r = await m.form('/odeme', { sepet: '[]', ...adresBilgisi, ...kart }, tk);
+sonuc('boş sepet reddedildi', r.metin.includes('Sepetiniz boş'));
+r = await m.form('/odeme', { sepet: sepetYaz([{ id: patikId, adet: 1 }]), ...kart }, tk);
+sonuc('misafir adres yazmadan ödeyemez', r.metin.includes('Ad soyad yazın') && r.metin.includes('Teslimat adresini'));
+
+// Misafir: başarılı ödeme. Tarayıcıdan "fiyat: 1" gönderilse bile fiyat veritabanından alınır.
+r = await m.form('/odeme', { sepet: sepetYaz([{ id: patikId, adet: 2, fiyat: 1 }, { id: corapId, adet: 1 }]), ...adresBilgisi, ...kart, aliciNotu: 'Mavi olsun' }, tk);
+sonuc('misafir ödemesi -> sipariş sayfası', r.durum === 302 && r.yer.startsWith('/siparis/IL-'), r.yer);
+const misafirNo = r.yer.split('/')[2].split('?')[0];
+sayfa = (await m.istek(r.yer)).metin;
+sonuc('teşekkür sayfası, toplam veritabanı fiyatıyla (2x220 + 240 = 680)', sayfa.includes('Teşekkürler') && sayfa.includes('680 ₺'));
+sonuc('kartın sadece son 4 hanesi görünüyor', sayfa.includes('**** 4242') && !sayfa.includes('4242 4242 4242 4242'));
+const baska = istemci();
+sonuc('başkası sipariş sayfasını göremez (404)', (await baska.istek('/siparis/' + misafirNo)).durum === 404);
+r = await baska.istek('/siparis-sorgula?no=' + misafirNo + '&eposta=yanlis@test.com');
+sonuc('sorgulama: yanlış e-posta reddedildi', r.metin.includes('bulunamadı'));
+r = await baska.istek('/siparis-sorgula?no=' + misafirNo + '&eposta=misafir@test.com');
+sonuc('sorgulama: numara + e-posta doğru -> sipariş', r.durum === 302 && (await baska.istek(r.yer)).metin.includes('Misafir Alıcı'));
+
+// Üye: ilk alışverişte adres sorulur ve hesabına kaydedilir, sonra sadece kart bilgisi
+tk = await u.token('/odeme');
+sonuc('üye ilk alışverişte adres formunu görüyor', (await u.istek('/odeme')).metin.includes('name="adres"'));
+r = await u.form('/odeme', { sepet: sepetYaz([{ id: patikId, adet: 1 }]), adSoyad: 'Test Üye', telefon: '05001112233', eposta: 'uye@test.com', adres: 'Üye Mah. Test Sok. No:9 Ankara', ...kart }, tk);
+sonuc('üye ödemesi', r.yer.startsWith('/siparis/IL-'), r.yer);
+const uyeNo = r.yer.split('/')[2].split('?')[0];
+sayfa = (await u.istek('/odeme')).metin;
+sonuc('ikinci alışverişte adres sorulmuyor (hesapta kayıtlı)', !sayfa.includes('name="adres"') && sayfa.includes('Üye Mah. Test Sok.'));
+r = await u.form('/odeme', { sepet: sepetYaz([{ id: corapId, adet: 1 }]), ...kart }, tk);
+sonuc('üye sadece kart bilgisiyle ödeyebiliyor', r.yer.startsWith('/siparis/IL-'), r.yer);
 sayfa = (await u.istek('/hesap/siparislerim')).metin;
-sonuc('siparişte "Onay bekliyor" ve tutar', sayfa.includes('Onay bekliyor') && sayfa.includes('440 ₺'));
+sonuc('siparişlerimde "Hazırlanıyor"', sayfa.includes(uyeNo) && sayfa.includes('Hazırlanıyor'));
 r = await u.form('/hesap/yorum/' + patikId, { puan: 5, metin: 'erken yorum' }, tk);
 sonuc('teslim almadan yorum yazılamaz', (await u.istek(r.yer)).metin.includes('Sadece teslim aldığınız'));
 
-// Favori ve takip
-let j = await u.json('/hesap/favori/' + patikId, tk);
+// Favori
+j = await u.json('/hesap/favori/' + patikId, tk);
 sonuc('favoriye ekle (JSON)', j.favori === true);
 sonuc('favorilerimde görünüyor', (await u.istek('/hesap/favorilerim')).metin.includes('/urun/bebek-patigi'));
 j = await u.json('/hesap/favori/' + patikId, tk);
 sonuc('tekrar basınca favoriden çıkar', j.favori === false);
 r = await m.istek('/hesap/favori/' + patikId, { method: 'POST', headers: { 'x-csrf-token': await m.token() } });
 sonuc('misafir favorileyemez -> girişe', r.durum === 302 && r.yer.startsWith('/auth/giris'));
-await u.form('/hesap/takip/zeynep', {}, tk);
-sonuc('mağaza takip ediliyor', (await u.istek('/magaza/zeynep')).metin.includes('Takip ediliyor'));
-sonuc('ana sayfada takip edilen mağazanın ürünleri', (await u.istek('/')).metin.includes('Takip ettiğin örgücülerden'));
 sonuc('üye admin paneline giremez (403)', (await u.istek('/admin')).durum === 403);
 
 // ================= SATICI (zeynep) =================
 const z = istemci();
 await z.giris('zeynep', '123456');
 sayfa = (await z.istek('/hesap/gelen-siparisler')).metin;
-sonuc('satıcıya sipariş geldi', sayfa.includes('testuye') && sayfa.includes('Mavi olsun'));
-// Bu testin siparişi: en yeni sipariş, sayfada ilk sıradaki
+sonuc('satıcıya üye ve misafir siparişi geldi', sayfa.includes('Test Üye') && sayfa.includes('Misafir Alıcı') && sayfa.includes('Mavi olsun'));
+sonuc('ödemeyle stoktan düştü (8 - 2 - 1 = 5)', (await z.istek('/urun/bebek-patigi')).metin.includes('Stok: <b>5</b>'));
+// Üyenin siparişi en yeni, sayfada ilk sırada
 const siparisId = sayfa.match(/\/hesap\/siparis\/(\d+)\/durum/)[1];
 tk = await z.token('/hesap/gelen-siparisler');
 r = await z.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'teslim' }, tk);
 sonuc('yanlış durum geçişi reddedildi', (await z.istek(r.yer)).metin.includes('geçirilemez'));
-r = await u.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'hazirlaniyor' }, await u.token());
+r = await u.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'kargoda' }, await u.token());
 sonuc('başkasının siparişini değiştiremez (404)', r.durum === 404);
-await z.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'hazirlaniyor' }, tk);
-sonuc('onaylayınca stoktan düştü (8 -> 6)', (await z.istek('/urun/bebek-patigi')).metin.includes('Stok: <b>6</b>'));
 await z.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'kargoda' }, tk);
 await z.form('/hesap/siparis/' + siparisId + '/durum', { durum: 'teslim' }, tk);
 sonuc('alıcı "Teslim edildi" görüyor', (await u.istek('/hesap/siparislerim')).metin.includes('Teslim edildi'));
@@ -126,12 +162,6 @@ r = await u.form('/hesap/yorum/' + patikId, { puan: 3, metin: 'Güzel ama <b>bir
 sonuc('teslimden sonra yorum yazıldı', r.yer.startsWith('/urun/bebek-patigi'), r.yer);
 sayfa = (await m.istek('/urun/bebek-patigi')).metin;
 sonuc('yorum görünüyor ve ortalama güncellendi (5 ve 3 -> 4.0)', sayfa.includes('&lt;b&gt;biraz&lt;/b&gt;') && sayfa.includes('<b>4.0</b>'));
-
-// İptal: sadece onay beklerken
-r = await u.form('/hesap/siparis/' + patikId, { adet: 1, adres: 'Deneme Mah. Test Sok. No:5 Ankara' }, tk);
-const iptalId = (await u.istek('/hesap/siparislerim')).metin.match(/\/hesap\/siparis\/(\d+)\/iptal/)[1];
-await u.form('/hesap/siparis/' + iptalId + '/iptal', {}, tk);
-sonuc('alıcı onay bekleyen siparişi iptal etti', (await u.istek('/hesap/siparislerim')).metin.includes('İptal edildi'));
 
 // ================= ADMİN =================
 const a = istemci();
@@ -152,7 +182,7 @@ await a.form('/admin/duyurular', { baslik: 'Çılgın Şubat İndirimleri Başla
 sonuc('duyuru slug', (await m.istek('/duyuru/cilgin-subat-indirimleri-basladi')).durum === 200);
 sonuc('admin siparişler', (await a.istek('/admin/siparisler')).metin.includes('testuye'));
 sayfa = (await a.istek('/admin')).metin;
-sonuc('admin panelinde ciro ve durumlar', sayfa.includes('Teslim edilen tutar') && sayfa.includes('Siparişlerin durumu'));
+sonuc('admin panelinde ciro ve durumlar', sayfa.includes('Toplam satış') && sayfa.includes('Siparişlerin durumu'));
 
 console.log(hataSayisi ? '\n' + hataSayisi + ' kontrol başarısız' : '\nBütün kontroller geçti');
 process.exitCode = hataSayisi ? 1 : 0;

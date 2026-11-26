@@ -32,13 +32,6 @@
   <% }) %>
 </div>
 
-<% if (takipUrunleri.length) { %>
-  <h2 class="bolum-baslik">Takip ettiğin örgücülerden</h2>
-  <div class="urun-izgara">
-    <% takipUrunleri.forEach(u => { %><%- include('partials/urun-kart', { u }) %><% }) %>
-  </div>
-<% } %>
-
 <div class="d-flex align-items-baseline justify-content-between">
   <h2 class="bolum-baslik">Yeni gelenler</h2>
   <a href="/urunler" class="kucuk fw-semibold turuncu">Hepsini gör <i class="bi bi-arrow-right"></i></a>

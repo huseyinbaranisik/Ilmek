@@ -33,7 +33,9 @@ async function populate() {
     hakkinda: "Bebekler için yumuşacık örgüler: patikler, kazaklar, battaniyeler. Bebek dostu pamuk ve merinos iplik." });
   const elif = await Kullanici.create({ kullaniciAdi: "elif", sifre, rolId: 2, magazaAdi: "Elif Örgü Evi", sehir: "İstanbul",
     hakkinda: "Çoraplar, eldivenler, şallar ve tığ işi çantalar. Renkli ve neşeli örgüler seviyorum." });
-  const can = await Kullanici.create({ kullaniciAdi: "can", sifre, rolId: 2 }); // sadece alıcı
+  // can sadece alıcı. Teslimat bilgileri kayıtlı olduğu için ödemede adres sorulmaz.
+  const can = await Kullanici.create({ kullaniciAdi: "can", sifre, rolId: 2, adSoyad: "Can Yılmaz", telefon: "05321234567",
+    eposta: "can@ornek.com", adres: "Atatürk Mah. Çınar Sok. No:12 D:3, Çankaya / Ankara" });
 
   await Sayac.create({ ad: "ziyaretci", deger: 0 });
 
@@ -77,19 +79,30 @@ async function populate() {
     iplik: "Pamuk", hazirlikGunu: 5, resim: "/img/urunler/yastik.jpg", onayli: false, kategoriId: kategoriler["Ev & Dekor"].id, kullaniciId: ayse.id });
 
   // ---------- Siparişler ve yorumlar ----------
-  // can birkaç şey sipariş etmiş: bazıları teslim edilmiş (yorum yazabilir), biri yolda, biri onay bekliyor
+  // can birkaç şey almış: bazıları teslim edilmiş (yorum yazabilir), biri kargoda, biri hazırlanıyor.
+  // Bir de misafir (üye olmayan) alışverişi var.
+  const misafir = { adSoyad: "Selin Kaya", telefon: "05559876543", eposta: "selin@ornek.com", adres: "Cumhuriyet Cad. No:45, Konak / İzmir" };
   const siparisler = [
-    [can, "El Örgüsü Bere", 1, "teslim", "Hardal renk olursa çok sevinirim."],
-    [can, "Bebek Patiği", 2, "teslim", "Yeğenim için, mavi olsun lütfen."],
-    [can, "Amigurumi Ayıcık", 1, "kargoda", null],
-    [can, "Pembe Motifli Hırka", 1, "beklemede", "M beden. Hediye paketi yapabilir misiniz?"],
-    [elif, "Amigurumi Tavşan", 1, "teslim", null],
-    [mehmet, "El Örgüsü Bere", 1, "teslim", null],
+    // [alıcı (null = misafir), ürün, adet, durum, not, sipariş no]
+    [can, "El Örgüsü Bere", 1, "teslim", "Hardal renk olursa çok sevinirim.", "IL-1001"],
+    [can, "Bebek Patiği", 2, "teslim", "Yeğenim için, mavi olsun lütfen.", "IL-1002"],
+    [can, "Amigurumi Ayıcık", 1, "kargoda", null, "IL-1003"],
+    [can, "Pembe Motifli Hırka", 1, "hazirlaniyor", "M beden. Hediye paketi yapabilir misiniz?", "IL-1004"],
+    [elif, "Amigurumi Tavşan", 1, "teslim", null, "IL-1005"],
+    [mehmet, "El Örgüsü Bere", 1, "teslim", null, "IL-1006"],
+    [null, "Çizgili Yün Çorap", 2, "hazirlaniyor", null, "IL-1007"],      // misafir
+    [null, "Tığ İşi Çiçek Buketi", 1, "hazirlaniyor", null, "IL-1007"],   // aynı misafir, aynı sepet
   ];
-  for (const [alici, baslik, adet, durum, aliciNotu] of siparisler) {
-    const u = urunler[baslik];
-    await Siparis.create({ adet, toplam: adet * u.fiyat, durum, aliciNotu, adres: "Örnek Mah. Deneme Sok. No:1, " + (alici.sehir || "Ankara"),
-      urunId: u.id, aliciId: alici.id, saticiId: u.kullaniciId });
+  for (const [alici, baslik, adet, durum, aliciNotu, siparisNo] of siparisler) {
+    const urun = urunler[baslik];
+    // Üyeyse bilgileri hesabından, misafirse yukarıdaki misafir bilgilerinden
+    let kisi = misafir;
+    if (alici) kisi = { adSoyad: alici.adSoyad || alici.kullaniciAdi, telefon: alici.telefon || "05000000000", eposta: alici.eposta || alici.kullaniciAdi + "@ornek.com", adres: alici.adres || "Örnek Mah. No:1, " + alici.sehir };
+    await Siparis.create({
+      siparisNo, adet, toplam: adet * urun.fiyat, durum, aliciNotu, kartSon4: "4242",
+      adSoyad: kisi.adSoyad, telefon: kisi.telefon, eposta: kisi.eposta, adres: kisi.adres,
+      urunId: urun.id, aliciId: alici ? alici.id : null, saticiId: urun.kullaniciId,
+    });
   }
   const yorumlar = [
     [can, "El Örgüsü Bere", 5, "Tam istediğim renk, çok sıcak tutuyor. Ayşe Hanım'a teşekkürler!"],
@@ -100,11 +113,9 @@ async function populate() {
   for (const [k, baslik, puan, metin] of yorumlar) await Yorum.create({ puan, metin, kullaniciId: k.id, urunId: urunler[baslik].id });
   for (const baslik in urunler) await puanGuncelle(urunler[baslik].id);
 
-  // ---------- Favoriler ve takip ----------
+  // ---------- Favoriler ----------
   await can.addFavoriler([urunler["Kalın Örgü Battaniye"], urunler["Saç Örgülü Kazak"], urunler["Tığ İşi Çiçek Buketi"]]);
   await elif.addFavoriler([urunler["Çizgili Yün Atkı"]]);
-  await can.addTakipEdilenler([ayse, zeynep]); // can bu mağazaları takip ediyor
-  await elif.addTakipEdilen(zeynep);
 
   // ---------- Galeri: atölyelerden kareler ----------
   for (const [resim, aciklama] of [["orgu_eller.jpg", "Akşam örgüsü"], ["yumak.jpg", "Yeni gelen yumaklar"], ["ip_rafi.jpg", "Elif'in ip rafı"],
@@ -124,10 +135,11 @@ async function populate() {
 
   // ---------- S.S.S. ----------
   await Soru.bulkCreate([
-    { soru: "Ödemeyi nasıl yapıyorum?", cevap: "İlmek'te online ödeme yok. Sipariş talebinizi satıcı kabul ettikten sonra ödeme ve kargo detaylarını satıcıyla kararlaştırırsınız.", yayinda: true },
+    { soru: "Üye olmadan alışveriş yapabilir miyim?", cevap: "Evet. Sepete ekleyip ödeme sayfasında adres ve kart bilgilerini yazmanız yeterli. Siparişinizi daha sonra 'Sipariş sorgula' sayfasından numara ve e-posta adresinizle görebilirsiniz. Üye olursanız adresiniz kayıtlı kalır, her seferinde yazmazsınız.", yayinda: true },
+    { soru: "Kart bilgilerim saklanıyor mu?", cevap: "Hayır. Kart numaranızın sadece son 4 hanesi siparişte görünsün diye kaydedilir. Kartın tamamı ve CVV hiçbir yere yazılmaz. (Bu bir ders projesidir, gerçek ödeme alınmaz.)", yayinda: true },
     { soru: "Ürün eklediğim halde neden görünmüyor?", cevap: "Eklenen ürünler yönetici onayından sonra yayınlanır. Onay bekleyen ürünlerinizi 'Ürünlerim' sayfasında görebilirsiniz.", yayinda: true },
     { soru: "Her ürüne yorum yazabilir miyim?", cevap: "Hayır, sadece satın alıp teslim aldığınız ürünlere yorum yazabilirsiniz. Böylece yorumlar gerçek alıcılardan gelir.", yayinda: true },
-    { soru: "Örgüler neden hemen gönderilmiyor?", cevap: "Ürünlerin çoğu sipariş üzerine elde örülüyor. Her ürünün sayfasında 'Hazırlanma' süresi yazıyor; satıcı onayladıktan sonra o kadar günde örülüp kargoya verilir.", yayinda: true },
+    { soru: "Örgüler neden hemen gönderilmiyor?", cevap: "Ürünlerin çoğu sipariş üzerine elde örülüyor. Her ürünün sayfasında 'Hazırlanma' süresi yazıyor; ödemeden sonra o kadar günde örülüp kargoya verilir.", yayinda: true },
     { soru: "Yün ürünleri nasıl yıkamalıyım?", cevap: "Yün, merinos ve alpaka ürünleri 30 derecede elde, yün şampuanıyla yıkayın, sıkmadan düz bir yüzeyde kurutun. Pamuklu ürünler makinede hassas programda yıkanabilir.", yayinda: true },
     { soru: "Kendi rengimi seçebilir miyim?", cevap: null, yayinda: false }, // cevapsız örnek soru
   ]);

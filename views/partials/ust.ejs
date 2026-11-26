@@ -34,23 +34,25 @@
         </form>
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
           <li class="nav-item"><a class="nav-link <%= yol === '/magazalar' ? 'active' : '' %>" href="/magazalar"><i class="bi bi-shop"></i> Örgücüler</a></li>
+          <!-- Sepet: içindeki ürün sayısını site.js tarayıcıdaki sepetten okuyup yazar -->
+          <li class="nav-item"><a class="nav-link <%= yol === '/sepet' ? 'active' : '' %>" href="/sepet"><i class="bi bi-bag"></i> Sepet <span class="rozet kiremit-rozet" id="sepet-sayi" hidden>0</span></a></li>
           <% if (kullanici) { %>
             <li class="nav-item"><a class="nav-link <%= yol === '/hesap/favorilerim' ? 'active' : '' %>" href="/hesap/favorilerim"><i class="bi bi-heart"></i> Favoriler</a></li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="avatar kucuk-avatar"><%= kullanici.ad[0].toUpperCase() %></span> <%= kullanici.ad %>
-                <% if (yeniSiparis) { %><span class="rozet kiremit-rozet" title="Onay bekleyen sipariş"><%= yeniSiparis %></span><% } %>
+                <% if (yeniSiparis) { %><span class="rozet sari-rozet" title="Kargoya verilecek sipariş"><%= yeniSiparis %></span><% } %>
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><h6 class="dropdown-header">Alışveriş</h6></li>
                 <li><a class="dropdown-item" href="/hesap/siparislerim"><i class="bi bi-box-seam"></i> Siparişlerim</a></li>
                 <li><a class="dropdown-item" href="/hesap/favorilerim"><i class="bi bi-heart"></i> Favorilerim</a></li>
+                <li><a class="dropdown-item" href="/hesap/bilgilerim"><i class="bi bi-person-vcard"></i> Hesap bilgilerim</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><h6 class="dropdown-header">Mağazam</h6></li>
-                <li><a class="dropdown-item" href="/hesap/gelen-siparisler"><i class="bi bi-inbox"></i> Gelen siparişler <% if (yeniSiparis) { %><span class="rozet kiremit-rozet"><%= yeniSiparis %></span><% } %></a></li>
+                <li><a class="dropdown-item" href="/hesap/gelen-siparisler"><i class="bi bi-inbox"></i> Gelen siparişler <% if (yeniSiparis) { %><span class="rozet sari-rozet"><%= yeniSiparis %></span><% } %></a></li>
                 <li><a class="dropdown-item" href="/hesap/urunlerim"><i class="bi bi-grid"></i> Ürünlerim</a></li>
                 <li><a class="dropdown-item" href="/magaza/<%= kullanici.ad %>"><i class="bi bi-shop-window"></i> Mağaza sayfam</a></li>
-                <li><a class="dropdown-item" href="/hesap/magaza"><i class="bi bi-gear"></i> Mağaza ayarları</a></li>
                 <% if (kullanici.admin) { %>
                   <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item" href="/admin"><i class="bi bi-speedometer2"></i> Admin paneli</a></li>

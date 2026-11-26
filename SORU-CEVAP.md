@@ -7,7 +7,10 @@ Her cevabın yanında kodun bulunduğu dosya ve fonksiyon yazıyor. Sunumdan ön
 ## Genel
 
 **Proje ne?**
-**İlmek**: el örgüsü ürünlerin pazar yeri. Şişle ve tığla ören üyeler mağaza açıp kazak, bere, bebek patiği, amigurumi gibi örgülerini ekliyor, diğer üyeler sipariş talebi gönderiyor. Her ürünün iplik türü ve kaç günde örüleceği (hazırlanma süresi) yazıyor. Gerçek ödeme yok: satıcı talebi onaylıyor, sonra durumu "hazırlanıyor → kargoda → teslim edildi" diye ilerletiyor. Ürünü teslim alan alıcı yorum ve puan yazabiliyor.
+**İlmek**: el örgüsü ürünlerin pazar yeri. Şişle ve tığla ören üyeler mağaza açıp kazak, bere, bebek patiği, amigurumi gibi örgülerini ekliyor, misafirler ve üyeler sepete ekleyip ödeme yapıyor. Her ürünün iplik türü ve kaç günde örüleceği (hazırlanma süresi) yazıyor. Ödeme sahte (ders projesi): kart bilgileri kontrol ediliyor ama para çekilmiyor. Satıcı siparişi "kargoda → teslim edildi" diye ilerletiyor. Ürünü teslim alan üye yorum ve puan yazabiliyor.
+
+**Kodu kim yazdı, neden bu kadar düz?**
+Kodu bilerek basit tuttum: her controller fonksiyonu yukarıdan aşağı okunuyor, kısa yollar (`?.`, iç içe üçlü `? :`, `...` gibi) yerine düz `if` ve `for` kullandım, değişken adları Türkçe (`hata`, `sepet`, `kalemler`, `teslimat`). Böylece her satırı açıklayabiliyorum.
 
 **Projenin yapısı nasıl?**
 Derste kullandığımız **MVC** yapısı:
@@ -19,7 +22,7 @@ Derste kullandığımız **MVC** yapısı:
 - `middleware/` ve `helpers/`: araya giren fonksiyonlar ve yardımcılar.
 
 **Route dosyaları nasıl bağlanıyor?**
-`index.js` içinde `app.use("/admin", adminRouter)` gibi. `routes/admin.js` içindeki `router.get("/urunler")` böylece `/admin/urunler` adresine karşılık geliyor. Dört router var: `user` (herkes), `auth` (giriş/kayıt), `hesap` (üyeler), `admin`.
+`index.js` içinde `app.use("/admin", adminRouter)` gibi. `routes/admin.js` içindeki `router.get("/urunler")` böylece `/admin/urunler` adresine karşılık geliyor. Beş router var: `user` (herkes), `sepet` (sepet, ödeme, sipariş sorgulama; misafir de kullanır), `auth` (giriş/kayıt), `hesap` (üyeler), `admin`.
 
 **Neden EJS?**
 HTML'in içine `<%= %>` ile veri yazabiliyoruz. Ortak parçalar `views/partials/` içinde (üst menü, alt bilgi, ürün kartı, yorum, sipariş durumu rozeti), her sayfa onları `include` ile çağırıyor. Örneğin ürün kartı (`urun-kart.ejs`) ana sayfada, kategori sayfasında, mağazada ve favorilerde aynı dosyadan geliyor.
@@ -33,9 +36,8 @@ Modeller `models/` içinde, ilişkiler `index.js`'in "İlişkiler" bölümünde:
 - `kategori` 1 → çok `urun`.
 - `kullanici` 1 → çok `urun` (satıcı). `urun.kullanici` ürünün satıcısı.
 - `urun` 1 → çok `yorum`, `kullanici` 1 → çok `yorum`.
-- `siparis`: bir ürüne, bir alıcıya ve bir satıcıya bağlı. Alıcı da satıcı da `kullanici` tablosunda olduğu için `as: "alici"` ve `as: "satici"` ile iki ayrı isimle bağlandı (`foreignKey: "aliciId"` / `"saticiId"`).
+- `siparis`: sepetteki her ürün için bir satır; bir ürüne, bir satıcıya ve (üyeyse) bir alıcıya bağlı. Misafir siparişinde `aliciId` boş (null), teslimat bilgileri siparişin kendi sütunlarında (`adSoyad`, `telefon`, `eposta`, `adres`). Alıcı da satıcı da `kullanici` tablosunda olduğu için `as: "alici"` ve `as: "satici"` ile iki ayrı isimle bağlandı.
 - **Favori**: `kullanici` çok ↔ çok `urun` (`belongsToMany`, ara tablo `favori`).
-- **Mağaza takibi**: `kullanici` çok ↔ çok `kullanici` (ara tablo `takip`: `takipciId`, `takipEdilenId`).
 - Diğerleri: `duyuru`, `soru`, `galeri`, `sayac` ve oturumlar için `Sessions`.
 
 **`db.sync()` ne yapıyor?**
@@ -90,11 +92,8 @@ Sunucu kapanıp açılınca sıfırlanmasın diye. `sayac` tablosunda `ziyaretci
 **Kullanıcı sayfada hiçbir şeye tıklamadan duruyorsa?**
 `public/js/site.js` 15 saniyede bir `/api/nabiz` adresine istek atıyor ("nabız"). Sayfa açık kaldığı sürece kişi çevrimiçi görünür, sekme kapanınca 60 saniye sonra düşer. Cevapta gelen sayıyla footer'daki rakam güncelleniyor.
 
-**Ürün sayfasındaki "Şu an 2 kişi bu ürüne bakıyor" nasıl çalışıyor?**
-Aynı mantık. Ürün sayfasında nabız isteğiyle `urunId` de gönderiliyor (`controller/user.js` → `nabiz`). Sunucu `bakanlar = { oturumId: { urunId, zaman } }` nesnesinde tutuyor, `bakanSayisi(urunId)` son 40 saniyede o ürün sayfasında olanları sayıyor.
-
 **Neden veritabanında değil de hafızada?**
-Bunlar saniyeler içinde değişen anlık bilgiler, kalıcı olmaları gerekmiyor.
+Saniyeler içinde değişen anlık bir bilgi, kalıcı olması gerekmiyor.
 
 **Neden Socket.io kullanmadın?**
 Projeyi basit tutmak için. 15 saniyede bir istek atmak (polling) bu iş için yeterli.
@@ -141,8 +140,8 @@ Normal formlar sadece metin gönderir. Dosya göndermek için bu biçim gerekiyo
 
 **Kaç tür kullanıcı var?**
 Üç seviye:
-- **Misafir**: giriş yapmamış. Ürünlere, mağazalara, yorumlara, galeriye ve duyurulara bakar, S.S.S.'e soru gönderir.
-- **Üye**: hem alıcı hem satıcı. Sipariş talebi gönderir, favoriler, mağaza takip eder, teslim aldığı ürüne yorum yazar; kendi mağazasına ürün ekler, gelen siparişleri yönetir.
+- **Misafir**: giriş yapmamış. Ürünlere, mağazalara, yorumlara, galeriye ve duyurulara bakar, S.S.S.'e soru gönderir. **Sepet oluşturup alışveriş yapabilir**; ödemede adresini ve kart bilgilerini kendisi yazar, siparişini sonra "Sipariş sorgula" ile görür.
+- **Üye**: hem alıcı hem satıcı. Alışveriş yapar (adresi ve telefonu hesabında kayıtlı, her seferinde sorulmaz), favoriler, teslim aldığı ürüne yorum yazar; kendi mağazasına ürün ekler, gelen siparişleri kargoya verir.
 - **Admin**: ürünleri onaylar ya da reddeder; kategorileri, duyuruları, galeriyi, S.S.S.'i yönetir; bütün siparişleri ve kullanıcıları görür.
 
 Rol bilgisi `rol` tablosunda (dersteki `usercategory` gibi), her kullanıcının `rolId`'si var.
@@ -156,7 +155,7 @@ Rol bilgisi `rol` tablosunda (dersteki `usercategory` gibi), her kullanıcının
 - `middleware/isAdmin.js`: giriş yoksa girişe yönlendiriyor, üyeyse 403 "Yetkiniz yok" gösteriyor. `routes/admin.js` içinde `router.use(isAdmin)`.
 
 **Bir üye başkasının ürününü ya da siparişini değiştirebilir mi?**
-Hayır. `controller/hesap.js` içinde her işlemde sahiplik kontrolü var: ürün düzenleme/silmede `urun.kullaniciId === benimId(req)`, sipariş durumunu değiştirmede `siparis.saticiId === benimId(req)`, iptalde `siparis.aliciId === benimId(req)`. Değilse 404. Kendi ürününe sipariş veremez, kendini takip edemez.
+Hayır. `controller/hesap.js` içinde her işlemde sahiplik kontrolü var: ürün düzenleme/silmede `urun.kullaniciId != req.session.kullanici.id` ise, sipariş durumunu değiştirmede `siparis.saticiId != req.session.kullanici.id` ise 404 dönüyor. Kendi ürününü satın alamıyor. Sipariş sayfasını da sadece siparişi veren üye, bu oturumda sipariş veren misafir ve admin görebiliyor.
 
 **Şifreler nasıl saklanıyor?**
 `bcrypt.hash(sifre, 10)` ile hash'lenerek (derste kullandığımız gibi). Veritabanında düz şifre yok. bcrypt her şifreye otomatik olarak rastgele bir **tuz (salt)** ekliyor, böylece aynı şifreyi kullanan iki kişinin hash'i farklı oluyor.
@@ -165,7 +164,7 @@ Hayır. `controller/hesap.js` içinde her işlemde sahiplik kontrolü var: ürü
 `middleware/config_Session.js`. Dersteki gibi `connect-session-sequelize` ile veritabanındaki `Sessions` tablosunda. Sunucu yeniden başlasa da kullanıcıların girişi düşmüyor.
 
 **Admin panelindeki istatistikler nasıl hesaplanıyor?**
-`controller/admin.js` → `panel`: `Urun.count(...)`, teslim edilen siparişlerin toplam tutarı için `Siparis.sum("toplam", ...)`, durumlara göre sipariş sayısı için `GROUP BY`: `Siparis.findAll({ attributes: ["durum", [fn("COUNT", col("id")), "sayi"]], group: ["durum"] })`. Favori ara tablosu için ayrı model yazmadık, Sequelize'ın oluşturduğu modele `db.models.favori.count()` ile ulaşılıyor.
+`controller/admin.js` → `panel`: `Urun.count(...)`, bütün satışların toplam tutarı için `Siparis.sum("toplam")`, durumlara göre sipariş sayısı için `GROUP BY`: `Siparis.findAll({ attributes: ["durum", [fn("COUNT", col("id")), "sayi"]], group: ["durum"] })`. Favori ara tablosu için ayrı model yazmadık, Sequelize'ın oluşturduğu modele `db.models.favori.count()` ile ulaşılıyor.
 
 ---
 
@@ -233,20 +232,28 @@ Spam ya da uygunsuz içerik doğrudan sitede görünmesin diye (moderasyon).
 **Ürün ekleme ve onay nasıl?**
 `/hesap/urun/yeni` (`controller/hesap.js` → `urunFormu`, `urunKaydet`). Hem "yeni" hem "düzenle" aynı formu kullanıyor: adreste `:id` varsa düzenleme. Üyenin eklediği ürün `onayli: false` kaydediliyor, admin `/admin/urunler`'den onaylayınca yayına giriyor. Admin eklerse hemen yayınlanıyor. Düzenlenen ürün tekrar onaya düşüyor. Onaysız ürünü sadece sahibi ve admin görebiliyor, misafir 404 alıyor.
 
-**Sipariş akışı nasıl?**
-`models/siparis.js` içinde durumlar ve izin verilen geçişler tanımlı:
-```js
-Siparis.SONRAKI = {
-  beklemede:    ["hazirlaniyor", "reddedildi"],
-  hazirlaniyor: ["kargoda"],
-  kargoda:      ["teslim"],
-};
-```
-1. Alıcı ürün sayfasındaki formdan adet, adres ve not yazıp gönderiyor (`siparisVer`). Adet stoktan fazla olamaz, kendi ürününe sipariş veremez. Toplam tutar sipariş anındaki fiyatla kaydediliyor, fiyat sonra değişse de sipariş etkilenmiyor.
-2. Satıcı "Gelen siparişler"de düğmelerle durumu ilerletiyor (`siparisDurum`). Sadece `SONRAKI` listesindeki geçişlere izin var: "beklemede"den doğrudan "teslim"e geçilemez.
-3. Satıcı onaylayınca (`hazirlaniyor`) ürünün stoğu `decrement("stok", { by: adet })` ile düşüyor. Stok yetmezse onaylanamıyor.
-4. Alıcı, satıcı onaylamadan önce siparişi iptal edebiliyor (`siparisIptal`).
-5. "Siparişlerim" sayfasında siparişin hangi aşamada olduğu 4 adımlı bir çizgiyle gösteriliyor.
+**Sepet nerede tutuluyor?**
+Sunucuda değil, **tarayıcıda** (`localStorage`, "sepet" anahtarı). Bu yüzden giriş yapmayan misafir de sepet oluşturabiliyor. Sepette sadece ürün id'si ve adet var: `[{ "id": 3, "adet": 2 }]`. `public/js/site.js` içindeki `sepetiOku()` / `sepetiKaydet()` fonksiyonları `JSON.parse` / `JSON.stringify` ile okuyup yazıyor. "Sepete ekle" düğmesi ürünü listeye ekliyor, ürün zaten varsa adedini artırıyor, stoktan fazlasına izin vermiyor. Üst menüdeki sepet rozeti toplam adedi gösteriyor.
+
+**Sepet sayfası ürünlerin adını, fiyatını nereden biliyor?**
+Sepette sadece id var. `site.js` sunucuya `/api/sepet?idler=3,5` isteği atıyor (`controller/sepet.js` → `sepetBilgisi`), sunucu o ürünlerin adını, fiyatını, resmini JSON olarak döndürüyor. Sayfa bu bilgiyle dolduruluyor. Ürün adları `textContent` ile yazılıyor (XSS olmasın diye `innerHTML` kullanılmıyor).
+
+**Ödeme nasıl çalışıyor?** (`controller/sepet.js` → `odemeYap`)
+1. Form gönderilirken `site.js` tarayıcıdaki sepeti gizli bir `sepet` alanına JSON olarak koyuyor.
+2. Sunucu her ürünü veritabanından tekrar buluyor: hâlâ satışta mı, stok yetiyor mu, kendi ürünü mü. **Fiyat her zaman veritabanından alınıyor**; tarayıcıdan gelen sepette fiyat yok, birisi elle fiyat eklese bile dikkate alınmıyor.
+3. Teslimat bilgileri: **misafir** ad soyad, telefon, e-posta ve adresi formda yazıyor. **Üyenin** bu bilgileri hesabında kayıtlıysa formda hiç sorulmuyor, hesabından alınıyor. Üye ilk kez alışveriş yapıyorsa bir kere yazıyor ve bilgiler hesabına kaydediliyor (`ben.update(teslimat)`), bir dahakine sorulmuyor. "Hesap bilgilerim" sayfasından değiştirilebiliyor.
+4. Kart bilgileri herkesten her alışverişte isteniyor ve basitçe kontrol ediliyor: kart numarası 16 rakam (`/^\d{16}$/`), CVV 3 rakam, son kullanma tarihi AA/YY biçiminde ve geçmemiş olmalı. Hata varsa sayfa hatalarla birlikte tekrar gösteriliyor (kart numarası ve CVV geri doldurulmuyor).
+5. Her sepet ürünü için `siparis` tablosuna bir satır ekleniyor. Aynı alışverişin bütün satırlarının `siparisNo`'su aynı (`"IL-" + Date.now()`). Stok `decrement("stok", { by: adet })` ile hemen düşüyor.
+6. Kullanıcı "Teşekkürler" sayfasına yönlendiriliyor, o sayfa `localStorage.removeItem('sepet')` ile sepeti boşaltıyor.
+
+**Kart bilgileri saklanıyor mu?**
+Hayır. Sadece kartın **son 4 hanesi** (`kartNo.slice(-4)`) siparişe kaydediliyor, sipariş sayfasında "**** 4242" diye görünsün diye. Kart numarasının tamamı ve CVV hiçbir yere yazılmıyor. Gerçek bir sitede kart bilgileri hiç bizim sunucumuza gelmez, iyzico/Stripe gibi bir ödeme şirketinin sayfasında girilir; bu proje bir ders projesi olduğu için ödeme sahte.
+
+**Misafir siparişini nasıl görüyor?**
+Ödemeden sonra sipariş numarası oturuma yazılıyor (`req.session.siparisNolari`), aynı tarayıcıda sipariş sayfasını görebiliyor. Sonra görmek isterse "Sipariş sorgula" sayfasında sipariş numarası ve e-postasını yazıyor; ikisi eşleşirse sipariş gösteriliyor. Başka biri sadece numarayla siparişi göremiyor (404).
+
+**Sipariş durumu nasıl ilerliyor?**
+Ödeme yapıldığı için sipariş "Hazırlanıyor" diye başlıyor. Satıcı "Gelen siparişler" sayfasında önce "Kargoya verdim", sonra "Teslim edildi" düğmesine basıyor (`controller/hesap.js` → `siparisDurum`). Sadece sıradaki duruma geçilebiliyor, "hazırlanıyor"dan doğrudan "teslim"e geçilemiyor. "Siparişlerim" sayfasında siparişin hangi aşamada olduğu 3 adımlı bir çizgiyle gösteriliyor.
 
 **Yorumu herkes yazabilir mi?**
 Hayır, sadece ürünü satın alıp **teslim almış** üye (`controller/hesap.js` → `yorumKaydet`): `Siparis.findOne({ where: { urunId, aliciId, durum: "teslim" } })` yoksa yorum reddediliyor. Böylece yorumlar gerçek alıcılardan geliyor. Aynı ürüne ikinci kez yazarsa eski yorumu güncelleniyor. Her yorumdan sonra `helpers/puan.js` ürünün ortalama puanını ve yorum sayısını yeniden hesaplıyor (ürün kartlarında ve sıralamada kullanılıyor).
@@ -254,11 +261,8 @@ Hayır, sadece ürünü satın alıp **teslim almış** üye (`controller/hesap.
 **Favori (kalp) nasıl çalışıyor?**
 Çoka çok ilişki: `Kullanici.belongsToMany(Urun, { through: "favori", as: { singular: "favori", plural: "favoriler" } })`. `as` sayesinde `ben.addFavori(urun)`, `ben.removeFavori(urun)`, `ben.hasFavori(urun)`, `ben.getFavoriler()` fonksiyonları kendiliğinden oluşuyor. Kalbe basınca `site.js` `fetch` ile `/hesap/favori/5` adresine POST atıyor, sunucu varsa siliyor yoksa ekliyor ve `{ favori: true }` gibi JSON döndürüyor. Sayfa yenilenmiyor, kalp dolup boşalıyor ve altta bildirim çıkıyor.
 
-**Örgücü (mağaza) takibi?**
-Kullanıcının kendisiyle çoka çok ilişkisi (`takip` tablosu: `takipciId`, `takipEdilenId`). Takip ettiğin örgücülerin yeni ürünleri ana sayfada "Takip ettiğin örgücülerden" bölümünde çıkıyor: `Urun.findAll({ where: { kullaniciId: [2, 4] } })`. Sequelize `where`'e dizi verilince SQL'de `IN (2, 4)` yazıyor.
-
 **Sıralama ve fiyat filtresi?**
-`/urunler?sirala=ucuz&min=100&max=500` (`controller/user.js` → `urunler`). Sıralama seçenekleri `SIRALAMALAR` nesnesinde, her birinin `order` dizisi var. Fiyat aralığı `Op.gte` (büyük eşit) ve `Op.lte` (küçük eşit) ile. Form `method="get"` olduğu için seçimler adreste görünüyor, sayfa paylaşılabiliyor. Kategori sayfası da aynı fonksiyonu kullanıyor (`/kategori/:slug`).
+`/urunler?sirala=ucuz&min=100&max=500` (`controller/user.js` → `urunler`). Sıralama seçenekleri `SIRALAMALAR` nesnesinde, her birinin `sira` dizisi var. Fiyat aralığı için `Op.between` (ikisi de varsa), `Op.gte` (büyük eşit) ya da `Op.lte` (küçük eşit) kullanılıyor. Form `method="get"` olduğu için seçimler adreste görünüyor, sayfa paylaşılabiliyor. Kategori sayfası da aynı fonksiyonu kullanıyor (`/kategori/:slug`).
 
 **İplik türü ve hazırlanma süresi nasıl tutuluyor?**
 `models/urun.js` içinde iki sütun: `iplik` (metin) ve `hazirlikGunu` (sayı). Seçilebilecek iplikler aynı dosyada bir dizi: `Urun.IPLIKLER = ["Yün", "Merinos", "Alpaka", "Moher", "Pamuk", "Bambu", "Akrilik"]`. Ürün formundaki açılır liste bu diziden oluşuyor. Kaydederken `Urun.IPLIKLER.includes(req.body.iplik)` ile kontrol ediliyor, listede olmayan bir değer gönderilirse "Yün" yazılıyor. Hazırlanma süresi 1 ile 60 gün arasına sınırlanıyor. Ürün sayfasında "12 günde örülür" gibi gösteriliyor.
@@ -296,7 +300,7 @@ Bootstrap 5 + kendi `public/css/stil.css` dosyam. Bootstrap'ten navbar (telefond
 ## Test
 
 **Projeyi nasıl test ettin?**
-`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla siteyi gerçek bir kullanıcı gibi geziyor: misafir, alıcı, satıcı ve admin olarak giriş yapıyor, ürün ekliyor, sipariş veriyor, durumu ilerletiyor, yorum yazıyor ve sonuçları kontrol ediyor (46 kontrol). Örnekler: CSRF anahtarı olmadan gönderilen form 403 alıyor; ürün adındaki `<script>` sayfada çalışmadan düz yazı görünüyor; onaysız ürün 404 veriyor; teslim almadan yorum yazılamıyor; satıcı onaylayınca stok düşüyor; "beklemede"den doğrudan "teslim"e geçilemiyor; başkası siparişin durumunu değiştiremiyor. Çalıştırmak için: `ilmek.db`'yi sil, `npm start`, başka terminalde `npm test`.
+`test/test.mjs` dosyası Node'un kendi `fetch` fonksiyonuyla siteyi gerçek bir kullanıcı gibi geziyor: misafir, üye, satıcı ve admin olarak giriş yapıyor, ürün ekliyor, sepetle ödeme yapıyor, durumu ilerletiyor, yorum yazıyor ve sonuçları kontrol ediyor (57 kontrol). Örnekler: CSRF anahtarı olmadan gönderilen form 403 alıyor; ürün adındaki `<script>` sayfada çalışmadan düz yazı görünüyor; hatalı ya da süresi geçmiş kart reddediliyor; sepete elle "fiyat: 1" yazılsa bile toplam veritabanı fiyatıyla hesaplanıyor; sipariş sayfasında kartın sadece son 4 hanesi görünüyor; misafirin siparişini başkası göremiyor; üye ikinci alışverişte adres yazmıyor; teslim almadan yorum yazılamıyor; "hazırlanıyor"dan doğrudan "teslim"e geçilemiyor. Çalıştırmak için: `ilmek.db`'yi sil, `npm start`, başka terminalde `npm test`.
 
 ---
 
@@ -306,16 +310,19 @@ Bootstrap 5 + kendi `public/css/stil.css` dosyam. Bootstrap'ten navbar (telefond
 Kurulum gerektirmediği için, proje her bilgisayarda `npm install` ve `npm start` ile çalışıyor. Sequelize kullandığımız için kodun geri kalanı veritabanından bağımsız. MySQL'e geçmek için `data/db.js`'te dersteki satırı yazmak ve `mysql2` paketini kurmak yeterli.
 
 **Neden gerçek ödeme yok?**
-Ders projesi olduğu için ve gerçek ödeme almak güvenlik, sözleşme ve banka entegrasyonu gerektirdiği için. Bunun yerine sipariş talebi + durum takibi yaptık; örgüde zaten çoğu zaman örgücüyle konuşup beden, renk gibi kişiye özel ayarlama yapılıyor.
+Ders projesi olduğu için ve gerçek ödeme almak güvenlik, sözleşme ve banka entegrasyonu gerektirdiği için. Ödeme formu gerçek gibi çalışıyor (kart kontrolleri, sipariş oluşturma, stok düşme) ama para çekilmiyor. Gerçek bir sitede bu adımda iyzico ya da Stripe gibi bir ödeme şirketine bağlanılırdı.
 
 **Aynı anda iki kişi son ürünü alırsa?**
-Sipariş talebi stoğu düşürmüyor, satıcı onaylarken düşüyor. Satıcı onaylamaya çalıştığında stok yetmiyorsa "Stok yetersiz" uyarısı alıyor, o siparişi reddedebiliyor.
+Ödeme sırasında stok tekrar kontrol ediliyor. İlk ödeyen alıyor ve stok düşüyor; ikinci kişi ödemeye bastığında "stokta sadece 0 adet var" hatası alıyor.
+
+**Sepet neden sunucuda değil?**
+Misafir de alışveriş yapabilsin diye ve basit olsun diye. Sunucuda tutsaydık her ziyaretçi için oturumda ya da veritabanında sepet saklamamız gerekirdi. Tarayıcıda tutmanın dezavantajı: başka bir bilgisayarda aynı sepet görünmez. Bu yüzden fiyat ve stok gibi önemli şeyleri ödeme sırasında sunucuda tekrar kontrol ediyoruz.
 
 **`saveUninitialized: false` ne demek?**
 Oturuma bir şey yazılmadıkça veritabanına kaydetme demek. Biz ziyaretçi sayacı için ilk istekte `sayildi` yazdığımız için her ziyaretçinin oturumu yine de oluşuyor.
 
 **Sunucu yeniden başlarsa ne olur?**
-Oturumlar veritabanında olduğu için kimsenin girişi düşmez. Sadece online sayısı ve "şu an bakan" sayıları sıfırlanır, çünkü onlar hafızada.
+Oturumlar veritabanında olduğu için kimsenin girişi düşmez. Sadece online sayısı sıfırlanır, çünkü o hafızada.
 
 **Projeyi geliştirmek isteseydin ne eklerdin?**
 Alıcı ile satıcı arasında mesajlaşma, bir ürüne birden fazla resim, kargo takip numarası, e-posta bildirimleri, şifremi unuttum, Socket.io ile anlık bildirimler.

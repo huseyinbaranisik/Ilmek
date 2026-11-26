@@ -1,30 +1,25 @@
 // ============================================================
-//  helpers/canli.js - Online kullanıcı sayısı ve "şu an bu ürüne bakanlar"
+//  helpers/canli.js - Online kullanıcı sayısı
 //
-//  Veritabanına yazmıyoruz, sunucunun hafızasında (RAM) tutuyoruz:
-//  - sonGorulme: her oturumun en son ne zaman istek attığı
-//  - bakanlar:   her oturumun şu an hangi ürün sayfasında olduğu
-//  Sayfa açık kaldıkça tarayıcı 15 saniyede bir /api/nabiz adresine haber verir (public/js/site.js).
+//  Veritabanına yazmıyoruz, sunucunun hafızasında (RAM) tutuyoruz.
+//  sonGorulme = { oturumId: en son görüldüğü zaman }
+//  middleware/locals.js her istekte zamanı günceller,
+//  sayfa açık kaldıkça tarayıcı da 15 saniyede bir /api/nabiz adresine haber verir.
 // ============================================================
-const sonGorulme = {};   // { oturumId: zaman }
-const bakanlar = {};     // { oturumId: { urunId, zaman } }
+const sonGorulme = {};
 
-// Son 60 saniyede görülenler "çevrimiçi" sayılır
+// Son 60 saniyede görülenler "çevrimiçi" sayılır, eskiler silinir
 function onlineSayisi() {
   const sinir = Date.now() - 60 * 1000;
-  for (const id in sonGorulme) if (sonGorulme[id] < sinir) delete sonGorulme[id];
-  return Object.keys(sonGorulme).length;
-}
-
-// Son 40 saniyede bu ürünün sayfasında olanların sayısı
-function bakanSayisi(urunId) {
-  const sinir = Date.now() - 40 * 1000;
   let sayi = 0;
-  for (const id in bakanlar) {
-    if (bakanlar[id].zaman < sinir) { delete bakanlar[id]; continue; }
-    if (bakanlar[id].urunId === urunId) sayi++;
+  for (const oturumId in sonGorulme) {
+    if (sonGorulme[oturumId] < sinir) {
+      delete sonGorulme[oturumId];
+    } else {
+      sayi++;
+    }
   }
   return sayi;
 }
 
-module.exports = { sonGorulme, bakanlar, onlineSayisi, bakanSayisi };
+module.exports = { sonGorulme, onlineSayisi };
