@@ -3,3 +3,5 @@ ilmek.db
 # Yüklenen dosyalar GitHub'a gönderilmez
 public/img/yuklenen/*
 !public/img/yuklenen/.gitkeep
+# Kişisel çalışma notları, GitHub'a gönderilmez
+BACKEND.md
