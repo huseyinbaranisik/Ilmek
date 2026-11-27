@@ -1,0 +1,76 @@
+> npm test   (27.11.2026, boş veritabanı)
+
+OK   misafir hesap sayfasına giremez -> girişe /auth/giris?url=%2Fhesap%2Furunlerim
+OK   yanlış CSRF -> 403 
+OK   CSRF yok -> 403 
+OK   onaysız ürün misafire görünmez (404) 
+OK   kategori sayfası (slug, & -> ve) 
+OK   sıralama: en ucuz önce 120,140,160,160,180
+OK   fiyat filtresi (en az 1000) 
+OK   sayfalama: sayfa başına 24 ürün, 2. sayfa farklı 
+OK   sayfalama: olmayan sayfa boş liste 
+OK   her kategoride en az 20 ürün 
+OK   iplik filtresi (Alpaka) 
+OK   arama ürün buluyor 
+OK   arama iplik türünü buluyor 
+OK   arama örgücü buluyor 
+OK   ürün sayfasında iplik ve hazırlanma süresi 
+OK   sitemap.xml 
+OK   benzer ürünler aynı kategoriden, tekrar yok 8 benzer
+OK   girişte büyük/küçük harf ve boşluk önemsiz /
+OK   yanlış şifreyle giriş olmuyor 
+OK   kayıt /
+OK   ürün eklendi -> ürünlerim /hesap/urunlerim
+OK   ürünlerimde "Onay bekliyor" 
+OK   XSS kaçırıldı 
+OK   yüklenen resim /img/yuklenen/ adresinde 
+OK   onaysız ürün misafire görünmez 
+OK   sepet API ürün bilgilerini veriyor 
+OK   hatalı kart numarası reddedildi 
+OK   süresi geçmiş kart reddedildi 
+OK   stoktan fazla adet reddedildi 
+OK   boş sepet reddedildi 
+OK   misafir adres yazmadan ödeyemez 
+OK   misafir ödemesi -> sipariş sayfası /siparis/IL-1795777256724?yeni=1
+OK   teşekkür sayfası, toplam veritabanı fiyatıyla (2x220 + 240 = 680) 
+OK   kartın sadece son 4 hanesi görünüyor 
+OK   başkası sipariş sayfasını göremez (404) 
+OK   sorgulama: yanlış e-posta reddedildi 
+OK   sorgulama: numara + e-posta doğru -> sipariş 
+OK   üye ilk alışverişte adres formunu görüyor 
+OK   üye ödemesi /siparis/IL-1795777256966?yeni=1
+OK   ikinci alışverişte adres sorulmuyor (hesapta kayıtlı) 
+OK   üye sadece kart bilgisiyle ödeyebiliyor /siparis/IL-1795777257025?yeni=1
+OK   siparişlerimde "Hazırlanıyor" 
+OK   teslim almadan yorum yazılamaz 
+OK   favoriye ekle (JSON) 
+OK   favorilerimde görünüyor 
+OK   tekrar basınca favoriden çıkar 
+OK   misafir favorileyemez -> girişe 
+OK   üye admin paneline giremez (403) 
+OK   satıcıya üye ve misafir siparişi geldi 
+OK   ödemeyle stoktan düştü (8 - 2 - 1 = 5) 
+OK   yanlış durum geçişi reddedildi 
+OK   başkasının siparişini değiştiremez (404) 
+OK   alıcı "Teslim edildi" görüyor 
+OK   teslimden sonra yorum yazıldı /urun/bebek-patigi#yorumlar
+OK   yorum görünüyor ve ortalama güncellendi (5 ve 3 -> 4.0) 
+OK   yanlış şifre reddedildi 
+OK   admin giriş -> /admin /admin
+OK   admin onayladı -> ürün yayında 
+OK   kategori eklendi (slug: cam-isleri) 
+OK   içinde ürün olan kategori silinemez 
+OK   duyuru slug 
+OK   admin siparişler 
+OK   admin panelinde ciro ve durumlar 
+OK   galeri: 4 albümde 27 fotoğraf {"Desenler":6,"Atölyeden":7,"İplikler":7,"Örerken":7}
+OK   galeri: büyük görünümde önceki/sonraki ve sayaç 
+OK   galeri: örgücünün mağazasına bağlantı 
+OK   galeri: albüm süzgeci (sadece İplikler) {"İplikler":7}
+OK   galeri: olmayan albüm -> hepsi 
+OK   galeri: admin resmi albüme ekledi /img/yuklenen/1795777258935-723584.png
+OK   galeri: yüklenen dosya klasörden açılıyor 
+OK   galeri: albüm seçilmeden eklenmez 
+OK   galeri: silinince dosya da silindi (404) 
+
+Bütün kontroller geçti

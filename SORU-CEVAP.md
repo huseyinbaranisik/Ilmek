@@ -137,7 +137,7 @@ JavaScript kullanmadan, CSS `:target` seçicisiyle. Resim linki `#resim-3` adres
 Veritabanında değil, klasörde. Örnek ürün resimleri `public/img/urunler/`, yüklenen resimler `public/img/yuklenen/`. Veritabanına sadece adres (URL) yazılıyor: `urun.resim = "/img/urunler/bere.jpg"`. EJS bunu `<img src="<%= u.resim %>">` içine koyuyor, `express.static("public")` dosyayı o adresten sunuyor.
 
 **Ürün fotoğrafları nereden geldi, telifli mi?**
-Unsplash'ten indirildi (`public/img/urunler/*.jpg`). Unsplash Lisansı fotoğrafların ücretsiz indirilmesine ve ticari olanlar dahil her projede kullanılmasına izin veriyor, izin almak gerekmiyor. Yine de fotoğrafçıların adlarını ve fotoğrafların bağlantılarını README'ye yazdık. Fotoğraflar 600x600 ya da 800x800 piksel, kare kırpılmış JPG; tanesi 60-150 KB civarında, sayfa hızlı açılsın diye büyük hallerini indirmedik.
+Unsplash'ten indirildi (ürünler `public/img/urunler/`, galeri `public/img/galeri/`). Unsplash Lisansı fotoğrafların ücretsiz indirilmesine ve ticari olanlar dahil her projede kullanılmasına izin veriyor, izin almak gerekmiyor. Yine de fotoğrafçıların adlarını ve fotoğrafların bağlantılarını `CREDITS.md` dosyasına yazdık. Ürün fotoğrafları 600x600 ya da 800x800 piksel kare, galeri fotoğrafları 800x600 JPG; tanesi 60-150 KB civarında, sayfa hızlı açılsın diye büyük hallerini indirmedik.
 
 **Dosya yükleme nasıl ve güvenli mi?**
 `multer` paketiyle (`helpers/yukle.js`):

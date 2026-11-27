@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!-- README görselleri. tools/figurler.sh bu sayfayı Edge ile açıp her figürün PNG'sini docs/ altına çeker.
+     Hangi figürün çizileceği adresteki #hero, #ekranlar, #koyu, #telefon ile seçilir.
+     Ekran görüntüleri docs/kaynak/ içinde (tools/ekran-goruntuleri.sh ile alınır). -->
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../node_modules/@fontsource-variable/fraunces/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource-variable/inter/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/caveat/index.css">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #f7f1e6; color: #3b2f26; font-family: "Inter Variable", sans-serif; }
+  .figur { display: none !important; position: relative; overflow: hidden; }
+  .figur.goster { display: block !important; }
+  .ikili.goster, #telefon.goster { display: flex !important; }
+  /* Tarayıcı penceresi çerçevesi */
+  .pencere { background: #fffdf8; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 60px rgba(59, 47, 38, .22), 0 4px 12px rgba(59, 47, 38, .08); }
+  .pencere .cubuk { height: 40px; background: #3b2f26; display: flex; align-items: center; gap: 8px; padding: 0 18px; }
+  .pencere .cubuk i { width: 12px; height: 12px; border-radius: 50%; background: #c4623a; }
+  .pencere .cubuk i:nth-child(2) { background: #d9a441; }
+  .pencere .cubuk i:nth-child(3) { background: #6b7a3a; }
+  .pencere img { display: block; width: 100%; }
+  .kirp { overflow: hidden; }
+  .kirp img { object-fit: cover; object-position: top; width: 100%; height: 100%; }
+
+  /* ---------- HERO 1800x900 ---------- */
+  #hero { width: 1800px; height: 900px; }
+  #hero .sol { position: absolute; left: 96px; top: 110px; width: 700px; }
+  #hero .ust { color: #c4623a; font-weight: 700; letter-spacing: .14em; font-size: 24px; }
+  #hero h1 { font-family: "Fraunces Variable", serif; font-size: 116px; line-height: 1.05; margin: 26px 0 24px; font-weight: 700; }
+  #hero h1 img { width: 96px; vertical-align: -6px; margin-right: 10px; }
+  #hero .alt { font-size: 34px; line-height: 1.3; font-weight: 500; }
+  #hero .aciklama { font-size: 24px; line-height: 1.55; color: #6f6254; margin-top: 26px; }
+  #hero .el { font-family: "Caveat", cursive; color: #c4623a; font-size: 34px; margin-top: 18px; }
+  #hero .hap { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
+  #hero .hap span { border: 2px solid #3b2f26; border-radius: 999px; padding: 10px 22px; font-size: 22px; font-weight: 500; }
+  #hero .pencere { position: absolute; left: 850px; top: 130px; width: 880px; }
+  #hero .pencere .kirp { height: 550px; }
+
+  /* ---------- İKİLİ EKRANLAR 1600x540 ---------- */
+  .ikili { width: 1600px; height: 540px; display: flex; gap: 28px; padding: 32px; }
+  .ikili .pencere { flex: 1; }
+  .ikili .kirp { height: 436px; }
+  #koyu { background: #1c1713; }
+  #koyu .pencere { background: #26201a; box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
+
+  /* ---------- TELEFON + TABLET 1600x900 ---------- */
+  #telefon { width: 1600px; height: 900px; display: flex; justify-content: center; align-items: center; gap: 48px; }
+  .cihaz { background: #2a221b; padding: 14px; border-radius: 44px; box-shadow: 0 30px 60px rgba(59, 47, 38, .25); }
+  .cihaz .kirp { border-radius: 32px; }
+  .cihaz.tel .kirp { width: 360px; height: 760px; }
+  .cihaz.tab { border-radius: 30px; }
+  .cihaz.tab .kirp { width: 600px; height: 760px; border-radius: 18px; }
+
+  /* ---------- TEST ÇIKTISI 1600x560 (docs/kaynak/test.txt) ---------- */
+  #test { width: 1600px; height: 560px; padding: 32px; }
+  #test .pencere { background: #1c1713; height: 100%; }
+  #test .cubuk { background: #120e0b; color: #a8998a; font: 14px "Inter Variable", sans-serif; }
+  #test .cubuk span { margin-left: 12px; }
+  #test pre { margin: 0; padding: 22px 28px; color: #ede3d3; font: 17px/1.55 Consolas, "Cascadia Mono", monospace; white-space: pre-wrap; }
+  #test pre b { color: #9fbf6a; font-weight: 600; }
+  #test pre em { color: #e0b25a; font-style: normal; }
+</style>
+<!-- test.txt'nin içeriği: tools/figurler.sh bunu her seferinde docs/kaynak/test.js olarak yeniden yazar -->
+<script src="../docs/kaynak/test.js"></script>
+</head>
+<body>
+
+<section class="figur" id="hero">
+  <div class="sol">
+    <div class="ust">HAND-KNITTED MARKETPLACE</div>
+    <h1><img src="../public/img/logo.svg" alt="">İlmek</h1>
+    <div class="alt">Knitters open a shop, buyers order without signing up</div>
+    <div class="aciklama">An Express, EJS and Sequelize web app with a browser-side cart, mock checkout, seller shops, an album gallery and an admin panel.</div>
+    <div class="el">her ilmekte bir emek var…</div>
+    <div class="hap"><span>160 products</span><span>8 categories</span><span>72 checks</span></div>
+  </div>
+  <div class="pencere"><div class="cubuk"><i></i><i></i><i></i></div><div class="kirp"><img src="../docs/kaynak/ana-sayfa.png" alt=""></div></div>
+</section>
+
+<section class="figur ikili" id="ekranlar">
+  <div class="pencere"><div class="cubuk"><i></i><i></i><i></i></div><div class="kirp"><img src="../docs/kaynak/kategori.png" alt=""></div></div>
+  <div class="pencere"><div class="cubuk"><i></i><i></i><i></i></div><div class="kirp"><img src="../docs/kaynak/urun.png" alt=""></div></div>
+</section>
+
+<section class="figur ikili" id="koyu">
+  <div class="pencere"><div class="cubuk"><i></i><i></i><i></i></div><div class="kirp"><img src="../docs/kaynak/ana-sayfa-koyu.png" alt=""></div></div>
+  <div class="pencere"><div class="cubuk"><i></i><i></i><i></i></div><div class="kirp"><img src="../docs/kaynak/galeri-koyu.png" alt=""></div></div>
+</section>
+
+<section class="figur" id="telefon">
+  <div class="cihaz tel"><div class="kirp"><img src="../docs/kaynak/telefon.jpg" alt=""></div></div>
+  <div class="cihaz tel"><div class="kirp"><img src="../docs/kaynak/telefon-koyu.jpg" alt=""></div></div>
+  <div class="cihaz tab"><div class="kirp"><img src="../docs/kaynak/admin-koyu.jpg" alt=""></div></div>
+</section>
+
+<section class="figur" id="test">
+  <div class="pencere"><div class="cubuk"><i></i><i></i><i></i><span>npm test</span></div><pre id="cikti"></pre></div>
+</section>
+
+<script>
+  // Test çıktısının ilk satırı (komut) ve son 15 satırı; OK yeşil, özet sarı
+  if (window.TEST_CIKTISI) {
+    const satirlar = window.TEST_CIKTISI.trim().split(/\r?\n/);
+    const toplam = satirlar.filter(s => s.startsWith('OK')).length;
+    const son = satirlar.slice(-12);   // son 10 kontrol + boş satır + özet
+    const gizli = toplam - son.filter(s => s.startsWith('OK')).length;
+    const goster = [satirlar[0], '', '   ... ' + gizli + ' kontrol daha ...', ...son];
+    document.getElementById('cikti').innerHTML = goster.map(s => s
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/^OK/, '<b>OK</b>')
+      .replace(/^(Bütün kontroller geçti.*)$/, '<em>$1 (' + toplam + ' OK)</em>')).join('\n');
+  }
+  // Adresteki #hero, #koyu ... hangi figür çizilecek onu seçer
+  document.getElementById(location.hash.slice(1)).classList.add("goster");
+</script>
+</body>
+</html>
