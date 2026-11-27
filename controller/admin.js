@@ -2,7 +2,9 @@
 //  controller/admin.js - Admin paneli
 //  Bu fonksiyonlara sadece adminler ulaşabilir (routes/admin.js -> isAdmin)
 // ============================================================
-const { fn, col } = require("sequelize");
+const { fn, col, Op } = require("sequelize");
+const fs = require("fs");
+const path = require("path");
 const Urun = require("../models/urun");
 const Kategori = require("../models/kategori");
 const Kullanici = require("../models/kullanici");
@@ -193,8 +195,10 @@ exports.soruSil = async (req, res, next) => {
 // ---------- Galeri ----------
 exports.galeri = async (req, res, next) => {
   try {
-    const resimler = await Galeri.findAll({ order: [["id", "DESC"]] });
-    res.render("admin/galeri", { resimler });
+    const resimler = await Galeri.findAll({ include: Kullanici, order: [["id", "DESC"]] });
+    // Fotoğrafın bağlanabileceği örgücüler: mağaza adı olan üyeler
+    const orgucular = await Kullanici.findAll({ where: { magazaAdi: { [Op.ne]: null } }, order: [["magazaAdi", "ASC"]] });
+    res.render("admin/galeri", { resimler, orgucular, ALBUMLER: Galeri.ALBUMLER });
   } catch (hata) {
     next(hata);
   }
@@ -202,11 +206,27 @@ exports.galeri = async (req, res, next) => {
 
 exports.galeriEkle = async (req, res, next) => {
   try {
+    // Albüm listede yoksa ya da örgücü bulunamazsa resim eklenmez
+    const album = req.body.album;
+    let kullaniciId = null;
+    if (req.body.kullaniciId) {
+      const orgucu = await Kullanici.findByPk(req.body.kullaniciId);
+      if (orgucu) kullaniciId = orgucu.id;
+    }
+
     if (!req.file) {
       req.session.mesaj = { tur: "hata", metin: "Geçerli bir resim seçin (jpg, png, webp, gif)." };
+    } else if (!Galeri.ALBUMLER.includes(album)) {
+      dosyaSil("/img/yuklenen/" + req.file.filename); // multer dosyayı kaydetmişti, boşta kalmasın
+      req.session.mesaj = { tur: "hata", metin: "Bir albüm seçin." };
     } else {
-      await Galeri.create({ resim: "/img/yuklenen/" + req.file.filename, aciklama: req.body.aciklama || "" });
-      req.session.mesaj = { tur: "basari", metin: "Resim galeriye eklendi." };
+      await Galeri.create({
+        resim: "/img/yuklenen/" + req.file.filename,   // dosya klasörde, veritabanında sadece adresi
+        aciklama: (req.body.aciklama || "").trim().slice(0, 100),
+        album: album,
+        kullaniciId: kullaniciId,
+      });
+      req.session.mesaj = { tur: "basari", metin: "Resim \"" + album + "\" albümüne eklendi." };
     }
     res.redirect("/admin/galeri");
   } catch (hata) {
@@ -214,9 +234,24 @@ exports.galeriEkle = async (req, res, next) => {
   }
 };
 
+// Yüklenen bir resim dosyasını klasörden siler.
+// Sadece public/img/yuklenen/ içindekiler silinir; örnek fotoğraflar (img/galeri, img/urunler) projenin parçası.
+function dosyaSil(adres) {
+  if (!adres || !adres.startsWith("/img/yuklenen/")) return;
+  const dosya = path.join(__dirname, "../public", adres);
+  fs.unlink(dosya, (hata) => {
+    if (hata) console.log("Dosya silinemedi:", dosya);
+  });
+}
+
 exports.galeriSil = async (req, res, next) => {
   try {
-    await Galeri.destroy({ where: { id: req.params.id } });
+    const resim = await Galeri.findByPk(req.params.id);
+    if (resim) {
+      await resim.destroy();   // önce veritabanındaki satır
+      dosyaSil(resim.resim);   // sonra klasördeki dosya
+      req.session.mesaj = { tur: "basari", metin: "Resim silindi." };
+    }
     res.redirect("/admin/galeri");
   } catch (hata) {
     next(hata);

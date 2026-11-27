@@ -1,19 +1,55 @@
-<%- include('partials/ust', { sayfaBaslik: 'Galeri' }) %>
-<div class="sayfa-ust"><div><h1>Galeri</h1><p class="soluk mb-0">Atölyelerden kareler</p></div></div>
-<div class="galeri-izgara">
-  <% resimler.forEach(r => { %>
-    <a href="#resim-<%= r.id %>" class="galeri-kart">
-      <img src="<%= r.resim %>" alt="<%= r.aciklama %>">
-      <span class="el-yazisi"><%= r.aciklama %></span>
-    </a>
+<%- include('partials/ust', { sayfaBaslik: album ? album + ' · Galeri' : 'Galeri' }) %>
+<div class="sayfa-ust">
+  <div>
+    <h1>Galeri<% if (album) { %> <span class="soluk">· <%= album %></span><% } %></h1>
+    <p class="soluk mb-0">Atölyelerden kareler · <%= resimler.length %> fotoğraf</p>
+  </div>
+</div>
+
+<!-- Albüm düğmeleri: tıklanınca adrese ?album=İplikler eklenir -->
+<div class="iplik-cipleri" id="galeri">
+  <a href="/galeri" class="<%= !album ? 'aktif' : '' %>">Hepsi (<%= toplam %>)</a>
+  <% albumler.forEach(a => { %>
+    <a href="/galeri?album=<%= encodeURIComponent(a.ad) %>" class="<%= album === a.ad ? 'aktif' : '' %>"><%= a.ad %> (<%= a.sayi %>)</a>
   <% }) %>
 </div>
 
-<!-- Büyük görünüm: adres #resim-ID olunca CSS (:target) ile açılır, JavaScript gerekmez -->
-<% resimler.forEach(r => { %>
-  <a href="#" class="buyut" id="resim-<%= r.id %>">
-    <img src="<%= r.resim %>" alt="<%= r.aciklama %>">
-    <span><%= r.aciklama %></span>
-  </a>
+<div class="galeri-izgara">
+  <% resimler.forEach(r => { %>
+    <div class="galeri-kart">
+      <a href="#resim-<%= r.id %>"><img src="<%= r.resim %>" alt="<%= r.aciklama %>" loading="lazy"></a>
+      <span class="el-yazisi"><%= r.aciklama %></span>
+      <span class="galeri-alt">
+        <span class="galeri-album"><%= r.album %></span>
+        <% if (r.kullanici) { %><a href="/magaza/<%= r.kullanici.kullaniciAdi %>"><%= r.kullanici.magazaAdi || r.kullanici.kullaniciAdi %></a><% } %>
+      </span>
+    </div>
+  <% }) %>
+</div>
+<% if (resimler.length === 0) { %>
+  <div class="bos-durum"><i class="bi bi-images"></i><p>Bu albümde henüz fotoğraf yok.</p></div>
+<% } %>
+
+<!-- Büyük görünüm: adres #resim-ID olunca CSS (:target) ile açılır, JavaScript gerekmez.
+     Oklar bir önceki / bir sonraki fotoğrafın #resim-ID adresine gider (sondan başa döner). -->
+<% resimler.forEach((r, i) => { %>
+  <% const onceki = resimler[(i - 1 + resimler.length) % resimler.length]; %>
+  <% const sonraki = resimler[(i + 1) % resimler.length]; %>
+  <div class="buyut" id="resim-<%= r.id %>">
+    <a href="#galeri" class="buyut-kapat" aria-label="Kapat"></a>
+    <figure>
+      <img src="<%= r.resim %>" alt="<%= r.aciklama %>" loading="lazy">
+      <figcaption>
+        <b><%= r.aciklama %></b> · <%= r.album %>
+        <% if (r.kullanici) { %> · <a href="/magaza/<%= r.kullanici.kullaniciAdi %>"><%= r.kullanici.magazaAdi || r.kullanici.kullaniciAdi %></a><% } %>
+        <span class="buyut-sayac"><%= i + 1 %> / <%= resimler.length %></span>
+      </figcaption>
+    </figure>
+    <% if (resimler.length > 1) { %>
+      <a href="#resim-<%= onceki.id %>" class="buyut-ok onceki" aria-label="Önceki fotoğraf"><i class="bi bi-chevron-left"></i></a>
+      <a href="#resim-<%= sonraki.id %>" class="buyut-ok sonraki" aria-label="Sonraki fotoğraf"><i class="bi bi-chevron-right"></i></a>
+    <% } %>
+    <a href="#galeri" class="buyut-x" aria-label="Kapat"><i class="bi bi-x-lg"></i></a>
+  </div>
 <% }) %>
 <%- include('partials/alt') %>

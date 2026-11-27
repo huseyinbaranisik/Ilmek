@@ -333,12 +333,31 @@ a.satir:hover { color: inherit; outline: 1.5px dashed var(--turuncu); outline-of
 .galeri-kart:nth-child(odd) { transform: rotate(-2deg); }
 .galeri-kart:nth-child(even) { transform: rotate(1.5deg); }
 .galeri-kart:hover { transform: rotate(0) scale(1.04); color: inherit; z-index: 1; }
-.galeri-kart img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-.galeri-kart .el-yazisi { font-size: 1.3em; text-align: center; color: var(--yazi); }
+.galeri-kart img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.galeri-kart .el-yazisi { font-size: 1.3em; text-align: center; color: var(--yazi); line-height: 1.1; }
+.galeri-alt { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+.galeri-album { padding: 1px 8px; border-radius: 999px; background: var(--zemin); color: var(--soluk); }
+.galeri-alt a { color: var(--turuncu); font-weight: 600; }
 /* Büyük görünüm (:target) */
 .buyut { display: none; }
-.buyut:target { display: flex; position: fixed; inset: 0; z-index: 50; background: rgba(40, 30, 22, .85); flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #fff; }
-.buyut img { max-width: 80vw; max-height: 75vh; background: #fff; padding: 12px; }
+.buyut:target { display: flex; position: fixed; inset: 0; z-index: 1050; align-items: center; justify-content: center; }
+.buyut-kapat { position: absolute; inset: 0; background: rgba(40, 30, 22, .88); }
+.buyut figure { position: relative; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.buyut img { max-width: 82vw; max-height: 74vh; background: #fff; padding: 12px; }
+.buyut figcaption { color: #fff; text-align: center; font-size: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 6px; }
+.buyut figcaption a { color: var(--sari); }
+.buyut-sayac { width: 100%; color: #d9cdbb; font-size: 13px; }
+.buyut-ok, .buyut-x { position: absolute; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(255, 255, 255, .15); color: #fff; font-size: 22px; }
+.buyut-ok:hover, .buyut-x:hover { background: rgba(255, 255, 255, .3); color: #fff; }
+.buyut-ok { top: 50%; transform: translateY(-50%); }
+.buyut-ok.onceki { left: 16px; }
+.buyut-ok.sonraki { right: 16px; }
+.buyut-x { top: 16px; right: 16px; }
+@media (max-width: 576px) {
+  .buyut img { max-width: 94vw; padding: 6px; }
+  .buyut-ok { top: auto; bottom: 18px; transform: none; }
+}
 
 /* ============================================================
    ADMİN

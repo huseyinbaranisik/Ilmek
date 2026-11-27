@@ -75,7 +75,7 @@ helpers/              slugfield (slugify), yukle (multer), canli (online sayıs�
 views/                EJS sayfaları (partials/ ortak parçalar, admin/, hesap/)
 public/css/stil.css   Sıcak el işi teması
 public/js/site.js     Sepet (localStorage), favori kalbi, nabız (online sayısı), adet x fiyat, resim önizleme
-public/img            Bütün resimler: urunler/ (ürün ve galeri fotoğrafları), yuklenen/ (yüklenen resimler), logo.svg
+public/img            Bütün resimler: urunler/ (ürün fotoğrafları), galeri/ (galeri fotoğrafları), yuklenen/ (yüklenen resimler), logo.svg
 test/test.mjs         Uçtan uca test (npm test)
 ```
 
@@ -85,7 +85,7 @@ Resimler veritabanına konmaz. Dosyanın kendisi `public/img/` klasöründe duru
 
 ## Test
 
-`test/test.mjs` misafir, alıcı, örgücü ve admin akışlarını uçtan uca dener: CSRF, XSS, slug, sıralama, fiyat ve iplik filtresi, arama, ürün ekleme ve onay, sepet ve ödeme (misafir ve üye, kart kontrolleri, fiyatın sunucudan alınması, sipariş sorgulama), stok, sipariş durumları, "sadece teslim alan yorum yazabilir" kuralı, favori, sayfalama, her kategoride en az 20 ürün, benzer ürünler, kategori yönetimi, büyük/küçük harfe duyarsız giriş (63 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
+`test/test.mjs` misafir, alıcı, örgücü ve admin akışlarını uçtan uca dener: CSRF, XSS, slug, sıralama, fiyat ve iplik filtresi, arama, ürün ekleme ve onay, sepet ve ödeme (misafir ve üye, kart kontrolleri, fiyatın sunucudan alınması, sipariş sorgulama), stok, sipariş durumları, "sadece teslim alan yorum yazabilir" kuralı, favori, sayfalama, her kategoride en az 20 ürün, benzer ürünler, kategori yönetimi, büyük/küçük harfe duyarsız giriş, galeri albümleri ve dosya silme (72 kontrol). Test yeni bir üye oluşturduğu için boş veritabanında çalıştırılmalı:
 
 ```bash
 # ilmek.db dosyasını silin, sonra:
@@ -101,7 +101,7 @@ npm test       # başka bir terminalde
 | Ziyaretçi sayacı | Sayfanın altında (footer) ve admin panelinde. Her yeni oturum bir kez sayılır. |
 | Online kullanıcı sayısı | Sayfanın altında (footer) ve admin panelinde. |
 | Duyuru-Haber modülü | `/duyurular`, ana sayfadaki duyuru şeridi, admin panelinden ekleme ve silme |
-| Resim galerisi | `/galeri` (atölyelerden kareler, polaroid görünüm), tıklayınca büyür. Admin panelinden resim yüklenir. |
+| Resim galerisi | `/galeri`: 4 albüm (Örerken, İplikler, Atölyeden, Desenler), 27 fotoğraf. Albüme göre süzülür, fotoğraf bir örgücünün mağazasına bağlanabilir. Tıklayınca büyür, önceki/sonraki okları ve sayaç var (JavaScript'siz, CSS `:target`). Admin albüm ve örgücü seçerek yükler; silince dosya da klasörden silinir. |
 | Admin paneli ve yetkilendirme | `/admin`. Misafir, üye ve admin olmak üzere 3 seviye (`isAuth`, `isAdmin`). |
 | CSRF | `csurf` paketi. Bütün formlarda gizli `_csrf` alanı, fetch isteklerinde `x-csrf-token` başlığı. |
 | Slugify | `/urun/sac-orgulu-kazak`, `/kategori/bere-ve-sapka`, `/duyuru/ilmek-acildi` |
@@ -109,7 +109,7 @@ npm test       # başka bir terminalde
 
 ## Fotoğraf kaynakları
 
-`public/img/urunler/` klasöründeki fotoğraflar [Unsplash](https://unsplash.com)'ten indirildi ve [Unsplash Lisansı](https://unsplash.com/license) ile kullanılıyor (ücretsiz, ticari kullanım dahil, izin gerekmez). İlk 38 fotoğraf 800x800, sonra eklenen 122 fotoğraf 600x600 piksel kare JPG olarak kırpıldı.
+`public/img/urunler/` klasöründeki fotoğraflar [Unsplash](https://unsplash.com)'ten indirildi ve [Unsplash Lisansı](https://unsplash.com/license) ile kullanılıyor (ücretsiz, ticari kullanım dahil, izin gerekmez). Ürün fotoğraflarının ilk 38'i 800x800, sonra eklenen 122'si 600x600 piksel kare JPG. Galeri fotoğrafları (`public/img/galeri/`, tabloda `galeri/` ile başlayanlar) 800x600.
 
 | Dosya | Fotoğrafçı | Kaynak |
 |---|---|---|
@@ -128,9 +128,9 @@ npm test       # başka bir terminalde
 | `sal.jpg` | Giulia Bertelli | https://unsplash.com/photos/a-knitted-teddy-bear-laying-on-top-of-a-blanket-7j737kkSoBs |
 | `canta.jpg` | Anna Tukhfatullina | https://unsplash.com/photos/brown-knit-handbag-PF-PYpnA0JM |
 | `yastik.jpg` | la crafter | https://unsplash.com/photos/white-and-brown-knit-textile-0-i_R_vSpOI |
-| `yumak.jpg` | Margarida Afonso | https://unsplash.com/photos/orange-blue-and-white-yarn-ahMCpXdUjv0 |
-| `ip_rafi.jpg` | Paul Hanaoka | https://unsplash.com/photos/assorted-color-textiles-4nabmlliGdU |
-| `orgu_eller.jpg` | Tanaphong Toochinda | https://unsplash.com/photos/a-woman-is-knitting-a-piece-of-fabric-WddCult7llk |
+| `galeri/yumak.jpg` | Margarida Afonso | https://unsplash.com/photos/orange-blue-and-white-yarn-ahMCpXdUjv0 |
+| `galeri/ip_rafi.jpg` | Paul Hanaoka | https://unsplash.com/photos/assorted-color-textiles-4nabmlliGdU |
+| `galeri/orgu_eller.jpg` | Tanaphong Toochinda | https://unsplash.com/photos/a-woman-is-knitting-a-piece-of-fabric-WddCult7llk |
 | `ponponlu_bere.jpg` | Chris Lorensson | https://unsplash.com/photos/woman-covering-her-face-with-knit-cap-zXdI8XO3ZBs |
 | `tig_sapka.jpg` | la crafter | https://unsplash.com/photos/brown-textile-FQi7FgB6GRo |
 | `bebek_bere.jpg` | kaushal mishra | https://unsplash.com/photos/baby-in-white-knit-cap-lying-on-white-textile-p76UivR30oo |
@@ -277,3 +277,27 @@ npm test       # başka bir terminalde
 | `pastel_mini_canta.jpg` | Joy Ru | https://unsplash.com/photos/a-miniature-purse-is-sitting-on-a-table-QKDemhgdwcQ |
 | `cicekli_anahtarlik.jpg` | COPPERTIST WU | https://unsplash.com/photos/a-key-chain-with-a-white-flower-on-it-GvOCTRQ0IN0 |
 | `bordo_orgu_sac_bandi.jpg` | Riccardo Vicidomini Varotto | https://unsplash.com/photos/woman-standing-behind-green-leafed-tre-aCj0dNnkgSc |
+| `galeri/aksam_orgusu.jpg` | Marina Ermakova | https://unsplash.com/photos/person-holding-green-leaf-during-daytime-NVB16ic4tec |
+| `galeri/mor_ilmekler.jpg` | David Vilches | https://unsplash.com/photos/person-in-black-knit-sweater-holding-pen-d0v09fmxuXc |
+| `galeri/hardal_yun_siste_buyuyor.jpg` | Ursula Castillo | https://unsplash.com/photos/yellow-crochet-textile-aLfHUE8o5Xc |
+| `galeri/yesil_yunle_orgu_saati.jpg` | R M | https://unsplash.com/photos/a-woman-holding-a-piece-of-cloth-and-a-pair-of-scissors-QKyElfOJOIA |
+| `galeri/kalpli_isaretcilerle_orgu.jpg` | Yuliia Pakhomova | https://unsplash.com/photos/hand-holding-knitting-needle-with-heart-stitch-markers-T2WSKgOxRM0 |
+| `galeri/salonda_orgu_molasi.jpg` | Peyman Shojaei | https://unsplash.com/photos/a-woman-sitting-on-a-stool-in-a-living-room-m0XooB3fYAs |
+| `galeri/pastel_yumaklar.jpg` | Raelle Cameron | https://unsplash.com/photos/a-group-of-yarn-eHm_wq_Ys7M |
+| `galeri/renk_renk_akrilikler.jpg` | June Gathercole | https://unsplash.com/photos/pink-blue-and-yellow-yarn-64yO1CCQAY8 |
+| `galeri/sepetteki_kis_yunleri.jpg` | Alexandra Tran | https://unsplash.com/photos/a-basket-filled-with-balls-of-yarn-next-to-a-potted-plant-NFY_Wp26FQs |
+| `galeri/elde_boyanmis_cileler.jpg` | Anya Chernykh | https://unsplash.com/photos/a-close-up-of-a-bunch-of-yarn-huX8hfbrEh4 |
+| `galeri/avucta_bej_merinos.jpg` | Oksana Maselko | https://unsplash.com/photos/a-close-up-of-a-babys-head-BEvyoJYYSj0 |
+| `galeri/ebruli_yumak.jpg` | Hannah Cole | https://unsplash.com/photos/yellow-purple-and-pink-yarn-kfzzaTbvEJg |
+| `galeri/tiglar_ve_isaretciler.jpg` | Edz Norton | https://unsplash.com/photos/silver-and-gold-rings-on-brown-wooden-table-9rStyyFGKQA |
+| `galeri/tig_isi_masasi.jpg` | Mel Poole | https://unsplash.com/photos/orange-and-white-yarn-on-white-table-vJgD2A1CPjE |
+| `galeri/gri_yun_sepeti.jpg` | Kelly Sikkema | https://unsplash.com/photos/white-and-brown-yarn-in-basket-e-qf3qwi98er4 |
+| `galeri/hasir_sepette_ipler.jpg` | A R | https://unsplash.com/photos/green-red-and-blue-yarn-zVGYXVaFXNs |
+| `galeri/ipci_dukkaninin_raflari.jpg` | Philip Myrtorp | https://unsplash.com/photos/a-display-of-different-colored-yarns-in-a-store-SLEPTFiCtnI |
+| `galeri/mor_ve_gri_raf.jpg` | Jonathan Cooper | https://unsplash.com/photos/a-display-of-yarns-for-sale-in-a-store-TfcSTnQykTU |
+| `galeri/hardal_kabartma_orgu.jpg` | Nataliya Melnychuk | https://unsplash.com/photos/close-up-of-a-yellow-knitted-fabric-with-a-diamond-pattern-UQp8lp50ypg |
+| `galeri/katlanmis_sis_orguleri.jpg` | Jordan Bigelow | https://unsplash.com/photos/green-and-white-striped-textile-pYYSOBjg6CI |
+| `galeri/renkli_cizgiler.jpg` | Lauren bova | https://unsplash.com/photos/blue-green-and-red-knit-textile-DLazlyj8sYA |
+| `galeri/kiremit_sac_orgusu.jpg` | Barney Goodman | https://unsplash.com/photos/orange-cable-knit-wool-texture-K7WaLp9CiyE |
+| `galeri/granny_kareler.jpg` | JOONY | https://unsplash.com/photos/green-white-and-yellow-knit-textile-VleAEtGmQH0 |
+| `galeri/dantel_motif.jpg` | Marat Gilyadzinov | https://unsplash.com/photos/round-brown-knit-textile-EJXBuz9YpYQ |

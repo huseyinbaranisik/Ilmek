@@ -3,18 +3,35 @@
 
 <div class="kutu mb-4">
   <div class="fw-medium mb-3"><i class="bi bi-plus-circle turuncu"></i> Galeriye resim ekle</div>
+  <!-- Dosyalı form: CSRF anahtarı adreste de gönderilir (csurf, multer'dan önce çalışıyor) -->
   <form action="/admin/galeri?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data" class="row g-2">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <div class="col-md-5"><input type="file" name="resim" accept=".jpg,.jpeg,.png,.webp,.gif" class="giris-kutu w-100" required></div>
-    <div class="col-md-5"><input name="aciklama" class="giris-kutu w-100" placeholder="Açıklama"></div>
-    <div class="col-md-2"><button class="btn-turuncu w-100">Yükle</button></div>
+    <div class="col-md-6 col-lg-3"><input type="file" name="resim" accept=".jpg,.jpeg,.png,.webp,.gif" class="giris-kutu w-100" required aria-label="Resim"></div>
+    <div class="col-md-6 col-lg-3"><input name="aciklama" class="giris-kutu w-100" placeholder="Açıklama" maxlength="100" aria-label="Açıklama"></div>
+    <div class="col-md-4 col-lg-2">
+      <select name="album" class="giris-kutu w-100" required aria-label="Albüm">
+        <option value="">Albüm seç</option>
+        <% ALBUMLER.forEach(a => { %><option value="<%= a %>"><%= a %></option><% }) %>
+      </select>
+    </div>
+    <div class="col-md-5 col-lg-2">
+      <select name="kullaniciId" class="giris-kutu w-100" aria-label="Örgücü">
+        <option value="">Örgücü yok</option>
+        <% orgucular.forEach(o => { %><option value="<%= o.id %>"><%= o.magazaAdi %></option><% }) %>
+      </select>
+    </div>
+    <div class="col-md-3 col-lg-2"><button class="btn-turuncu w-100">Yükle</button></div>
   </form>
 </div>
 
 <div class="galeri-izgara">
   <% resimler.forEach(r => { %>
     <div class="galeri-kart">
-      <img src="<%= r.resim %>" alt="<%= r.aciklama %>">
+      <img src="<%= r.resim %>" alt="<%= r.aciklama %>" loading="lazy">
+      <span class="galeri-alt">
+        <span class="galeri-album"><%= r.album %></span>
+        <% if (r.kullanici) { %><span class="soluk"><%= r.kullanici.magazaAdi || r.kullanici.kullaniciAdi %></span><% } %>
+      </span>
       <div class="d-flex align-items-center gap-2">
         <span class="soluk kucuk text-truncate flex-grow-1"><%= r.aciklama %></span>
         <form action="/admin/galeri/<%= r.id %>/sil" method="post" onsubmit="return confirm('Bu resim silinsin mi?')">

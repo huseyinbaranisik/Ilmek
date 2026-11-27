@@ -217,5 +217,38 @@ sonuc('admin siparişler', (await a.istek('/admin/siparisler')).metin.includes('
 sayfa = (await a.istek('/admin')).metin;
 sonuc('admin panelinde ciro ve durumlar', sayfa.includes('Toplam satış') && sayfa.includes('Siparişlerin durumu'));
 
+// ================= GALERİ =================
+// Kartlardaki albüm etiketlerini say: { "İplikler": 9, ... }
+const albumSay = (html) => { const s = {}; for (const x of html.matchAll(/class="galeri-album">([^<]+)</g)) s[x[1]] = (s[x[1]] || 0) + 1; return s; };
+sayfa = (await m.istek('/galeri')).metin;
+let say = albumSay(sayfa);
+sonuc('galeri: 4 albümde 27 fotoğraf', Object.keys(say).length === 4 && Object.values(say).reduce((t, x) => t + x, 0) === 27, JSON.stringify(say));
+sonuc('galeri: büyük görünümde önceki/sonraki ve sayaç', sayfa.includes('class="buyut-ok sonraki"') && sayfa.includes('1 / 27'));
+sonuc('galeri: örgücünün mağazasına bağlantı', sayfa.includes('href="/magaza/elif"'));
+say = albumSay((await m.istek('/galeri?album=' + encodeURIComponent('İplikler'))).metin);
+sonuc('galeri: albüm süzgeci (sadece İplikler)', JSON.stringify(say) === '{"İplikler":7}', JSON.stringify(say));
+say = albumSay((await m.istek('/galeri?album=olmayan')).metin);
+sonuc('galeri: olmayan albüm -> hepsi', Object.values(say).reduce((t, x) => t + x, 0) === 27);
+
+// Admin resim yükler (albüm + örgücü), sonra siler: dosya da klasörden silinmeli
+tk = await a.token('/admin/galeri');
+sayfa = (await a.istek('/admin/galeri')).metin;
+const elifId = sayfa.match(/<option value="(\d+)">Elif Örgü Evi</)[1];
+const gfd = new FormData();
+gfd.append('aciklama', 'Test kare'); gfd.append('album', 'Desenler'); gfd.append('kullaniciId', elifId);
+gfd.append('resim', new Blob([PNG], { type: 'image/png' }), 'kare.png');
+r = await a.istek('/admin/galeri?_csrf=' + encodeURIComponent(tk), { method: 'POST', body: gfd });
+sayfa = (await m.istek('/galeri?album=Desenler')).metin;
+const yuklenen = (sayfa.match(/src="(\/img\/yuklenen\/[^"]+)" alt="Test kare"/) || [])[1];
+sonuc('galeri: admin resmi albüme ekledi', !!yuklenen && albumSay(sayfa).Desenler === 7, yuklenen);
+sonuc('galeri: yüklenen dosya klasörden açılıyor', yuklenen && (await m.istek(yuklenen)).durum === 200);
+const gfd2 = new FormData();
+gfd2.append('aciklama', 'Albümsüz'); gfd2.append('resim', new Blob([PNG], { type: 'image/png' }), 'kare.png');
+r = await a.istek('/admin/galeri?_csrf=' + encodeURIComponent(tk), { method: 'POST', body: gfd2 });
+sonuc('galeri: albüm seçilmeden eklenmez', (await a.istek('/admin/galeri')).metin.includes('Bir albüm seçin') && !(await m.istek('/galeri')).metin.includes('Albümsüz'));
+const gId = (await a.istek('/admin/galeri')).metin.match(/\/admin\/galeri\/(\d+)\/sil/)[1];   // en yeni en üstte
+await a.form('/admin/galeri/' + gId + '/sil', {}, tk);
+sonuc('galeri: silinince dosya da silindi (404)', !(await m.istek('/galeri')).metin.includes('Test kare') && (await m.istek(yuklenen)).durum === 404);
+
 console.log(hataSayisi ? '\n' + hataSayisi + ' kontrol başarısız' : '\nBütün kontroller geçti');
 process.exitCode = hataSayisi ? 1 : 0;

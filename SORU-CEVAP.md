@@ -119,10 +119,19 @@ GET ile silme yapılırsa bir link ya da resim etiketi bile silmeyi tetikleyebil
 ## 5. Resim Galerisi
 
 **Galeri nasıl çalışıyor?**
-`/galeri` sayfası `galeri` tablosundaki resimleri polaroid fotoğraflar gibi (CSS grid, hafif eğik beyaz çerçeveler) gösteriyor: "atölyelerden kareler". Admin `/admin/galeri`'den resim yüklüyor (`controller/admin.js` → `galeriEkle`).
+`/galeri` sayfası `galeri` tablosundaki resimleri polaroid fotoğraflar gibi (CSS grid, hafif eğik beyaz çerçeveler) gösteriyor: "atölyelerden kareler". Fotoğraflar 4 albüme ayrılmış: Örerken, İplikler, Atölyeden, Desenler. Üstteki düğmeler `/galeri?album=İplikler` adresine gidiyor; controller albüm adını `Galeri.ALBUMLER` listesinde kontrol edip `where: { album }` ile süzüyor. Admin `/admin/galeri`'den albüm ve (isteğe bağlı) örgücü seçerek resim yüklüyor (`controller/admin.js` → `galeriEkle`).
+
+**Galeri fotoğrafları ürün fotoğraflarından farklı mı?**
+Evet. Ürün fotoğrafları `public/img/urunler/`, galeri fotoğrafları `public/img/galeri/` klasöründe; aynı fotoğraf iki yerde kullanılmıyor. Galeride örgünün kendisi değil süreci var: örgü ören eller, yumaklar, atölye rafları, desen yakın çekimleri.
+
+**Fotoğrafın altındaki mağaza adı nereden geliyor?**
+`galeri` tablosunda `kullaniciId` var (`Galeri.belongsTo(Kullanici)`). Boş olabiliyor; doluysa `include: Kullanici` ile örgücü de geliyor ve fotoğrafın altında mağazasına bağlantı çıkıyor. Örgücü silinirse `onDelete: "SET NULL"` sayesinde fotoğraf silinmiyor, sadece bağlantısı boşalıyor.
+
+**Admin bir resmi silince dosya ne oluyor?**
+Önce veritabanındaki satır siliniyor, sonra `fs.unlink` ile `public/img/yuklenen/` içindeki dosya da siliniyor (`controller/admin.js` → `dosyaSil`). Böylece klasörde sahipsiz dosya kalmıyor. Projeyle gelen örnek fotoğraflara dokunulmuyor, sadece yüklenenler siliniyor.
 
 **Resme tıklayınca büyümesi nasıl oluyor?**
-JavaScript kullanmadan, CSS `:target` seçicisiyle. Resim linki `#resim-3` adresine gidiyor, CSS'teki `.buyut:target` kuralı o elemanı tam ekran gösteriyor.
+JavaScript kullanmadan, CSS `:target` seçicisiyle. Resim linki `#resim-3` adresine gidiyor, CSS'teki `.buyut:target` kuralı o elemanı tam ekran gösteriyor. Büyük görünümdeki önceki/sonraki okları da birer bağlantı: komşu fotoğrafın `#resim-ID` adresine gidiyor. Komşular EJS'te `(i + 1) % resimler.length` ile bulunuyor, sonuncudan sonra birinciye dönülüyor. Altta "3 / 27" gibi bir sayaç var.
 
 **Resimleri nerede tutuyorsun?**
 Veritabanında değil, klasörde. Örnek ürün resimleri `public/img/urunler/`, yüklenen resimler `public/img/yuklenen/`. Veritabanına sadece adres (URL) yazılıyor: `urun.resim = "/img/urunler/bere.jpg"`. EJS bunu `<img src="<%= u.resim %>">` içine koyuyor, `express.static("public")` dosyayı o adresten sunuyor.

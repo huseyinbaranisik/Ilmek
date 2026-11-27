@@ -32,6 +32,7 @@ const Kategori = require("./models/kategori");
 const Urun = require("./models/urun");
 const Siparis = require("./models/siparis");
 const Yorum = require("./models/yorum");
+const Galeri = require("./models/galeri");
 
 const app = express();
 
@@ -99,6 +100,11 @@ Siparis.belongsTo(Kullanici, { as: "satici", foreignKey: "saticiId" });
 // uye.hasFavori(urun), uye.getFavoriler() fonksiyonları kendiliğinden oluşur.
 Kullanici.belongsToMany(Urun, { through: "favori", as: { singular: "favori", plural: "favoriler" } });
 Urun.belongsToMany(Kullanici, { through: "favori", as: { singular: "favorileyen", plural: "favorileyenler" } });
+
+// Galeri fotoğrafı bir örgücünün atölyesinden olabilir (isteğe bağlı).
+// Üye silinirse fotoğraf kalır, sadece bağlantısı boşalır (SET NULL).
+Kullanici.hasMany(Galeri, { onDelete: "SET NULL" });
+Galeri.belongsTo(Kullanici);
 
 // ---------- Sayfa bulunamadı (404) ----------
 app.use((req, res) => {

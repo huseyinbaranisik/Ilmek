@@ -276,11 +276,40 @@ async function populate() {
   await can.addFavoriler([urunler["Kalın Örgü Battaniye"], urunler["Saç Örgülü Kazak"], urunler["Tığ İşi Çiçek Buketi"]]);
   await elif.addFavoriler([urunler["Çizgili Yün Atkı"]]);
 
-  // ---------- Galeri: atölyelerden kareler ----------
-  for (const [resim, aciklama] of [["orgu_eller.jpg", "Akşam örgüsü"], ["yumak.jpg", "Yeni gelen yumaklar"], ["ip_rafi.jpg", "Elif'in ip rafı"],
-    ["kazak.jpg", "Ayşe'nin kış koleksiyonu"], ["tavsan.jpg", "Tığ Atölyesi'nin yeni üyesi"], ["battaniye.jpg", "Minik İlmek'ten kalın örgü"],
-    ["dantel_sal.jpg", "Gül'ün dantel şalı şişte"], ["motifli_battaniye.jpg", "Yüzlerce granny kare"], ["mantar.jpg", "Mantar yumağın üstünde"]]) {
-    await Galeri.create({ resim: "/img/urunler/" + resim, aciklama });
+  // ---------- Galeri: albümlere ayrılmış atölye fotoğrafları ----------
+  // Resimler public/img/galeri/ klasöründe. Bazıları bir örgücünün atölyesinden (mağazasına bağlantı verilir).
+  const galeri = [
+    // [dosya, açıklama, albüm, örgücü (yoksa null)]
+    ["orgu_eller.jpg", "Şişte yeni bir örgü", "Örerken", elif],
+    ["yumak.jpg", "Yeni gelen yumaklar", "İplikler", null],
+    ["ip_rafi.jpg", "Renklere göre dizilmiş ipler", "Atölyeden", elif],
+    ["aksam_orgusu.jpg", "Akşam örgüsü", "Örerken", ayse],
+    ["mor_ilmekler.jpg", "Mor ilmekler", "Örerken", null],
+    ["hardal_yun_siste_buyuyor.jpg", "Hardal yün şişte büyüyor", "Örerken", burak],
+    ["yesil_yunle_orgu_saati.jpg", "Yeşil yünle örgü saati", "Örerken", null],
+    ["kalpli_isaretcilerle_orgu.jpg", "Kalpli işaretçilerle örgü", "Örerken", zeynep],
+    ["salonda_orgu_molasi.jpg", "Salonda örgü molası", "Örerken", null],
+    ["pastel_yumaklar.jpg", "Pastel yumaklar", "İplikler", zeynep],
+    ["renk_renk_akrilikler.jpg", "Renk renk akrilikler", "İplikler", mehmet],
+    ["sepetteki_kis_yunleri.jpg", "Sepetteki kış yünleri", "İplikler", null],
+    ["elde_boyanmis_cileler.jpg", "Elde boyanmış çileler", "İplikler", elif],
+    ["avucta_bej_merinos.jpg", "Avuçta bej merinos", "İplikler", ayse],
+    ["ebruli_yumak.jpg", "Ebruli yumak", "İplikler", null],
+    ["tiglar_ve_isaretciler.jpg", "Tığlar ve işaretçiler", "Atölyeden", gul],
+    ["tig_isi_masasi.jpg", "Tığ işi masası", "Atölyeden", mehmet],
+    ["gri_yun_sepeti.jpg", "Gri yün sepeti", "Atölyeden", burak],
+    ["hasir_sepette_ipler.jpg", "Hasır sepette ipler", "Atölyeden", gul],
+    ["ipci_dukkaninin_raflari.jpg", "İpçi dükkanının rafları", "Atölyeden", null],
+    ["mor_ve_gri_raf.jpg", "Mor ve gri raf", "Atölyeden", elif],
+    ["hardal_kabartma_orgu.jpg", "Hardal kabartma örgü", "Desenler", ayse],
+    ["katlanmis_sis_orguleri.jpg", "Katlanmış şiş örgüleri", "Desenler", null],
+    ["renkli_cizgiler.jpg", "Renkli çizgiler", "Desenler", elif],
+    ["kiremit_sac_orgusu.jpg", "Kiremit saç örgüsü", "Desenler", burak],
+    ["granny_kareler.jpg", "Granny kareler", "Desenler", gul],
+    ["dantel_motif.jpg", "Dantel motif", "Desenler", null],
+  ];
+  for (const [dosya, aciklama, album, orgucu] of galeri) {
+    await Galeri.create({ resim: "/img/galeri/" + dosya, aciklama, album, kullaniciId: orgucu ? orgucu.id : null });
   }
 
   // ---------- Duyurular ----------

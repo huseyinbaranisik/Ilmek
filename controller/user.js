@@ -247,10 +247,29 @@ exports.magaza = async (req, res, next) => {
 };
 
 // ---------- Galeri, duyurular ----------
+// /galeri -> bütün fotoğraflar, /galeri?album=İplikler -> sadece o albüm
 exports.galeri = async (req, res, next) => {
   try {
-    const resimler = await Galeri.findAll({ order: [["id", "DESC"]] });
-    res.render("galeri", { resimler: resimler });
+    // Albüm sadece listedekilerden biri olabilir, değilse hepsi gösterilir
+    let album = "";
+    if (Galeri.ALBUMLER.includes(req.query.album)) album = req.query.album;
+
+    const kosul = {};
+    if (album) kosul.album = album;
+    const resimler = await Galeri.findAll({
+      where: kosul,
+      include: Kullanici,              // fotoğraf bir örgücüye aitse mağaza adı da gelsin
+      order: [["id", "DESC"]],         // en yeni en üstte
+    });
+
+    // Albüm düğmelerinde kaç fotoğraf olduğunu yazmak için
+    const albumler = [];
+    for (const ad of Galeri.ALBUMLER) {
+      albumler.push({ ad: ad, sayi: await Galeri.count({ where: { album: ad } }) });
+    }
+    const toplam = await Galeri.count();
+
+    res.render("galeri", { resimler: resimler, albumler: albumler, album: album, toplam: toplam });
   } catch (hata) {
     next(hata);
   }
