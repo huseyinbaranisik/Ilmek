@@ -22,6 +22,27 @@ function bildirim(metin) {
 }
 
 // ============================================================
+//  0) KOYU TEMA
+//  Sayfa açılırken tema ust.ejs içindeki küçük script ile zaten uygulandı.
+//  Burada sadece düğmeye basınca değiştirip tarayıcıya kaydediyoruz.
+// ============================================================
+const temaDugme = document.getElementById('tema-dugme');
+if (temaDugme) {
+  temaDugme.addEventListener('click', function () {
+    const html = document.documentElement;
+    if (html.getAttribute('data-tema') === 'koyu') {
+      html.removeAttribute('data-tema');
+      html.removeAttribute('data-bs-theme');
+      localStorage.setItem('tema', 'acik');
+    } else {
+      html.setAttribute('data-tema', 'koyu');
+      html.setAttribute('data-bs-theme', 'dark');
+      localStorage.setItem('tema', 'koyu');
+    }
+  });
+}
+
+// ============================================================
 //  1) SEPET
 //  Sepet tarayıcının localStorage'ında "sepet" adıyla tutulur:  [{ "id": 3, "adet": 2 }, ...]
 //  Sunucuya hiç gitmez, bu yüzden misafir de sepet oluşturabilir.

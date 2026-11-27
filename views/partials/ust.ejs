@@ -12,6 +12,16 @@
   <link rel="stylesheet" href="/vendor/fraunces/index.css"><!-- başlıklar -->
   <link rel="stylesheet" href="/vendor/caveat/index.css"><!-- el yazısı notlar -->
   <link rel="stylesheet" href="/css/stil.css">
+  <script>
+    // Koyu tema: sayfa çizilmeden ÖNCE uygulanır, yoksa sayfa bir an beyaz yanıp söner.
+    // Seçim localStorage'da "tema" adıyla durur; hiç seçilmediyse bilgisayarın ayarına bakılır.
+    var tema = localStorage.getItem('tema');
+    if (!tema) tema = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'koyu' : 'acik';
+    if (tema === 'koyu') {
+      document.documentElement.setAttribute('data-tema', 'koyu');
+      document.documentElement.setAttribute('data-bs-theme', 'dark');   // Bootstrap'in açılır menüleri de koyu olsun
+    }
+  </script>
 </head>
 <body>
 
@@ -33,6 +43,8 @@
           <input type="search" name="q" placeholder="Kazak, bere, amigurumi, örgücü..." value="<%= typeof q !== 'undefined' ? q : '' %>" aria-label="Ara">
         </form>
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+          <!-- Açık / koyu tema düğmesi: site.js tıklanınca temayı değiştirir -->
+          <li class="nav-item"><button type="button" class="tema-dugme" id="tema-dugme" aria-label="Koyu / açık tema" title="Koyu / açık tema"><i class="bi bi-moon"></i><i class="bi bi-sun"></i></button></li>
           <li class="nav-item"><a class="nav-link <%= yol === '/magazalar' ? 'active' : '' %>" href="/magazalar"><i class="bi bi-shop"></i> Örgücüler</a></li>
           <!-- Sepet: içindeki ürün sayısını site.js tarayıcıdaki sepetten okuyup yazar -->
           <li class="nav-item"><a class="nav-link <%= yol === '/sepet' ? 'active' : '' %>" href="/sepet"><i class="bi bi-bag"></i> Sepet <span class="rozet kiremit-rozet" id="sepet-sayi" hidden>0</span></a></li>
