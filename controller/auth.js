@@ -5,6 +5,17 @@
 const bcrypt = require("bcrypt");
 const Kullanici = require("../models/kullanici");
 const Rol = require("../models/rol");
+const { fn, col, where } = require("sequelize");
+
+// Kullanıcı adını büyük/küçük harfe bakmadan arar: "Can", "CAN", "can" aynı kişi.
+// (Telefon klavyeleri ilk harfi kendiliğinden büyük yazıyor.)
+// SQL: WHERE lower(kullaniciAdi) = 'can'
+function adlaBul(kullaniciAdi) {
+  return Kullanici.findOne({
+    where: where(fn("lower", col("kullaniciAdi")), kullaniciAdi.toLowerCase()),
+    include: Rol,
+  });
+}
 
 // Giriş başarılı olunca oturuma kullanıcı bilgisini yazar
 function oturumAc(req, kullanici) {
@@ -28,10 +39,8 @@ exports.getGiris = (req, res) => {
 
 exports.postGiris = async (req, res, next) => {
   try {
-    const kullanici = await Kullanici.findOne({
-      where: { kullaniciAdi: req.body.kullaniciAdi || "" },
-      include: Rol,
-    });
+    // trim(): otomatik doldurmanın eklediği baştaki/sondaki boşlukları sil
+    const kullanici = await adlaBul((req.body.kullaniciAdi || "").trim());
     // Kullanıcı yoksa ya da şifre uyuşmuyorsa
     if (!kullanici || !(await bcrypt.compare(req.body.sifre || "", kullanici.sifre))) {
       return res.render("giris", { hata: "Kullanıcı adı veya şifre hatalı.", url: req.query.url || "" });
@@ -54,7 +63,8 @@ exports.postKayit = async (req, res, next) => {
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(kullaniciAdi) || sifre.length < 6) {
       return res.render("kayit", { hata: "Kullanıcı adı 3-20 karakter (harf, rakam, _) ve şifre en az 6 karakter olmalı." });
     }
-    if (await Kullanici.findOne({ where: { kullaniciAdi } })) {
+    // "Can" varken "can" adıyla ikinci bir hesap açılamasın
+    if (await adlaBul(kullaniciAdi)) {
       return res.render("kayit", { hata: "Bu kullanıcı adı alınmış." });
     }
     const yeni = await Kullanici.create({

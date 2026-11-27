@@ -82,6 +82,12 @@ sonuc('benzer ürünler aynı kategoriden, tekrar yok',
   benzerler.length === 8 && benzerler.every(x => amigurumiler.includes(x)) && !benzerler.includes('/urun/amigurumi-tavsan') && !benzerler.some(x => magazaKismi.includes(x)),
   benzerler.length + ' benzer');
 
+// Giriş: kullanıcı adında büyük harf ve boşluk sorun olmamalı (telefon klavyesi "Can " yazabilir)
+r = await istemci().giris(' Can ', '123456');
+sonuc('girişte büyük/küçük harf ve boşluk önemsiz', r.durum === 302 && r.yer === '/', r.yer);
+r = await istemci().giris('Can', 'yanlis99');
+sonuc('yanlış şifreyle giriş olmuyor', r.durum === 200 && r.metin.includes('hatalı'));
+
 // ================= YENİ ÜYE (alıcı + satıcı) =================
 const u = istemci();
 tk = await u.token('/auth/kayit');
